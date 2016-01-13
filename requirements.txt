@@ -1,0 +1,5 @@
+#gdal/ogr python bindings
+django
+gsconfig
+python-dateutil
+psycopg2
