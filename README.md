@@ -1,5 +1,4 @@
-# Importer
-
+# django-osgeo-uploader
 An extensible module for importing geospatial data into GeoNode-backed applications.
 
 ## Settings ##
