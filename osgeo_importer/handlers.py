@@ -7,10 +7,10 @@ from geonode.geoserver.helpers import gs_slurp, gs_catalog
 from geoserver.catalog import FailedRequestError
 
 
-DEFAULT_IMPORT_HANDLERS = ['mapstory.importer.handlers.FieldConverterHandler',
-                           'mapstory.importer.handlers.GeoserverPublishHandler',
-                           'mapstory.importer.handlers.GeoServerTimeHandler',
-                           'mapstory.importer.handlers.GeoNodePublishHandler']
+DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
+                           'osgeo_importer.handlers.GeoserverPublishHandler',
+                           'osgeo_importer.handlers.GeoServerTimeHandler',
+                           'osgeo_importer.handlers.GeoNodePublishHandler']
 
 IMPORT_HANDLERS = getattr(settings, 'IMPORT_HANDLERS', DEFAULT_IMPORT_HANDLERS)
 

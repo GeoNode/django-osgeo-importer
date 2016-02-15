@@ -148,8 +148,11 @@ class GDALImport(Import):
             layer_name = launder(str(layer_name))
 
             # if the layer name already exists, increment it
-            while target_file.GetLayerByName(layer_name):
+            try:
+                target_file.GetLayerByName(layer_name)
                 layer_name = increment(layer_name)
+            except:
+                pass # do nothing
 
             # default the layer to 4326 if a spatial reference is not provided
             if not srs:

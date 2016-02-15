@@ -61,8 +61,6 @@ LOCALE_PATHS = (
 
 INSTALLED_APPS = INSTALLED_APPS + ("osgeo_importer",)
 
-print INSTALLED_APPS
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
