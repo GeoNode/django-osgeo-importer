@@ -1,6 +1,6 @@
 #gdal/ogr python bindings
+-e git+https://github.com/GeoNode/geonode.git@master#egg=GeoNode
 django
 gsconfig
 python-dateutil
 psycopg2
--e git+https://github.com/GeoNode/geonode.git@master#egg=GeoNode
