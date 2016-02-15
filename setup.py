@@ -32,6 +32,10 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Framework :: Django',
     ],
+    install_requires=[
+        'django-tastypie==0.11.0',
+        'geonode==2.4',
+    ],
     include_package_data=True,
     zip_safe=False,
 )
