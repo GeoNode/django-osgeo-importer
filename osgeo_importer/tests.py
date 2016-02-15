@@ -89,7 +89,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def setUp(self):
 
-        if not os.path.exists(os.path.join(os.path.split(__file__)[0], 'test_ogr')):
+        if not os.path.exists(os.path.join(os.path.split(__file__)[0], '..', 'importer-test-files')):
             self.skipTest('Skipping test due to missing test data.')
 
         # These tests require geonode to be running on :80!
@@ -111,7 +111,7 @@ class UploaderTests(MapStoryTestMixin):
     def generic_import(self, file, configuration_options=[{'index': 0}]):
 
         f = file
-        filename = os.path.join(os.path.dirname(__file__), 'test_ogr', f)
+        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
 
         res = self.import_file(filename, configuration_options=configuration_options)
         layer = Layer.objects.get(name=res[0][0])
@@ -284,11 +284,11 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_us_shootings_csv(self):
         """
-        Tests the import of US_shootings.csv.
+        Tests the import of US_Shootings.csv.
         """
 
-        filename = 'US_shootings.csv'
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', filename)
+        filename = 'US_Shootings.csv'
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         layer = self.generic_import(filename, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
         self.assertEqual(layer.name, 'us_shootings')
 
@@ -302,7 +302,7 @@ class UploaderTests(MapStoryTestMixin):
         """
 
         filename = 'US_Civil_Rights_Sitins0.csv'
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', filename)
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         layer = self.generic_import(f, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
 
     def get_layer_names(self, in_file):
@@ -314,7 +314,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_gdal_import(self):
         filename = 'point_with_date.geojson'
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', filename)
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         self.generic_import(filename, configuration_options=[{'index': 0,  'convert_to_date': ['date']}])
 
     def import_file(self, in_file, configuration_options=[]):
@@ -344,7 +344,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the create_vrt function.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'US_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
 
         vrt = create_vrt(f)
         vrt.seek(0)
@@ -359,7 +359,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the file_add_view.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'point_with_date.geojson')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
 
         # test login required for this view
@@ -386,7 +386,7 @@ class UploaderTests(MapStoryTestMixin):
         self.assertTrue(os.path.exists(uploaded_file.file.path))
 
 
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'empty_file.geojson')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'empty_file.geojson')
 
         with open(f) as fp:
             response = c.post(reverse('uploads-new'), {'file': fp}, follow=True)
@@ -398,7 +398,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the describe fields functionality.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'us_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_shootings.csv')
         fields = None
 
         with GDALInspector(f) as f:
@@ -414,12 +414,12 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the describe fields functionality.
         """
-        files = ((os.path.join(os.path.dirname(__file__), 'test_ogr', 'us_shootings.csv'), 'CSV'),
-                 (os.path.join(os.path.dirname(__file__), 'test_ogr', 'point_with_date.geojson'), 'GeoJSON'),
-                 (os.path.join(os.path.dirname(__file__), 'test_ogr', 'mojstrovka.gpx'), 'GPX'),
-                 (os.path.join(os.path.dirname(__file__), 'test_ogr', 'us_states.kml'), 'KML'),
-                 (os.path.join(os.path.dirname(__file__), 'test_ogr', 'boxes_with_year_field.shp'), 'ESRI Shapefile'),
-                 (os.path.join(os.path.dirname(__file__), 'test_ogr', 'boxes_with_date_iso_date.zip'), 'ESRI Shapefile'),
+        files = ((os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_shootings.csv'), 'CSV'),
+                 (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson'), 'GeoJSON'),
+                 (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'mojstrovka.gpx'), 'GPX'),
+                 (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_states.kml'), 'KML'),
+                 (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'boxes_with_year_field.shp'), 'ESRI Shapefile'),
+                 (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'boxes_with_date_iso_date.zip'), 'ESRI Shapefile'),
         )
 
         for path, file_type in files:
@@ -430,7 +430,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the configuration view.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'point_with_date.geojson')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
         c.login_as_non_admin()
 
@@ -464,7 +464,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the configure view with a dataset that needs to be converted to a date.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'US_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
         c = AdminClient()
         c.login_as_non_admin()
 
@@ -520,7 +520,7 @@ class UploaderTests(MapStoryTestMixin):
         non_admin = User.objects.get(username=self.non_admin_username)
         from osgeo_importer.models import UploadFile
 
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'US_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
 
         with open(f, 'rb') as f:
             uploaded_file = SimpleUploadedFile('test_data', f.read())
@@ -558,7 +558,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         c = AdminClient()
 
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'point_with_date.geojson')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
         c.login_as_non_admin()
 
@@ -576,7 +576,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Ensure that administrators can delete data that isn't theirs.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'point_with_date.geojson')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
         c.login_as_non_admin()
 
@@ -599,7 +599,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests providing a name in the configuration options.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'point_with_date.geojson')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
         c.login_as_non_admin()
         name = 'point-with-a-date'
@@ -623,7 +623,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the import api.
         """
-        f = os.path.join(os.path.dirname(__file__), 'test_ogr', 'point_with_date.geojson')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
         c.login_as_non_admin()
 

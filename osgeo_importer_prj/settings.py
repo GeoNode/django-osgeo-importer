@@ -25,13 +25,13 @@ from geonode.settings import *
 # General Django development settings
 #
 
-SITENAME = 'osgeo_importer_geonode'
+SITENAME = 'osgeo_importer_prj'
 
 # Defines the directory that contains the settings file as the LOCAL_ROOT
 # It is used for relative settings elsewhere.
 LOCAL_ROOT = os.path.abspath(os.path.dirname(__file__))
 
-WSGI_APPLICATION = "osgeo_importer_geonode.wsgi.application"
+WSGI_APPLICATION = "osgeo_importer_prj.wsgi.application"
 
 
 # Load more settings from a file called local_settings.py if it exists
@@ -52,7 +52,7 @@ TEMPLATE_DIRS = (
 ) + TEMPLATE_DIRS
 
 # Location of url mappings
-ROOT_URLCONF = 'osgeo_importer_geonode.urls'
+ROOT_URLCONF = 'osgeo_importer_prj.urls'
 
 # Location of locale files
 LOCALE_PATHS = (
@@ -78,5 +78,3 @@ DATABASES = {
         'PORT' : '5432',
      }
 }
-
-print DATABASES['default']['NAME']

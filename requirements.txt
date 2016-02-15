@@ -3,3 +3,4 @@ django
 gsconfig
 python-dateutil
 psycopg2
+-e git+https://github.com/GeoNode/geonode.git@master#egg=GeoNode
