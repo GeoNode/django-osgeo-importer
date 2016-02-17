@@ -85,6 +85,12 @@ class GeoNodePublishHandler(ImportHandler):
         connection = db.connections['datastore']
         return connection.settings_dict['NAME']
 
+    def can_run(self, layer, layer_config, *args, **kwargs):
+        """
+        Skips this layer if the user is appending data to another dataset.
+        """
+        return 'appendTo' not in layer_config
+
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         """
@@ -97,7 +103,9 @@ class GeoNodePublishHandler(ImportHandler):
         return gs_slurp(workspace=self.workspace,
                         store=self.store_name,
                         filter=layer,
-                        owner=layer_config.get('layer_owner'))
+                        owner=layer_config.get('layer_owner'),
+                        permissions=layer_config.get('permissions')
+                        )
 
 
 class GeoServerTimeHandler(ImportHandler):
@@ -280,6 +288,7 @@ class GeoServerBoundsHandler(ImportHandler):
         """
         Only run this handler if the layer is found in Geoserver.
         """
+        self.catalog._cache.clear()
         self.layer = self.catalog.get_layer(layer)
 
         if self.layer:
@@ -290,6 +299,7 @@ class GeoServerBoundsHandler(ImportHandler):
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         resource = self.layer.resource
+
         try:
             for dec in map(Decimal, resource.latlon_bbox[:4]):
                 dec.quantize(1)

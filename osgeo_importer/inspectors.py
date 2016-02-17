@@ -1,7 +1,9 @@
 import os
-import ogr
+
 import gdal
+import ogr
 from django.conf import settings
+
 from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, parse
 
 
@@ -97,7 +99,7 @@ class GDALInspector(InspectorMixin):
         x_possible = getattr(settings, 'IMPORT_CSV_X_FIELDS', ['Lon*', 'x', 'lon*'])
         y_possible = getattr(settings, 'IMPORT_CSV_Y_FIELDS', ['Lat*', 'y', 'lat*'])
         geom_possible = getattr(settings, 'IMPORT_CSV_GEOM_FIELDS',
-                                ['geom', 'GEOM', 'WKT', 'the_geom', 'THE_GEOM', 'WKB'])
+                                ['geom', 'GEOM', 'WKT', 'the_geom', 'THE_GEOM', 'WKB', 'wkb_geometry'])
 
         oo = kwargs.get('open_options', [])
 
@@ -136,8 +138,7 @@ class GDALInspector(InspectorMixin):
             filename, args, kwargs = getattr(self, prepare_method)(filename, *args, **kwargs)
 
         open_options = kwargs.get('open_options', [])
-        self.data = ogr.Open(filename)
-        #self.data = gdal.Open(filename, open_options=open_options)
+        self.data = gdal.OpenEx(filename, open_options=open_options)
 
         if self.data is None:
             raise NoDataSourceFound
@@ -203,24 +204,110 @@ class GDALInspector(InspectorMixin):
             return
 
 
+class OGRTruncatedConverter(OGRInspector):
+    def convert_truncated(self, source_layer_name, dest_layer_name):
+        converted_mapping = {}
+        dest_layer_name = dest_layer_name.split(':')[1]
+        dest_layer = self.data.GetLayerByName(dest_layer_name)
+        source_layer = self.data.GetLayerByName(source_layer_name)
+        dest_schema = dest_layer.GetLayerDefn()
+        source_schema = source_layer.GetLayerDefn()
+
+        #if the feature definitions are exactly the same we don't need to do any work.
+        if dest_schema.IsSame(source_schema) is True:
+            return True
+
+        dest_field_count = dest_schema.GetFieldCount()
+        source_field_count = source_schema.GetFieldCount()
+        if dest_field_count == 0:
+            raise AttributeError('Destination layer has no attributes.')
+        if source_field_count == 0:
+            raise AttributeError('Source layer has no attributes.')
+
+        if dest_field_count < source_field_count:
+            raise AttributeError('Destination layer has fewer attributes than source layer.')
+
+        dest_field_schema = self.extract_field_definitions(dest_schema, dest_field_count)
+        source_field_schema = self.extract_field_definitions(source_schema, source_field_count)
+
+        is_subset = True
+        truncated_fields = {}
+        for attribute in source_field_schema:
+            if attribute in dest_field_schema:
+                source_type = source_field_schema[attribute]
+                dest_type = dest_field_schema[attribute]
+                if source_type != dest_type and (self.compatible_types(source_type,dest_type) is False):
+                    is_subset = False
+                    break
+            elif len(attribute) == 10:
+                truncated_name = self.find_truncated_name(attribute,dest_field_schema)
+                if truncated_name is not None and truncated_name not in source_field_schema:
+                    trunc_field_index = source_schema.GetFieldIndex(attribute)
+                    truncated_fields[truncated_name] = trunc_field_index
+                    converted_mapping[attribute] = truncated_name
+
+        if is_subset is False:
+            raise AttributeError('Source layer attributes are not a subset of destination.')
+
+        for truncated_name in truncated_fields:
+            trunc_field_index = truncated_fields[truncated_name]
+            name_alter = ogr.FieldDefn(truncated_name,ogr.OFTInteger)
+            source_layer.AlterFieldDefn(trunc_field_index,name_alter,ogr.ALTER_NAME_FLAG)
+
+        return converted_mapping
+
+    @staticmethod
+    def compatible_types(source_type, dest_type):
+        if source_type is ogr.OFTString:
+            if dest_type is ogr.OFTDateTime or dest_type is ogr.OFTDate:
+                return True
+        elif source_type is ogr.OFTDate or source_type is ogr.OFTDateTime:
+            if dest_type is ogr.OFTString or ogr.OFTDateTime or ogr.OFTDate:
+                return True
+        elif source_type is ogr.OFTInteger or ogr.OFTReal:
+            if dest_type is ogr.OFTInteger or ogr.OFTReal:
+                return True
+        return False
+
+    @staticmethod
+    def find_truncated_name(attribute, field_list):
+        for dest_attribute in field_list:
+            if dest_attribute.startswith(attribute) and len(dest_attribute) > 10:
+                return dest_attribute
+        return None
+
+    @staticmethod
+    def extract_field_definitions(schema,field_count):
+        field_schema = {}
+        for field_index in range(0,field_count):
+            field_definition = schema.GetFieldDefn(field_index)
+            field_schema[field_definition.GetNameRef()] = field_definition.GetType()
+        return field_schema
+
+
 class OGRFieldConverter(OGRInspector):
 
     def convert_field(self, layer_name, field):
+        field_as_string = str(field)
         fieldname = '{0}_as_date'.format(field)
         target_layer = self.data.GetLayerByName(layer_name)
-
-        while target_layer.GetLayerDefn().GetFieldIndex(fieldname) >= 0:
+        target_defn = target_layer.GetLayerDefn()
+        while target_defn.GetFieldIndex(fieldname) >= 0:
             fieldname = increment(fieldname)
 
+        original_field_index = target_defn.GetFieldIndex(field_as_string)
         target_layer.CreateField(ogr.FieldDefn(fieldname, ogr.OFTDateTime))
-        field_index = target_layer.GetLayerDefn().GetFieldIndex(fieldname)
+
+        field_index = target_defn.GetFieldIndex(fieldname)
+
+        field_defn = ogr.FieldDefn(field_as_string, ogr.OFTDateTime)
 
         for feat in target_layer:
 
             if not feat:
                 continue
 
-            string_field = feat[str(field)]
+            string_field = feat[field_as_string]
 
             if string_field:
                 pars = parse(str(string_field))
@@ -230,4 +317,8 @@ class OGRFieldConverter(OGRInspector):
 
                 target_layer.SetFeature(feat)
 
-        return fieldname
+        target_layer.DeleteField(original_field_index)
+        field_index = target_defn.GetFieldIndex(fieldname)
+        target_layer.AlterFieldDefn(field_index,field_defn,ogr.ALTER_NAME_FLAG)
+
+        return field
