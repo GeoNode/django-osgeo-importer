@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/terranodo/django-osgeo-importer.svg?branch=master)](https://travis-ci.org/terranodo/django-osgeo-importer)
+
 # django-osgeo-uploader
 An extensible module for importing geospatial data into GeoNode-backed applications.
 

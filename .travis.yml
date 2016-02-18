@@ -1,0 +1,75 @@
+sudo: required
+
+dist: trusty
+
+language: python
+
+cache:
+  directories:
+    - gs
+    - $HOME/.cache/pip
+    - importer-test-files
+
+addons:
+  postgresql: "9.3"
+
+services:
+ - postgresql
+
+matrix:
+  include:
+    - python: "2.7"
+      env: GS_VERSION=2.7.x
+    - python: "2.7"
+      env: GS_VERSION=2.8.x
+    - python: "2.7"
+      env: GS_VERSION=master
+
+virtualenv:
+  system_site_packages: true
+
+install:
+  - sudo apt-get -qq -y update
+  # geoserver
+  - sudo apt-get install -y --force-yes openjdk-7-jdk --no-install-recommends
+  - mkdir gs
+  - pushd gs
+  - wget http://repo2.maven.org/maven2/org/mortbay/jetty/jetty-runner/8.1.8.v20121106/jetty-runner-8.1.8.v20121106.jar
+  - wget http://ares.boundlessgeo.com/geoserver/${GS_VERSION}/geoserver-${GS_VERSION}-latest-war.zip
+  - unzip geoserver-${GS_VERSION}-latest-war.zip
+  - popd
+  # postgis
+  - sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y # For postgresql-9.1-postgis-2.1
+  - sudo rm -f /etc/apt/sources.list.d/pgdg-source.list # postgis from pgdg requires different gdal package than the grass package
+  - sudo apt-get update -qq
+  - sudo apt-get remove -y postgresql-9.3-postgis-2.1 # Remove postgis from pgdg, will install postgis from ubuntugis-unstable instead
+  - sudo apt-get install -y --no-install-recommends postgresql-9.3-postgis-2.1 python-gdal
+  # python
+  - pip install psycopg2
+  - sudo apt-get install -y python-virtualenv python-imaging python-lxml python-pyproj python-shapely python-nose python-httplib2 python-httplib2 gettext
+  - pip install -r requirements.txt
+  - pip install -e .
+  - pip install boto
+  # test data
+  - python download.py
+
+before_script:
+  - psql -U postgres -c "create database osgeo_importer_test;"
+  - psql -U postgres -d osgeo_importer_test -c "create extension postgis"
+  - psql -U postgres -c "alter user postgres with password 'password';"
+  - python manage.py syncdb --noinput
+  - python mange.py runserver > /dev/null 2>&1 &
+  - java -Xmx512m -XX:MaxPermSize=256m -Dorg.eclipse.jetty.server.webapp.parentLoaderPriority=true -jar gs/jetty-runner-8.1.8.v20121106.jar --path /geoserver gs/geoserver.war > /dev/null 2>&1 &
+  - sleep 90
+
+script:
+  - python osgeo_importer/tests.py
+
+notifications:
+  email:
+    on_success: never
+    on_failure: never
+
+branches:
+  only:
+    - master
