@@ -122,7 +122,12 @@ class GDALImport(Import):
         but depending on the number of parts of each geometry, the actual type can be either OGRPolygon or
         OGRMultiPolygon.
         """
-        if source.GetDriver().ShortName == 'ESRI Shapefile':
+        return layer.GetGeomType()
+        try:
+            driver = source.GetDriver().ShortName
+        except AttributeError:
+            return
+        if driver == 'ESRI Shapefile':
             geom_type = layer.GetGeomType()
 
             # If point return MultiPoint
@@ -187,7 +192,7 @@ class GDALImport(Import):
                 n += 1
                 try:
                     target_layer = self.create_target_dataset(target_file, layer_name, srs,
-                                                              layer_type, options=target_create_options)
+                                                              layer.GetGeomType(), options=target_create_options)
                 except RuntimeError as e:
                     # the layer already exists in the target store, increment the name
                     if 'Use the layer creation option OVERWRITE=YES to replace it.' in e.message:

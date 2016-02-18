@@ -138,7 +138,8 @@ class GDALInspector(InspectorMixin):
             filename, args, kwargs = getattr(self, prepare_method)(filename, *args, **kwargs)
 
         open_options = kwargs.get('open_options', [])
-        self.data = gdal.OpenEx(filename, open_options=open_options)
+        #self.data = gdal.OpenEx(filename, open_options=open_options)
+        self.data = ogr.Open(filename)
 
         if self.data is None:
             raise NoDataSourceFound

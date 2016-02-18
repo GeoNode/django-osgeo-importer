@@ -39,7 +39,7 @@ class JSONView(JSONResponseMixin, TemplateView):
 
 class UploadListView(ListView):
     model = UploadedData
-    template_name = 'importer/uploads-list.html'
+    template_name = 'osgeo_importer/uploads-list.html'
     queryset = UploadedData.objects.all()
 
 
@@ -66,7 +66,7 @@ class ImportHelper(object):
 class FileAddView(FormView, ImportHelper, JSONResponseMixin):
     form_class = UploadFileForm
     success_url = reverse_lazy('uploads-list')
-    template_name = 'importer/new.html'
+    template_name = 'osgeo_importer/new.html'
     json = False
 
     @property
