@@ -1,6 +1,7 @@
 import os
 import json
 import unittest
+import osgeo
 from django import db
 from django.test import TestCase, Client
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -370,6 +371,8 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the create_vrt function.
         """
+        if osgeo.ogr.GetDriverByName('VRT') is None:
+           self.skipTest('VRT Driver Not Available')
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
 
         vrt = create_vrt(f)
