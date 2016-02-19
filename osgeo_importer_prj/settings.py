@@ -70,8 +70,8 @@ DATABASES = {
      'datastore' : {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'osgeo_importer_test',
-        'USER' : 'postgres',
-        'PASSWORD' : 'password',
+        'USER' : 'osgeo',
+        'PASSWORD' : 'osgeo',
         'HOST' : 'localhost',
         'PORT' : '5432',
      }

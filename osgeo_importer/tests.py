@@ -4,6 +4,7 @@ import unittest
 import osgeo
 from django import db
 from django.test import TestCase, Client
+from django.test.utils import setup_test_environment
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.contrib.auth import get_user_model
@@ -19,6 +20,8 @@ from osgeo_importer.models import UploadLayer
 from osgeo_importer.models import validate_file_extension, IMPORTER_VALID_EXTENSIONS, ValidationError, validate_inspector_can_read
 from osgeo_importer.models import UploadedData
 from osgeo_importer.handlers import GeoWebCacheHandler
+
+setup_test_environment()
 
 User = get_user_model()
 
@@ -177,7 +180,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests a CSV from schema download.
         """
-        self.skipTest('Not Working')
         layer = self.generic_import('schema_download.csv', configuration_options=[{'index': 0,
                                                                                          'convert_to_date': ['date']}])
         date_attr = filter(lambda attr: attr.attribute == 'date', layer.attributes)[0]
@@ -314,7 +316,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the import of US_shootings.csv.
         """
-        self.skipTest('Not Working')
         filename = 'US_shootings.csv'
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         layer = self.generic_import(filename, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
@@ -328,7 +329,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the import of US_shootings.csv.
         """
-        self.skipTest('Not Working')
 
         filename = 'US_Civil_Rights_Sitins0.csv'
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
@@ -390,7 +390,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the file_add_view.
         """
-        self.skipTest('Not Working')
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
 
@@ -463,7 +462,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the describe fields functionality.
         """
-        self.skipTest('Not Working')
         files = ((os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_shootings.csv'), 'CSV'),
                  (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson'), 'GeoJSON'),
                  (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'mojstrovka.gpx'), 'GPX'),
@@ -480,7 +478,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the configuration view.
         """
-        self.skipTest('Not Working')
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         new_user = User.objects.create(username='test')
         new_user_perms = ['change_resourcebase_permissions']
@@ -526,7 +523,6 @@ class UploaderTests(MapStoryTestMixin):
         self.assertEqual(2,cursor.fetchone()[0])
 
     def test_trunc_append(self):
-        self.skipTest('Not Working')
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'long_attr_name.geojson')
         new_user = User.objects.create(username='test')
         new_user_perms = ['change_resourcebase_permissions']
@@ -577,7 +573,6 @@ class UploaderTests(MapStoryTestMixin):
         self.assertNotEqual(None,result[1])
 
     def test_schema_append(self):
-        self.skipTest('Not Working')
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'schema_initial.zip')
         new_user = User.objects.create(username='test')
         new_user_perms = ['change_resourcebase_permissions']
@@ -623,7 +618,6 @@ class UploaderTests(MapStoryTestMixin):
         cursor = db.connections['datastore'].cursor()
         cursor.execute('select count(*), date from append group by date')
         result = cursor.fetchone()
-        import pdb;pdb.set_trace()
         #ensure that the feature was added and the attribute was appended
         self.assertEqual(2,result[0])
         self.assertNotEqual(None,result[1])
@@ -632,7 +626,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the configuration view.
         """
-        self.skipTest('Not Working')
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         new_user = User.objects.create(username='test')
         new_user_perms = ['change_resourcebase_permissions']
@@ -688,7 +681,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the configure view with a dataset that needs to be converted to a date.
         """
-        self.skipTest('Not Working')
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
         c = AdminClient()
         c.login_as_non_admin()
@@ -731,7 +723,6 @@ class UploaderTests(MapStoryTestMixin):
         self.assertEqual(response.status_code, 404)
 
     def test_list_api(self):
-        self.skipTest('Not Working') # Counts are off, something not being cleaned up properly
         c = AdminClient()
 
         response = c.get('/importer-api/data/')
@@ -781,7 +772,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Ensure users can delete their data.
         """
-        self.skipTest('Not Working') # Counts are off, something not being cleaned up properly
         c = AdminClient()
 
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
@@ -802,7 +792,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Ensure that administrators can delete data that isn't theirs.
         """
-        self.skipTest('Not Working') # Counts are off, something not being cleaned up properly
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
         c.login_as_non_admin()
@@ -919,7 +908,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Regression where layers with features outside projection bounds fail.
         """
-        self.skipTest('Not Working')
         self.generic_import('Spring_2015.zip', configuration_options=[{'index': 0 }])
         resource = self.cat.get_layer('spring_2015').resource
         self.assertEqual(resource.latlon_bbox, ('-180.0', '180.0', '-90.0', '90.0', 'EPSG:4326'))
@@ -928,7 +916,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests shapefile with multipart polygons.
         """
-        self.skipTest('Not Working')
 
         self.generic_import('PhoenixFirstDues.zip', configuration_options=[{'index': 0}])
 
@@ -936,7 +923,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the GeoWebCache handler
         """
-        self.skipTest('Works when run individually, not as part of full suite')
         layer = self.generic_import('boxes_with_date.shp', configuration_options=[{'index': 0,
                                                                                    'convert_to_date': ['date'],
                                                                                    'start_date': 'date',
