@@ -103,7 +103,8 @@ class UploaderTests(MapStoryTestMixin):
         self.username, self.password = self.create_user('admin', 'admin', is_superuser=True)
         self.non_admin_username, self.non_admin_password = self.create_user('non_admin', 'non_admin')
         self.cat = Catalog(ogc_server_settings.internal_rest, *ogc_server_settings.credentials)
-        self.cat.create_workspace('geonode', 'http://geonode.org')
+        if self.cat.get_workspace('geonode') == None:
+            self.cat.create_workspace('geonode', 'http://geonode.org')
         self.workspace = 'geonode'
         self.datastore = self.create_datastore(self.postgis, self.cat)
 
