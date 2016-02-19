@@ -10,6 +10,7 @@ from cStringIO import StringIO
 from django.template import Context, Template
 from geoserver.support import DimensionInfo
 from dateutil.parser import parse
+from datetime import datetime
 from django.conf import settings
 from django.utils.module_loading import import_by_path
 
@@ -46,6 +47,24 @@ BASE_VRT = '''
         <GeometryField encoding="{{enc}}" {{encopt|safe}} />
     </OGRVRTLayer>
 </OGRVRTDataSource>'''
+
+def timeparse(timestr):
+    DEFAULT=datetime(1,1,1)
+    bc=False
+    if re.search('bce?',timestr,flags=re.I):
+        bc = True
+        timestr=re.sub('bce?','',timestr,flags=re.I)
+    if re.search('-',timestr,flags=re.I):
+        bc = True
+        timestr = re.sub('-','',timestr,flags=re.I)
+    if re.search('ad',timestr,flags=re.I):
+        timestr=re.sub('ad','',timestr,flags=re.I)
+    dt=parse(timestr,default=DEFAULT)
+    if bc:
+        year = -dt.year
+    else:
+        year = dt.year
+    return year,dt.month,dt.day,dt.hour,dt.minute,dt.second,dt.microsecond
 
 
 def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,

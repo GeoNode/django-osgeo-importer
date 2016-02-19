@@ -63,7 +63,7 @@ class FieldConverterHandler(ImportHandler):
             if not field_to_convert:
                 continue
 
-            new_field = self.convert_field_to_time(layer, field_to_convert)
+            new_field, new_field_yr = self.convert_field_to_time(layer, field_to_convert)
 
             # if the start_date or end_date needed to be converted to a date
             # field, use the newly created field name

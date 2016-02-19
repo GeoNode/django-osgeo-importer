@@ -4,7 +4,8 @@ import gdal
 import ogr
 from django.conf import settings
 
-from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, parse
+from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse
+
 
 
 class InspectorMixin(object):
@@ -291,18 +292,23 @@ class OGRFieldConverter(OGRInspector):
     def convert_field(self, layer_name, field):
         field_as_string = str(field)
         fieldname = '{0}_as_date'.format(field)
+        fieldname_yr = '{0}_as_year'.format(field)
         target_layer = self.data.GetLayerByName(layer_name)
         target_defn = target_layer.GetLayerDefn()
         while target_defn.GetFieldIndex(fieldname) >= 0:
             fieldname = increment(fieldname)
+        while target_layer.GetLayerDefn().GetFieldIndex(fieldname_yr) >= 0:
+            fieldname_yr = increment(fieldname_yr)
 
         original_field_index = target_defn.GetFieldIndex(field_as_string)
-        target_layer.CreateField(ogr.FieldDefn(fieldname, ogr.OFTDateTime))
 
-        field_index = target_defn.GetFieldIndex(fieldname)
+        target_layer.CreateField(ogr.FieldDefn(fieldname, ogr.OFTDateTime))
+        field_index = target_layer.GetLayerDefn().GetFieldIndex(fieldname)
+
+        target_layer.CreateField(ogr.FieldDefn(fieldname_yr, ogr.OFTInteger))
+        field_yr_index = target_layer.GetLayerDefn().GetFieldIndex(fieldname_yr)
 
         field_defn = ogr.FieldDefn(field_as_string, ogr.OFTDateTime)
-
         for feat in target_layer:
 
             if not feat:
@@ -311,15 +317,17 @@ class OGRFieldConverter(OGRInspector):
             string_field = feat[field_as_string]
 
             if string_field:
-                pars = parse(str(string_field))
+                year,month,day,hour,minute,second,microsecond = timeparse(str(string_field))
 
-                feat.SetField(field_index, pars.year, pars.month, pars.day, pars.hour, pars.minute, pars.second,
-                              pars.microsecond)
+                feat.SetField(field_index, abs(year), month, day, hour, minute, second,
+                              microsecond)
+                feat.SetField(field_yr_index, year)
 
                 target_layer.SetFeature(feat)
+
 
         target_layer.DeleteField(original_field_index)
         field_index = target_defn.GetFieldIndex(fieldname)
         target_layer.AlterFieldDefn(field_index,field_defn,ogr.ALTER_NAME_FLAG)
 
-        return field
+        return fieldname, fieldname_yr
