@@ -56,4 +56,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# test files
+importer-test-files/
 >>>>>>> 52e9549763b57c87e18a472a54b71402ff5d618a
