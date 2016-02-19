@@ -57,7 +57,6 @@ before_script:
   - psql -U postgres -c "create user osgeo with password 'osgeo';"
   - psql -U postgres -c "create database osgeo_importer_test owner osgeo;"
   - psql -U postgres -d osgeo_importer_test -c "create extension postgis"
-  - psql -U postgres -d osgeo_importer_test -c "SELECT PostGIS_full_version();"
   - python manage.py syncdb --noinput
   - python mange.py runserver > /dev/null 2>&1 &
   - java -Xmx512m -XX:MaxPermSize=256m -Dorg.eclipse.jetty.server.webapp.parentLoaderPriority=true -jar gs/jetty-runner-8.1.8.v20121106.jar --path /geoserver gs/geoserver.war > /dev/null 2>&1 &
