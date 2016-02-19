@@ -90,7 +90,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def setUp(self):
 
-        if not os.path.exists(os.path.join(os.path.split(__file__)[0], '..', 'importer-test-files')): 
+        if not os.path.exists(os.path.join(os.path.split(__file__)[0], '..', 'importer-test-files')):
             self.skipTest('Skipping test due to missing test data.')
 
         # These tests require geonode to be running on :80!
@@ -112,7 +112,7 @@ class UploaderTests(MapStoryTestMixin):
     def generic_import(self, file, configuration_options=[{'index': 0}]):
 
         f = file
-        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f) 
+        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
 
         res = self.import_file(filename, configuration_options=configuration_options)
 
@@ -156,6 +156,8 @@ class UploaderTests(MapStoryTestMixin):
 
         date_attr = filter(lambda attr: attr.attribute == 'date', layer.attributes)[0]
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
+
+        configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
         self.generic_time_check(layer, attribute=date_attr.attribute)
 
     def test_boxes_with_date_csv(self):
