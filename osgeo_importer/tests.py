@@ -321,7 +321,7 @@ class UploaderTests(MapStoryTestMixin):
         filename = 'US_Shootings.csv'
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         layer = self.generic_import(filename, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
-        self.assertEqual(layer.name, 'us_shootings')
+        self.assertEqual(layer.name, 'us_Shootings')
 
         date_field = 'date'
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_field)
@@ -329,7 +329,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_sitins(self):
         """
-        Tests the import of US_shootings.csv.
+        Tests the import of US_Shootings.csv.
         """
 
         filename = 'US_Civil_Rights_Sitins0.csv'
@@ -377,13 +377,13 @@ class UploaderTests(MapStoryTestMixin):
         """
         if osgeo.ogr.GetDriverByName('VRT') is None:
            self.skipTest('VRT Driver Not Available')
-        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_Shootings.csv')
 
         vrt = create_vrt(f)
         vrt.seek(0)
         output = vrt.read()
 
-        self.assertTrue('name="US_shootings"' in output)
+        self.assertTrue('name="US_Shootings"' in output)
         self.assertTrue('<SrcDataSource>{0}</SrcDataSource>'.format(f) in output)
         self.assertTrue('<GeometryField encoding="PointFromColumns" x="Longitude" y="Latitude" />'.format(f) in output)
         self.assertEqual(os.path.splitext(vrt.name)[1], '.vrt')
@@ -448,13 +448,13 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the describe fields functionality.
         """
-        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_Shootings.csv')
         fields = None
 
         with GDALInspector(f) as f:
             layers = f.describe_fields()
 
-        self.assertTrue(layers[0]['name'], 'us_shootings')
+        self.assertTrue(layers[0]['name'], 'us_Shootings')
         self.assertEqual([n['name'] for n in layers[0]['fields']], ['Date', 'Shooter', 'Killed',
                                                                     'Wounded', 'Location', 'City',
                                                                     'Longitude', 'Latitude'])
@@ -464,7 +464,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the describe fields functionality.
         """
-        files = ((os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_shootings.csv'), 'CSV'),
+        files = ((os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_Shootings.csv'), 'CSV'),
                  (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson'), 'GeoJSON'),
                  (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'mojstrovka.gpx'), 'GPX'),
                  (os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'us_states.kml'), 'KML'),
@@ -683,7 +683,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests the configure view with a dataset that needs to be converted to a date.
         """
-        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_Shootings.csv')
         c = AdminClient()
         c.login_as_non_admin()
 
@@ -739,7 +739,7 @@ class UploaderTests(MapStoryTestMixin):
         non_admin = User.objects.get(username=self.non_admin_username)
         from osgeo_importer.models import UploadFile
 
-        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_shootings.csv')
+        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_Shootings.csv')
 
         with open(f, 'rb') as f:
             uploaded_file = SimpleUploadedFile('test_data', f.read())
