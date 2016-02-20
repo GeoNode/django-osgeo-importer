@@ -64,7 +64,7 @@ before_script:
   - sleep 90
 
 script:
-  - python osgeo_importer/tests.py
+  - python osgeo_importer/tests.py -vvvv
 
 notifications:
   email:

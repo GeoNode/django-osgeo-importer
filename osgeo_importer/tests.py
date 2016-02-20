@@ -316,9 +316,9 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_us_shootings_csv(self):
         """
-        Tests the import of US_shootings.csv.
+        Tests the import of US_Shootings.csv.
         """
-        filename = 'US_shootings.csv'
+        filename = 'US_Shootings.csv'
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         layer = self.generic_import(filename, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
         self.assertEqual(layer.name, 'us_shootings')
