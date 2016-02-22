@@ -329,12 +329,9 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_sitins(self):
         """
-        Tests the import of US_Shootings.csv.
+        Tests the import of US_Civil_Rights_Sitins0.csv 
         """
-
-        filename = 'US_Civil_Rights_Sitins0.csv'
-        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
-        layer = self.generic_import(f, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
+        layer = self.generic_import("US_Civil_Rights_Sitins0.csv", configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
 
     def get_layer_names(self, in_file):
         """
