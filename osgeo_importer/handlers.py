@@ -10,6 +10,8 @@ from geoserver.catalog import FailedRequestError
 DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
                            'osgeo_importer.handlers.GeoserverPublishHandler',
                            'osgeo_importer.handlers.GeoServerTimeHandler',
+                           'osgeo_importer.handlers.GeoWebCacheHandler',
+                           'osgeo_importer.handlers.GeoServerBoundsHandler',
                            'osgeo_importer.handlers.GeoNodePublishHandler']
 
 IMPORT_HANDLERS = getattr(settings, 'IMPORT_HANDLERS', DEFAULT_IMPORT_HANDLERS)

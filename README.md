@@ -1,7 +1,18 @@
-[![Build Status](https://travis-ci.org/terranodo/django-osgeo-importer.svg?branch=master)](https://travis-ci.org/terranodo/django-osgeo-importer)
+[![Build Status](https://travis-ci.org/ProminentEdge/django-osgeo-importer.svg?branch=master)](https://travis-ci.org/ProminentEdge/django-osgeo-importer)
 
 # django-osgeo-uploader
 An extensible module for importing geospatial data into GeoNode-backed applications.
+
+
+## Running test cases. ##
+
+Requires [Vagrant](http://vagrantup.com).
+
+```shell
+vagrant up
+vagrant ssh
+python /vagrant/manage.py test osgeo_importer
+```
 
 ## Settings ##
 

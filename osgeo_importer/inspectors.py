@@ -139,8 +139,7 @@ class GDALInspector(InspectorMixin):
             filename, args, kwargs = getattr(self, prepare_method)(filename, *args, **kwargs)
 
         open_options = kwargs.get('open_options', [])
-        #self.data = gdal.OpenEx(filename, open_options=open_options)
-        self.data = ogr.Open(filename)
+        self.data = gdal.OpenEx(filename, open_options=open_options)
 
         if self.data is None:
             raise NoDataSourceFound
@@ -200,10 +199,7 @@ class GDALInspector(InspectorMixin):
         """
         Returns the data's file type (via the GDAL driver name)
         """
-        try:
-            return self.get_driver().ShortName
-        except AttributeError:
-            return
+        return self.get_driver().ShortName
 
 
 class OGRTruncatedConverter(OGRInspector):
@@ -253,8 +249,8 @@ class OGRTruncatedConverter(OGRInspector):
 
         for truncated_name in truncated_fields:
             trunc_field_index = truncated_fields[truncated_name]
-            name_alter = ogr.FieldDefn(truncated_name,ogr.OFTInteger)
-            source_layer.AlterFieldDefn(trunc_field_index,name_alter,ogr.ALTER_NAME_FLAG)
+            name_alter = ogr.FieldDefn(truncated_name, ogr.OFTInteger)
+            source_layer.AlterFieldDefn(trunc_field_index,name_alter, ogr.ALTER_NAME_FLAG)
 
         return converted_mapping
 
@@ -328,6 +324,6 @@ class OGRFieldConverter(OGRInspector):
 
         target_layer.DeleteField(original_field_index)
         field_index = target_defn.GetFieldIndex(fieldname)
-        target_layer.AlterFieldDefn(field_index,field_defn,ogr.ALTER_NAME_FLAG)
+        target_layer.AlterFieldDefn(field_index,field_defn, ogr.ALTER_NAME_FLAG)
 
         return fieldname, fieldname_yr

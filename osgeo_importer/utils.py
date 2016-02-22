@@ -1,17 +1,16 @@
-import os
 import ogr
 import gdal
+import os
 import re
 import sys
 import tempfile
 import logging
 from csv import DictReader
 from cStringIO import StringIO
+from datetime import datetime
+from dateutil.parser import parse
 from django.template import Context, Template
 from geoserver.support import DimensionInfo
-from dateutil.parser import parse
-from datetime import datetime
-from django.conf import settings
 from django.utils.module_loading import import_by_path
 
 logger = logging.getLogger(__name__)
