@@ -4,8 +4,8 @@
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
-AWS_ACCESS_KEY_ID="" # SET THIS
-AWS_SECRET_ACCESS_KEY= "" # SET THIS
+AWS_ACCESS_KEY_ID=ENV['AWS_ACCESS_KEY_ID']
+AWS_SECRET_ACCESS_KEY=ENV['AWS_SECRET_ACCESS_KEY']
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
