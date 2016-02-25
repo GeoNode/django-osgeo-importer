@@ -129,7 +129,6 @@ class GeoServerTimeHandler(ImportHandler):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-
         if not all([layer_config.get('configureTime', False), layer_config.get('start_date', None)]):
             return False
 
@@ -145,7 +144,6 @@ class GeoServerTimeHandler(ImportHandler):
         "start_date": Passed as the start time to Geoserver.
         "end_date" (optional): Passed as the end attribute to Geoserver.
         """
-
         lyr = gs_catalog.get_layer(layer)
         configure_time(lyr.resource, attribute=layer_config.get('start_date'),
                        end_attribute=layer_config.get('end_date'))
@@ -225,6 +223,7 @@ class GeoserverPublishHandler(ImportHandler):
             self.geogig_handler(store, layer, layer_config)
 
         return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config), self.srs)
+
 
 class GeoWebCacheHandler(ImportHandler):
     """

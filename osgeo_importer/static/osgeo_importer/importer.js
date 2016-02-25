@@ -363,7 +363,7 @@
           restrict: 'E',
           replace: true,
           templateUrl: function(elem,attrs) {
-           return attrs.templateUrl || '/static/importer/partials/upload.html'
+           return attrs.templateUrl || '/static/osgeo_importer/partials/upload.html'
           },
           scope: {
               upload: '=uploadObject',

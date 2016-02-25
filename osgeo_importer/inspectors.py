@@ -291,8 +291,10 @@ class OGRFieldConverter(OGRInspector):
         fieldname_yr = '{0}_as_year'.format(field)
         target_layer = self.data.GetLayerByName(layer_name)
         target_defn = target_layer.GetLayerDefn()
+
         while target_defn.GetFieldIndex(fieldname) >= 0:
             fieldname = increment(fieldname)
+
         while target_layer.GetLayerDefn().GetFieldIndex(fieldname_yr) >= 0:
             fieldname_yr = increment(fieldname_yr)
 
@@ -313,17 +315,15 @@ class OGRFieldConverter(OGRInspector):
             string_field = feat[field_as_string]
 
             if string_field:
-                year,month,day,hour,minute,second,microsecond = timeparse(str(string_field))
+                year, month, day, hour, minute, second, microsecond = timeparse(str(string_field))
 
-                feat.SetField(field_index, abs(year), month, day, hour, minute, second,
-                              microsecond)
+                feat.SetField(field_index, abs(year), month, day, hour, minute, second, microsecond)
                 feat.SetField(field_yr_index, year)
 
                 target_layer.SetFeature(feat)
 
-
         target_layer.DeleteField(original_field_index)
         field_index = target_defn.GetFieldIndex(fieldname)
-        target_layer.AlterFieldDefn(field_index,field_defn, ogr.ALTER_NAME_FLAG)
+        target_layer.AlterFieldDefn(field_index, field_defn, ogr.ALTER_NAME_FLAG)
 
-        return fieldname, fieldname_yr
+        return field_as_string, fieldname_yr
