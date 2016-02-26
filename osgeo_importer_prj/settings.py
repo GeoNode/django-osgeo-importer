@@ -33,6 +33,7 @@ LOCAL_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 WSGI_APPLICATION = "osgeo_importer_prj.wsgi.application"
 
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 # Load more settings from a file called local_settings.py if it exists
 try:
