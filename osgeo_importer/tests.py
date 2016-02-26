@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import os
 import json
 import unittest
@@ -803,6 +805,12 @@ class UploaderTests(MapStoryTestMixin):
         self.assertFalse('regexParameterFilter' in payload[1])
         self.assertEqual(int(payload[0]['status']), 200)
 
+    def test_non_utf8(self):
+        """
+        Tests non-utf8 characters in filename and attributes
+        """
+
+        layer = self.generic_import('v4_time_prov_pgn_utf.shp')
 
 if __name__ == '__main__':
     unittest.main()
