@@ -805,12 +805,18 @@ class UploaderTests(MapStoryTestMixin):
         self.assertFalse('regexParameterFilter' in payload[1])
         self.assertEqual(int(payload[0]['status']), 200)
 
-    def test_non_utf8(self):
+    def test_utf8(self):
         """
-        Tests non-utf8 characters in filename and attributes
+        Tests utf8 characters in attributes
         """
-
-        layer = self.generic_import('v4_time_prov_pgn_utf.shp')
+        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'china_provinces.shp')
+        layer = self.generic_import('china_provinces.shp')
+        gi = GDALImport(filename)
+        ds = gi.open_target_datastore(gi.target_store) 
+        sql = str("select NAME_CH from %s where NAME_PY = 'An Zhou'" % (layer.name))
+        res = ds.ExecuteSQL(sql)
+        feat = res.GetFeature(0)
+        self.assertEqual(feat.GetField('name_ch'), "安州")
 
 if __name__ == '__main__':
     unittest.main()
