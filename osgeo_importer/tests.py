@@ -12,7 +12,8 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.gis.gdal import DataSource
 from osgeo_importer.importers import GDALImport
-from osgeo_importer.utils import create_vrt, configure_time, ensure_defaults
+from osgeo_importer.utils import create_vrt, ensure_defaults
+from osgeo_importer.handlers.geoserver import configure_time
 from osgeo_importer.inspectors import GDALInspector, OGRFieldConverter
 from geoserver.catalog import Catalog, FailedRequestError
 from geonode.layers.models import Layer
@@ -21,7 +22,7 @@ from geonode.geoserver.helpers import gs_slurp
 from osgeo_importer.models import UploadLayer
 from osgeo_importer.models import validate_file_extension, IMPORTER_VALID_EXTENSIONS, ValidationError, validate_inspector_can_read
 from osgeo_importer.models import UploadedData
-from osgeo_importer.handlers import GeoWebCacheHandler
+from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 
 setup_test_environment()
 

@@ -77,3 +77,5 @@ DATABASES = {
         'PORT' : '5432',
      }
 }
+
+OSGEO_IMPORTER_GEONODE_ENABLED = True

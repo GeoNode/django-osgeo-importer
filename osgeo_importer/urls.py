@@ -1,9 +1,12 @@
 from django.conf.urls import patterns, url, include
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from .views import FileAddView, UploadListView
 from tastypie.api import Api
 from .api import UploadedDataResource, UploadedLayerResource, UploadedFileResource
 
+if getattr(settings, 'OSGEO_IMPORTER_GEONODE_ENABLED', False):
+    from .geonode_apis import UploadedDataResource, UploadedLayerResource, UploadedFileResource
 
 importer_api = Api(api_name='importer-api')
 importer_api.register(UploadedDataResource())

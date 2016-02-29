@@ -10,7 +10,6 @@ from cStringIO import StringIO
 from datetime import datetime
 from dateutil.parser import parse
 from django.template import Context, Template
-from geoserver.support import DimensionInfo
 from django.utils.module_loading import import_by_path
 
 logger = logging.getLogger(__name__)
@@ -65,15 +64,6 @@ def timeparse(timestr):
         year = dt.year
     return year,dt.month,dt.day,dt.hour,dt.minute,dt.second,dt.microsecond
 
-
-def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
-                   unitSymbol=None, **kwargs):
-    """
-    Configures time on a geoserver resource.
-    """
-    time_info = DimensionInfo(name, enabled, presentation, resolution, units, unitSymbol, **kwargs)
-    resource.metadata = {'time': time_info}
-    return resource.catalog.save(resource)
 
 
 def ensure_defaults(layer):

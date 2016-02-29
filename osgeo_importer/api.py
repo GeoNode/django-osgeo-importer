@@ -1,6 +1,6 @@
-import os
 import json
 from tastypie.fields import IntegerField, DictField, ListField, CharField, ToManyField, ForeignKey
+from django.contrib.auth import get_user_model
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource
 from .models import UploadedData, UploadLayer, UploadFile
@@ -12,9 +12,14 @@ from django.conf.urls import url
 from tastypie.bundle import Bundle
 from .tasks import import_object
 from tastypie.exceptions import ImmediateHttpResponse
-from geonode.api.api import ProfileResource
 from django.utils.text import slugify
-from geonode.geoserver.helpers import ogc_server_settings
+
+
+class UserResource(ModelResource):
+
+    class Meta:
+        queryset = get_user_model().objects.all()
+        fields = ['username', 'first_name', 'last_name']
 
 
 class UploadedLayerResource(ModelResource):
@@ -40,6 +45,9 @@ class UploadedLayerResource(ModelResource):
         """
         return super(UploadedLayerResource, self).get_object_list(request).filter(upload__user=request.user.id)
 
+    def clean_configuration_options(self, request, configuration_options):
+        return configuration_options
+
     def import_layer(self, request, **kwargs):
         """
         Imports a layer
@@ -63,15 +71,7 @@ class UploadedLayerResource(ModelResource):
             configuration_options = configuration_options[0]
 
         if isinstance(configuration_options, dict):
-            if configuration_options.get('geoserver_store'):
-                store = configuration_options.get('geoserver_store')
-                if store.get('type', str).lower() == 'geogig':
-                    store.setdefault('branch', 'master')
-                    store.setdefault('create', 'true')
-                    store.setdefault('name', '{0}-storylayers'.format(request.user.username))
-                    store['geogig_repository'] = os.path.join(ogc_server_settings.GEOGIG_DATASTORE_DIR,
-                                                              store.get('name'))
-
+            self.clean_configuration_options(request, configuration_options)
             obj.configuration_options = configuration_options
             obj.save()
 
@@ -117,7 +117,7 @@ class UploadedDataResource(ModelResource):
     API for accessing UploadedData.
     """
 
-    user = ForeignKey(ProfileResource, 'user')
+    user = ForeignKey(UserResource, 'user')
     file_size = CharField(attribute='filesize', readonly=True)
     layers = ToManyField(UploadedLayerResource, 'uploadlayer_set', full=True)
     file_url = CharField(attribute='file_url', readonly=True, null=True)

@@ -70,8 +70,9 @@ class GDALImport(Import):
     source_inspectors = [GDALInspector]
     target_inspectors = [OGRInspector]
 
-    def __init__(self, filename, target_store=None):
+    def __init__(self, filename, target_store=None, upload_file=None):
         self.file = filename
+        self.upload_file = upload_file
         self.completed_layers = []
 
         if target_store is None:

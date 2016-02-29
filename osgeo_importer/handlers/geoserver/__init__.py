@@ -1,123 +1,22 @@
 import requests
-from .utils import configure_time
-from .inspectors import OGRFieldConverter
 from decimal import Decimal, InvalidOperation
-from django import db
-from django.conf import settings
-from geonode.geoserver.helpers import gs_slurp, gs_catalog
+from osgeo_importer.handlers import ImportHandler
 from geoserver.catalog import FailedRequestError
+from osgeo_importer.handlers import ensure_can_run
 from geonode.upload.utils import create_geoserver_db_featurestore
+from django import db
+from geonode.geoserver.helpers import gs_catalog
+from geoserver.support import DimensionInfo
 
 
-
-DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
-                           'osgeo_importer.handlers.GeoserverPublishHandler',
-                           'osgeo_importer.handlers.GeoServerTimeHandler',
-                           'osgeo_importer.handlers.GeoWebCacheHandler',
-                           'osgeo_importer.handlers.GeoServerBoundsHandler',
-                           'osgeo_importer.handlers.GeoNodePublishHandler']
-
-IMPORT_HANDLERS = getattr(settings, 'IMPORT_HANDLERS', DEFAULT_IMPORT_HANDLERS)
-
-def ensure_can_run(func):
+def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
+                   unitSymbol=None, **kwargs):
     """
-    Convenience decorator that executes the "can_run" method class and returns the function if the can_run is True.
+    Configures time on a geoserver resource.
     """
-
-    def func_wrapper(self, *args, **kwargs):
-
-        if self.can_run(*args, **kwargs):
-            return func(self, *args, **kwargs)
-
-    return func_wrapper
-
-
-class ImportHandler(object):
-
-    def __init__(self, importer, *args, **kwargs):
-        self.importer = importer
-
-    @ensure_can_run
-    def handle(self, layer, layerconfig, *args, **kwargs):
-        raise NotImplementedError('Subclass should implement this.')
-
-    def can_run(self, layer, layer_config, *args, **kwargs):
-        """
-        Returns true if the configuration has enough information to run the handler.
-        """
-        return True
-
-
-class FieldConverterHandler(ImportHandler):
-    """
-    Converts fields based on the layer_configuration.
-    """
-
-    def convert_field_to_time(self, layer, field):
-        d = db.connections['datastore'].settings_dict
-        connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s'" % (d['NAME'], d['USER'],
-                                                                        d['PASSWORD'], d['HOST'], d['PORT'])
-
-        with OGRFieldConverter(connection_string) as datasource:
-            return datasource.convert_field(layer, field)
-
-    @ensure_can_run
-    def handle(self, layer, layer_config, *args, **kwargs):
-        for field_to_convert in set(layer_config.get('convert_to_date', [])):
-
-            if not field_to_convert:
-                continue
-
-            new_field, new_field_yr = self.convert_field_to_time(layer, field_to_convert)
-
-            # if the start_date or end_date needed to be converted to a date
-            # field, use the newly created field name
-            for date_option in ('start_date', 'end_date'):
-                if layer_config.get(date_option) == field_to_convert:
-                    layer_config[date_option] = new_field.lower()
-
-
-class GeoNodePublishHandler(ImportHandler):
-    """
-    Creates a GeoNode Layer from a layer in Geoserver.
-    """
-
-    workspace = 'geonode'
-
-    @property
-    def store_name(self):
-        geoserver_publishers = self.importer.filter_handler_results('GeoserverPublishHandler')
-
-        for result in geoserver_publishers:
-            for key, feature_type in result.items():
-                if feature_type and hasattr(feature_type, 'store'):
-                    return feature_type.store.name
-
-        return db.connections['datastore'].settings_dict['NAME']
-
-
-
-    def can_run(self, layer, layer_config, *args, **kwargs):
-        """
-        Skips this layer if the user is appending data to another dataset.
-        """
-        return 'appendTo' not in layer_config
-
-    @ensure_can_run
-    def handle(self, layer, layer_config, *args, **kwargs):
-        """
-        Adds a layer in GeoNode, after it has been added to Geoserver.
-
-        Handler specific params:
-        "layer_owner": Sets the owner of the layer.
-        """
-
-        return gs_slurp(workspace=self.workspace,
-                        store=self.store_name,
-                        filter=layer,
-                        owner=layer_config.get('layer_owner'),
-                        permissions=layer_config.get('permissions')
-                        )
+    time_info = DimensionInfo(name, enabled, presentation, resolution, units, unitSymbol, **kwargs)
+    resource.metadata = {'time': time_info}
+    return resource.catalog.save(resource)
 
 
 class GeoServerTimeHandler(ImportHandler):

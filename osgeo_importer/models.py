@@ -29,7 +29,14 @@ from django.db import models
 from djcelery.models import TaskState
 from jsonfield import JSONField
 
-from geonode.layers.models import Layer
+
+from django.contrib.contenttypes.models import ContentType
+
+try:
+    from django.contrib.contenttypes.fields import GenericForeignKey
+except ImportError:
+    from django.contrib.contenttypes.generic import GenericForeignKey
+
 from .inspectors import GDALInspector
 from .utils import NoDataSourceFound
 from .utils import sizeof_fmt
@@ -141,7 +148,9 @@ class UploadLayer(models.Model):
     index = models.IntegerField(default=0)
     name = models.CharField(max_length=64, null=True)
     fields = JSONField(null=True)
-    layer = models.ForeignKey(Layer, blank=True, null=True, verbose_name='The linked GeoNode layer.')
+    content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    object_id = models.PositiveIntegerField(blank=True, null=True)
+    layer = GenericForeignKey('content_type', 'object_id')
     configuration_options = JSONField(null=True)
     task_id = models.CharField(max_length=36, blank=True, null=True)
     feature_count = models.IntegerField(null=True, blank=True)
@@ -149,7 +158,7 @@ class UploadLayer(models.Model):
     @property
     def layer_data(self):
         """
-        Serialized information about the GeoNode layer.
+        Serialized information about the layer.
         """
         if not self.layer:
             return
