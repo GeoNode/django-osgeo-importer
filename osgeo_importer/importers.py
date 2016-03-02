@@ -232,7 +232,10 @@ class GDALImport(Import):
                         # e is a very generic "OGR Error: General Error"
                         # use the GdalError handler to see the actual error
                         if err.err_level >= gdal.CE_Warning:
-                            print err.err_msg
+                            if "UnicodeDecodeError" in err.err_msg:
+                                pass # Just ignore these and dont insert the feature for now 
+                            else:
+                                raise RuntimeError(err.err_level, err.err_no, err.err_msg)
                     finally:
                         gdal.PopErrorHandler()
 
