@@ -226,7 +226,15 @@ class GDALImport(Import):
 
                         geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
                         feature.SetGeometry(conversion_function(geom))
-                    target_layer.CreateFeature(feature)
+                    try:
+                        target_layer.CreateFeature(feature)
+                    except Exception as e:
+                        # e is a very generic "OGR Error: General Error"
+                        # use the GdalError handler to see the actual error
+                        if err.err_level >= gdal.CE_Warning:
+                            print err.err_msg
+                    finally:
+                        gdal.PopErrorHandler()
 
             self.completed_layers.append([target_layer.GetName(), layer_options])
 
