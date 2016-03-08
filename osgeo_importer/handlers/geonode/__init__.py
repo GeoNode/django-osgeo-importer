@@ -3,6 +3,11 @@ from osgeo_importer.models import UploadLayer
 from osgeo_importer.handlers import ImportHandler
 from osgeo_importer.handlers import ensure_can_run
 from geonode.geoserver.helpers import gs_slurp
+from django.contrib.auth import get_user_model
+from django import db
+
+User = get_user_model()
+
 
 class GeoNodePublishHandler(ImportHandler):
     """
@@ -27,7 +32,7 @@ class GeoNodePublishHandler(ImportHandler):
         Skips this layer if the user is appending data to another dataset.
         """
         return 'appendTo' not in layer_config
-
+    
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         """
@@ -37,10 +42,14 @@ class GeoNodePublishHandler(ImportHandler):
         "layer_owner": Sets the owner of the layer.
         """
 
+        owner = layer_config.get('layer_owner')
+        if isinstance(owner, str) or isinstance(owner, unicode):
+            owner = User.objects.filter(username=owner).first()
+
         results = gs_slurp(workspace=self.workspace,
                            store=self.store_name,
                            filter=layer,
-                           owner=layer_config.get('layer_owner'),
+                           owner=owner,
                            permissions=layer_config.get('permissions'))
 
         if self.importer.upload_file and results['layers'][0]['status'] == 'created':

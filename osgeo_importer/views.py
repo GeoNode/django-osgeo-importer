@@ -4,8 +4,12 @@ from django.views.generic import FormView, ListView, TemplateView
 from django.core.urlresolvers import reverse_lazy
 from .forms import UploadFileForm
 from .models import UploadedData, UploadLayer, DEFAULT_LAYER_CONFIGURATION
-from .inspectors import GDALInspector
+from .importers import OSGEO_IMPORTER
+from .inspectors import OSGEO_INSPECTOR
+from .utils import import_by_path
 
+OSGEO_INSPECTOR = import_by_path(OSGEO_INSPECTOR)
+OSGEO_IMPORTER = import_by_path(OSGEO_IMPORTER)
 
 class JSONResponseMixin(object):
     """
@@ -48,13 +52,12 @@ class ImportHelper(object):
     Import Helpers
     """
 
-    inspector = GDALInspector
+    inspector = OSGEO_INSPECTOR
 
     def get_fields(self, path):
         """
         Returns a list of field names and types.
         """
-
         with self.inspector(path) as opened_file:
             return opened_file.describe_fields()
 
@@ -68,14 +71,6 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
     success_url = reverse_lazy('uploads-list')
     template_name = 'osgeo_importer/new.html'
     json = False
-
-    @property
-    def is_json(self):
-        """
-        Returns True when f=json is passed as a GET parameter.
-        """
-
-        return self.json
 
     def create_upload_session(self, upload_file):
         """
@@ -103,6 +98,7 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         return upload
 
     def form_valid(self, form):
+
         form.save(commit=True)
         upload = self.create_upload_session(form.instance)
 

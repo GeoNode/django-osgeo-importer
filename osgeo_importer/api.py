@@ -45,7 +45,7 @@ class UploadedLayerResource(ModelResource):
         """
         return super(UploadedLayerResource, self).get_object_list(request).filter(upload__user=request.user.id)
 
-    def clean_configuration_options(self, request, configuration_options):
+    def clean_configuration_options(self, request, obj, configuration_options):
         return configuration_options
 
     def import_layer(self, request, **kwargs):
@@ -71,12 +71,9 @@ class UploadedLayerResource(ModelResource):
             configuration_options = configuration_options[0]
 
         if isinstance(configuration_options, dict):
-            self.clean_configuration_options(request, configuration_options)
+            self.clean_configuration_options(request, obj, configuration_options)
             obj.configuration_options = configuration_options
             obj.save()
-
-            if not configuration_options.get('layer_owner'):
-                configuration_options['layer_owner'] = obj.upload.user
 
         if not configuration_options:
             raise ImmediateHttpResponse(response=http.HttpBadRequest('Configuration options missing.'))

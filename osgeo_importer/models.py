@@ -38,22 +38,22 @@ except ImportError:
     from django.contrib.contenttypes.generic import GenericForeignKey
 
 from .inspectors import GDALInspector
+from .importers import OSGEO_IMPORTER
 from .utils import NoDataSourceFound
-from .utils import sizeof_fmt
+from .utils import sizeof_fmt, load_handler
 
 DEFAULT_LAYER_CONFIGURATION = {'configureTime': True,
                                'editable': True,
                                'convert_to_date': []}
-
-IMPORTER_VALID_EXTENSIONS = getattr(settings, 'IMPORTER_VALID_EXTENSIONS',
-                                    ['gpx', 'geojson', 'zip', 'tar', 'kml', 'csv'])
 
 
 def validate_file_extension(value):
     """
     Validates file extensions.
     """
-    for extension in IMPORTER_VALID_EXTENSIONS:
+
+    importer = load_handler(OSGEO_IMPORTER, value)
+    for extension in importer.valid_extensions:
         if value.name.lower().endswith(extension):
             return
     raise ValidationError(u'Invalid File Type')
@@ -72,12 +72,11 @@ def validate_inspector_can_read(value):
             f.write(chunk)
 
     try:
-        data = GDALInspector(filename)
-        data.open()
-
+        importer = load_handler(OSGEO_IMPORTER, filename)
+        data, inspector = importer.open_source_datastore(filename)
         # Ensure the data has a geometry.
-        for description in data.describe_fields():
-            if description.get('geom_type') in data.INVALID_GEOMETRY_TYPES:
+        for description in inspector.describe_fields():
+            if description.get('geom_type') in inspector.INVALID_GEOMETRY_TYPES:
                 raise ValidationError('Unable to find geometry or the geometry type is unsupported.')
 
     except NoDataSourceFound:

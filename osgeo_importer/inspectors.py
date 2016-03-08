@@ -3,16 +3,18 @@ import os
 import gdal
 import ogr
 from django.conf import settings
-
+from .utils import import_by_path
 from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse
 
+
+OSGEO_INSPECTOR = getattr(settings, 'OSGEO_INSPECTOR', 'osgeo_importer.inspectors.GDALInspector')
 
 
 class InspectorMixin(object):
     """
     Inspectors open data sources and return information about them.
     """
-
+    INVALID_GEOMETRY_TYPES = []
     opener = None
 
     def __init__(self, *args, **kwargs):
@@ -35,8 +37,14 @@ class InspectorMixin(object):
     def describe_fields(self):
         raise NotImplementedError
 
-    def file_type(self):
-        raise NotImplementedError
+    def get_filetype(self, filename):
+        """
+        Gets the filetype.
+        """
+        try:
+            return os.path.splitext(filename)[1]
+        except IndexError:
+            return
 
 
 class OGRInspector(InspectorMixin):
@@ -73,15 +81,6 @@ class GDALInspector(InspectorMixin):
 
     def close(self, *args, **kwargs):
         self.data = None
-
-    def get_filetype(self, filename):
-        """
-        Gets the filetype.
-        """
-        try:
-            return os.path.splitext(filename)[1]
-        except IndexError:
-            return
 
     @property
     def method_safe_filetype(self):
@@ -139,7 +138,11 @@ class GDALInspector(InspectorMixin):
             filename, args, kwargs = getattr(self, prepare_method)(filename, *args, **kwargs)
 
         open_options = kwargs.get('open_options', [])
-        self.data = gdal.OpenEx(filename, open_options=open_options)
+
+        try:
+            self.data = gdal.OpenEx(filename, open_options=open_options)
+        except RuntimeError:
+            raise NoDataSourceFound
 
         if self.data is None:
             raise NoDataSourceFound

@@ -4,6 +4,12 @@
 An extensible module for importing geospatial data into GeoNode-backed applications.
 
 
+## Installation ##
+
+`pip install git+https://github.com/ProminentEdge/django-osgeo-importer.git`
+
+
+
 ## Running test cases. ##
 
 Requires [Vagrant](http://vagrantup.com).

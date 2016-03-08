@@ -20,9 +20,11 @@ from geonode.layers.models import Layer
 from geonode.geoserver.helpers import ogc_server_settings
 from geonode.geoserver.helpers import gs_slurp
 from osgeo_importer.models import UploadLayer
-from osgeo_importer.models import validate_file_extension, IMPORTER_VALID_EXTENSIONS, ValidationError, validate_inspector_can_read
+from osgeo_importer.models import validate_file_extension, ValidationError, validate_inspector_can_read
 from osgeo_importer.models import UploadedData
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
+from osgeo_importer.importers import OSGEO_IMPORTER
+from .utils import load_handler
 
 setup_test_environment()
 
@@ -208,6 +210,8 @@ class UploaderTests(MapStoryTestMixin):
         self.assertEqual(layers1[0][0], 'test')
         self.assertEqual(layers2[0][0], 'test0')
 
+
+
     def test_boxes_with_date_iso_date_zip(self):
         """
         Tests the import of test_boxes_with_iso_date.
@@ -323,7 +327,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_sitins(self):
         """
-        Tests the import of US_Civil_Rights_Sitins0.csv 
+        Tests the import of US_Civil_Rights_Sitins0.csv
         """
         if osgeo.gdal.__version__ < '2.0.0':
             self.skipTest('GDAL Version does not support open options')
@@ -413,7 +417,6 @@ class UploaderTests(MapStoryTestMixin):
 
         uploaded_file = upload.uploadfile_set.first()
         self.assertTrue(os.path.exists(uploaded_file.file.path))
-
 
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'empty_file.geojson')
 
@@ -668,7 +671,6 @@ class UploaderTests(MapStoryTestMixin):
 
         self.assertEqual(UploadedData.objects.all().count(), 0)
 
-
     def naming_an_import(self):
         """
         Tests providing a name in the configuration options.
@@ -737,7 +739,7 @@ class UploaderTests(MapStoryTestMixin):
         Test the file extension validator.
         """
 
-        for extension in IMPORTER_VALID_EXTENSIONS:
+        for extension in load_handler(OSGEO_IMPORTER, 'test.txt').valid_extensions:
             self.assertIsNone(validate_file_extension(SimpleUploadedFile('test.{0}'.format(extension), '')))
 
         with self.assertRaises(ValidationError):
@@ -761,13 +763,6 @@ class UploaderTests(MapStoryTestMixin):
         """
         self.generic_import('Walmart.zip', configuration_options=[{'index': 0, 'convert_to_date': []}])
 
-    def test_outside_bounds_regression(self):
-        """
-        Regression where layers with features outside projection bounds fail.
-        """
-        self.generic_import('Spring_2015.zip', configuration_options=[{'index': 0 }])
-        resource = self.cat.get_layer('spring_2015').resource
-        self.assertEqual(resource.latlon_bbox, ('-180.0', '180.0', '-90.0', '90.0', 'EPSG:4326'))
 
     def test_multipolygon_shapefile(self):
         """
@@ -813,11 +808,13 @@ class UploaderTests(MapStoryTestMixin):
         filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'china_provinces.shp')
         layer = self.generic_import('china_provinces.shp')
         gi = GDALImport(filename)
-        ds = gi.open_target_datastore(gi.target_store) 
+        ds, insp = gi.open_target_datastore(gi.target_store)
         sql = str("select NAME_CH from %s where NAME_PY = 'An Zhou'" % (layer.name))
         res = ds.ExecuteSQL(sql)
         feat = res.GetFeature(0)
         self.assertEqual(feat.GetField('name_ch'), "安州")
+
+
 
 if __name__ == '__main__':
     unittest.main()

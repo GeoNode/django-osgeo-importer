@@ -14,7 +14,8 @@ class UploadedDataResource(UploadedDataResource):
 
 
 class UploadedLayerResource(UploadedLayerResource):
-    def clean_configuration_options(self, request, configuration_options):
+    def clean_configuration_options(self, request, obj, configuration_options):
+
         if configuration_options.get('geoserver_store'):
             store = configuration_options.get('geoserver_store')
             if store.get('type', str).lower() == 'geogig':
@@ -23,3 +24,8 @@ class UploadedLayerResource(UploadedLayerResource):
                 store.setdefault('name', '{0}-storylayers'.format(request.user.username))
                 store['geogig_repository'] = os.path.join(ogc_server_settings.GEOGIG_DATASTORE_DIR,
                                                           store.get('name'))
+
+        if not configuration_options.get('layer_owner'):
+            configuration_options['layer_owner'] = obj.upload.user.username
+
+        return configuration_options

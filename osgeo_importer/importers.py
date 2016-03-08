@@ -5,22 +5,29 @@ import gdal
 from .inspectors import GDALInspector, OGRInspector
 from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, increment
 from .handlers import IMPORT_HANDLERS
+from django.conf import settings
 from django import db
 
 ogr.UseExceptions()
 
 
+OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.GDALImport')
+
+
 class Import(object):
     _import_handlers = []
     handler_results = []
-    file_extensions = ['shp', 'zip']
+    enabled_handlers = IMPORT_HANDLERS
+    source_inspectors = []
+    target_inspectors = []
+    valid_extensions = ['gpx', 'geojson', 'json', 'zip', 'tar', 'kml', 'csv', 'shp']
 
     def filter_handler_results(self, handler_name):
         return filter(lambda results: handler_name in results.keys(), self.handler_results)
 
     def _initialize_handlers(self):
         self._import_handlers = [load_handler(handler, self)
-                                 for handler in IMPORT_HANDLERS]
+                                 for handler in self.enabled_handlers]
 
     @property
     def import_handlers(self):
@@ -64,6 +71,24 @@ class Import(object):
 
         return self.handler_results
 
+    def open_datastore(self, connection_string, inspectors, *args, **kwargs):
+        """
+        Opens the source source data set using GDAL.
+        """
+
+        for inspector in inspectors:
+            insp = inspector(connection_string, *args, **kwargs)
+            data = insp.open()
+            if data is not None:
+                return data, insp
+
+    def open_source_datastore(self, connection_string, *args, **kwargs):
+        """
+        Opens the source source data set using GDAL.
+        """
+        return self.open_datastore(connection_string, self.source_inspectors, *args, **kwargs)
+
+
 
 class GDALImport(Import):
 
@@ -81,23 +106,6 @@ class GDALImport(Import):
                                                                                                 d['PASSWORD'],
                                                                                                 d['HOST'], d['PORT'])
             self.target_store = connection_string
-
-    def open_datastore(self, connection_string, inspectors, *args, **kwargs):
-        """
-        Opens the source source data set using GDAL.
-        """
-
-        for inspector in inspectors:
-            data = inspector(connection_string, *args, **kwargs).open()
-            if data is not None:
-                return data
-
-    def open_source_datastore(self, connection_string, *args, **kwargs):
-        """
-        Opens the source source data set using GDAL.
-        """
-
-        return self.open_datastore(connection_string, self.source_inspectors, *args, **kwargs)
 
     def open_target_datastore(self, connection_string, *args, **kwargs):
         """
@@ -150,6 +158,7 @@ class GDALImport(Import):
         self.completed_layers = []
         err = GdalErrorHandler()
         gdal.PushErrorHandler(err.handler)
+        gdal.UseExceptions()
         configuration_options = kwargs.get('configuration_options', [{'index': 0}])
 
         # Configuration options should be a list at this point since the importer can process multiple layers in a
@@ -157,9 +166,8 @@ class GDALImport(Import):
         if isinstance(configuration_options, dict):
             configuration_options = [configuration_options]
 
-        data = self.open_source_datastore(filename, *args, **kwargs)
-        target_file = self.open_target_datastore(self.target_store)
-
+        data, _ = self.open_source_datastore(filename, *args, **kwargs)
+        target_file, _ = self.open_target_datastore(self.target_store)
         target_create_options = []
 
         # Prevent numeric field overflow for shapefiles https://trac.osgeo.org/gdal/ticket/5241
@@ -227,18 +235,8 @@ class GDALImport(Import):
 
                         geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
                         feature.SetGeometry(conversion_function(geom))
-                    try:
-                        target_layer.CreateFeature(feature)
-                    except Exception as e:
-                        # e is a very generic "OGR Error: General Error"
-                        # use the GdalError handler to see the actual error
-                        if err.err_level >= gdal.CE_Warning:
-                            if "UnicodeDecodeError" in err.err_msg:
-                                pass # Just ignore these and dont insert the feature for now 
-                            else:
-                                raise RuntimeError(err.err_level, err.err_no, err.err_msg)
-                    finally:
-                        gdal.PopErrorHandler()
+
+                    target_layer.CreateFeature(feature)
 
             self.completed_layers.append([target_layer.GetName(), layer_options])
 

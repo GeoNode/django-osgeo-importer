@@ -242,7 +242,6 @@ class GeoServerBoundsHandler(ImportHandler):
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         resource = self.layer.resource
-
         try:
             for dec in map(Decimal, resource.latlon_bbox[:4]):
                 dec.quantize(1)

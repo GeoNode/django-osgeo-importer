@@ -176,7 +176,7 @@
             animation: $scope.animationsEnabled,
             templateUrl: templateUrl || 'importWizard.html',
             controller: 'WizardController',
-          //size: size,
+            windowClass: 'wizard-modal-window',
             resolve: {
                 layer: function () {
                     return layer;
