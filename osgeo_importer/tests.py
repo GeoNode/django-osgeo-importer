@@ -243,7 +243,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_point_with_date(self):
         """
-        Tests the import of test_boxes_with_dates_bc.
+        Tests the import of point_with_date.geojson 
         """
 
         layer = self.generic_import('point_with_date.geojson', configuration_options=[{'index': 0,
