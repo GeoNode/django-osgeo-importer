@@ -10,8 +10,9 @@ if [ -n "$1" ]
  pushd $1
 fi
 
+echo $DJANGO_SETTINGS_MODULE
 python manage.py syncdb --noinput
-python mange.py runserver > /dev/null 2>&1 &
+python manage.py runserver > /dev/null 2>&1 &
 
 if [ -n "$1" ]
  then

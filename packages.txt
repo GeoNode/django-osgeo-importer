@@ -1,0 +1,16 @@
+openjdk-7-jdk
+postgresql-9.3-postgis-2.1
+libpq-dev
+python-dev
+python-lxml
+libxslt1-dev
+python-virtualenv
+python-imaging
+python-pyproj
+python-shapely
+python-nose
+python-httplib2
+python-httplib2
+gettext git
+python-pip
+build-essential
