@@ -11,7 +11,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.gis.gdal import DataSource
-from osgeo_importer.importers import GDALImport
 from osgeo_importer.utils import create_vrt, ensure_defaults
 from osgeo_importer.handlers.geoserver import configure_time
 from osgeo_importer.inspectors import GDALInspector, OGRFieldConverter
@@ -23,7 +22,7 @@ from osgeo_importer.models import UploadLayer
 from osgeo_importer.models import validate_file_extension, ValidationError, validate_inspector_can_read
 from osgeo_importer.models import UploadedData
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
-from osgeo_importer.importers import OSGEO_IMPORTER
+from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
 from .utils import load_handler
 
 setup_test_environment()
@@ -203,7 +202,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'boxes_with_date_iso_date.zip')
 
-        gi = GDALImport(filename)
+        gi = OGRImport(filename)
         layers1 = gi.handle({'index': 0, 'name': 'test'})
         layers2 = gi.handle({'index': 0,  'name': 'test'})
 
@@ -243,7 +242,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_point_with_date(self):
         """
-        Tests the import of point_with_date.geojson 
+        Tests the import of point_with_date.geojson
         """
 
         layer = self.generic_import('point_with_date.geojson', configuration_options=[{'index': 0,
@@ -352,7 +351,7 @@ class UploaderTests(MapStoryTestMixin):
         self.assertTrue(os.path.exists(in_file))
 
         # run ogr2ogr
-        gi = GDALImport(in_file)
+        gi = OGRImport(in_file)
         layers = gi.handle(configuration_options=configuration_options)
 
         return layers
@@ -807,7 +806,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'china_provinces.shp')
         layer = self.generic_import('china_provinces.shp')
-        gi = GDALImport(filename)
+        gi = OGRImport(filename)
         ds, insp = gi.open_target_datastore(gi.target_store)
         sql = str("select NAME_CH from %s where NAME_PY = 'An Zhou'" % (layer.name))
         res = ds.ExecuteSQL(sql)

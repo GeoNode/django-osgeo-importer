@@ -11,7 +11,7 @@ from django import db
 ogr.UseExceptions()
 
 
-OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.GDALImport')
+OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 
 
 class Import(object):
@@ -73,7 +73,7 @@ class Import(object):
 
     def open_datastore(self, connection_string, inspectors, *args, **kwargs):
         """
-        Opens the source source data set using GDAL.
+        Opens the source source data set using GDAL/OGR.
         """
 
         for inspector in inspectors:
@@ -84,13 +84,13 @@ class Import(object):
 
     def open_source_datastore(self, connection_string, *args, **kwargs):
         """
-        Opens the source source data set using GDAL.
+        Opens the source source data set using GDAL/OGR.
         """
         return self.open_datastore(connection_string, self.source_inspectors, *args, **kwargs)
 
 
 
-class GDALImport(Import):
+class OGRImport(Import):
 
     source_inspectors = [GDALInspector]
     target_inspectors = [OGRInspector]
