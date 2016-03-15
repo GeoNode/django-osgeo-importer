@@ -760,7 +760,7 @@ class UploaderTests(MapStoryTestMixin):
         Regression test for numeric field overflows in shapefiles.
         # https://trac.osgeo.org/gdal/ticket/5241
         """
-        self.generic_import('Walmart.zip', configuration_options=[{'index': 0, 'convert_to_date': []}])
+        self.generic_import('Walmart.zip', configuration_options=[{"configureTime":False,"convert_to_date":["W1_OPENDAT"],"editable":True,"index":0,"name":"Walmart","start_date":"W1_OPENDAT"}])
 
 
     def test_multipolygon_shapefile(self):

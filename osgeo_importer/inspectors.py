@@ -325,6 +325,9 @@ class OGRFieldConverter(OGRInspector):
 
                 target_layer.SetFeature(feat)
 
+            # prevent segfaults
+            feat = None
+
         target_layer.DeleteField(original_field_index)
         field_index = target_defn.GetFieldIndex(fieldname)
         target_layer.AlterFieldDefn(field_index, field_defn, ogr.ALTER_NAME_FLAG)
