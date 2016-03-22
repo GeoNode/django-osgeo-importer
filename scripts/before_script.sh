@@ -12,7 +12,7 @@ fi
 
 echo $DJANGO_SETTINGS_MODULE
 python manage.py syncdb --noinput
-python manage.py runserver > /dev/null 2>&1 &
+python manage.py runserver 0.0.0.0:8000 > /dev/null 2>&1 &
 
 if [ -n "$1" ]
  then
