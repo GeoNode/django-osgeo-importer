@@ -3,7 +3,7 @@ import ogr
 import osr
 import gdal
 from .inspectors import GDALInspector, OGRInspector
-from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, increment
+from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, increment, increment_filename, raster_import
 from .handlers import IMPORT_HANDLERS
 from django.conf import settings
 from django import db
@@ -12,7 +12,7 @@ ogr.UseExceptions()
 
 
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
-
+RASTER_FILES = getattr(settings, 'RASTER_FILES','/tmp')
 
 class Import(object):
     _import_handlers = []
@@ -179,7 +179,7 @@ class OGRImport(Import):
             raster_import(filename,fileout)
             self.completed_layers.append([data.GetName(), configuration_options])
             return self.completed_layers
-            
+
         target_file, _ = self.open_target_datastore(self.target_store)
         target_create_options = []
 
