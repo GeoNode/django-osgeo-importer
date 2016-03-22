@@ -11,10 +11,11 @@ from datetime import datetime
 from dateutil.parser import parse
 from django.template import Context, Template
 from django.utils.module_loading import import_by_path
-
+from django.conf import settings
 logger = logging.getLogger(__name__)
 
 ogr.UseExceptions()
+gdal.UseExceptions()
 
 GDAL_GEOMETRY_TYPES = {
    0: 'Unknown',
@@ -153,6 +154,13 @@ def increment(s):
     return s
 
 
+class FileExists(Exception):
+    """
+    Raised when trying to write to a file that already exists
+    """
+    pass
+
+
 class NoDataSourceFound(Exception):
     """
     Raised when a file that does not have any geospatial data is read in.
@@ -204,3 +212,56 @@ def load_handler(path, *args, **kwargs):
         <TemporaryFileUploadHandler object at 0x...>
     """
     return import_by_path(path)(*args, **kwargs)
+
+def get_kwarg(index,kwargs,default=None):
+    if index in kwargs:
+        return kwargs[index]
+    elif index in settings:
+        return settings[index]
+    else
+        return default
+
+def increment_filename(filename):
+    if os.path.exists(filename):
+        file_base=os.path.basename(filename)
+        file_dir=os.path.dirname(filename)
+        file_root, file_ext = os.path.splitext(file_base)
+        i=1
+        while i <= 100:
+            testfile="%s/%s%s.%s"%(file_dir,file_root,i,file_ext)
+            if not os.path.exists(testfile):
+                break
+            i += 1
+        if not os.path.exists(testfile):
+            return testfile
+        else:
+            raise FileExists
+    else:
+        return filename
+
+def raster_import(infile,outfile,*args,**kwargs):
+    if os.path.exists(outfile):
+        raise FileExists
+
+    if not os.path.exists(infile):
+        raise NoDataSourceFound
+
+    options=get_kwarg('options',kwargs,['TILED=YES'])
+    t_srs=get_kwarg('t_srs',kwargs,'EPSG:3857')
+    build_overviews=get_kwarg('build_overviews',kwargs,True)
+
+    geotiff = gdal.GetDriverByName("GTiff")
+    if geotiff is None:
+        raise RuntimeError
+
+    indata = gdal.Open(infile,'r')
+    if indata is None:
+        raise NoDataSourceFound
+
+    vrt = gdal.AutoCreateWarpedVRT(indata,None,t_srs,gdal.GRA_NearestNeighbor,.125)
+    outdata = geotiff.CreateCopy(outfile,vrt,0,options)
+    if build_overviews:
+        outdata.BuildOverviews("AVERAGE")
+    indata = None
+    outdata = None
+    return outfile
