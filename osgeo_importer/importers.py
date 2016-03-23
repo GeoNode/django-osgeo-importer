@@ -45,7 +45,7 @@ class Import(object):
     def file_extension_not_allowed(self, request, *args, **kwargs):
         raise FileTypeNotAllowed
 
-    def handle(self, configuration_options, *args, **kwargs):
+    def handle(self, configuration_options=[{'index':0}], *args, **kwargs):
         """
         Executes the entire import process.
         1) Imports the dataset from the source dataset to the target.
@@ -177,7 +177,8 @@ class OGRImport(Import):
             filedir,filebase=os.path.split(filename)
             fileout=increment_filename(os.path.join(RASTER_FILES,filebase))
             raster_import(filename,fileout)
-            self.completed_layers.append([fileout, configuration_options[0]])
+            layer_options=configuration_options[0]
+            self.completed_layers.append([fileout, layer_options])
             return self.completed_layers
 
         target_file, _ = self.open_target_datastore(self.target_store)

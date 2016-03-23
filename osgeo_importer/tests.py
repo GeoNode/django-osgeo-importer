@@ -4,6 +4,7 @@ import os
 import json
 import unittest
 import osgeo
+import gdal
 from django import db
 from django.test import TestCase, Client
 from django.test.utils import setup_test_environment
@@ -137,6 +138,25 @@ class UploaderTests(MapStoryTestMixin):
         self.assertTrue('xsd:dateTime' or 'xsd:date' in [n.attribute_type for n in layer.attributes.all()])
 
         return layer
+
+    def generic_raster_import(self,file,configuration_options=[{'index':0}]):
+        f = file
+        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
+        res = self.import_file(filename, configuration_options=configuration_options)
+        layerfile=res[0][0]
+        layername = os.path.splitext(os.path.basename(layerfile))[0]
+        layer = Layer.objects.get(name=layername)
+        self.assertTrue(layerfile.endswith('.tif'))
+        self.assertTrue(os.path.exists(layerfile))
+        l = gdal.OpenEx(layerfile)
+        self.assertTrue(l.GetDriver().ShortName,'GTiff')
+        return layer
+
+    def test_raster(self):
+        """
+        Tests raster import
+        """
+        layer = self.generic_raster_import('HYP_LR.tif', configuration_options=[{'index':0}])
 
     def test_box_with_year_field(self):
         """

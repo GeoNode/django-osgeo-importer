@@ -7,6 +7,8 @@ from geonode.upload.utils import create_geoserver_db_featurestore
 from django import db
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
+import re
+import os
 
 
 def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
@@ -52,6 +54,15 @@ class GeoserverPublishHandler(ImportHandler):
     catalog = gs_catalog
     workspace = 'geonode'
     srs = 'EPSG:4326'
+
+    def can_run(self, layer, layer_config, *args, **kwargs):
+        """
+        Returns true if the configuration has enough information to run the handler.
+        """
+        if re.search(r'\.tif$',layer):
+            return False
+
+        return True
 
     def get_default_store(self):
         connection = db.connections['datastore']
@@ -122,6 +133,31 @@ class GeoserverPublishHandler(ImportHandler):
             self.geogig_handler(store, layer, layer_config)
 
         return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config), self.srs)
+
+
+class GeoserverPublishCoverageHandler(ImportHandler):
+    catalog = gs_catalog
+    workspace = 'geonode'
+
+    def can_run(self, layer, layer_config, *args, **kwargs):
+        """
+        Returns true if the configuration has enough information to run the handler.
+        """
+        if re.search(r'\.tif$',layer):
+            return True
+
+        return False
+
+    @ensure_can_run
+    def handle(self, layer, layer_config, *args, **kwargs):
+        """
+        Publishes a Coverage layer to GeoServer.
+        """
+        name = os.path.splitext(os.path.basename(layer))[0]
+        file = 'file:' + layer
+        workspace=self.catalog.get_workspace(self.workspace)
+
+        return self.catalog.create_coveragestore(name,layer,workspace,False)
 
 
 class GeoWebCacheHandler(ImportHandler):

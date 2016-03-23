@@ -5,6 +5,8 @@ from osgeo_importer.handlers import ensure_can_run
 from geonode.geoserver.helpers import gs_slurp
 from django.contrib.auth import get_user_model
 from django import db
+import os
+import re
 
 User = get_user_model()
 
@@ -32,7 +34,7 @@ class GeoNodePublishHandler(ImportHandler):
         Skips this layer if the user is appending data to another dataset.
         """
         return 'appendTo' not in layer_config
-    
+
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         """
@@ -46,9 +48,16 @@ class GeoNodePublishHandler(ImportHandler):
         if isinstance(owner, str) or isinstance(owner, unicode):
             owner = User.objects.filter(username=owner).first()
 
+        if re.search(r'\.tif$',layer):
+            store_name = os.path.splitext(os.path.basename(layer))[0]
+            filter=None
+        else:
+            store_name=self.store_name
+            filter=layer
+
         results = gs_slurp(workspace=self.workspace,
-                           store=self.store_name,
-                           filter=layer,
+                           store=store_name,
+                           filter=filter,
                            owner=owner,
                            permissions=layer_config.get('permissions'))
 

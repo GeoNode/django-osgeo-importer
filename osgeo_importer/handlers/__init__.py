@@ -6,6 +6,7 @@ from osgeo_importer.inspectors import OGRFieldConverter
 
 DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
                            'osgeo_importer.handlers.geoserver.GeoserverPublishHandler',
+                           'osgeo_importer.handlers.geoserver.GeoserverPublishCoverageHandler',
                            'osgeo_importer.handlers.geoserver.GeoServerTimeHandler',
                            'osgeo_importer.handlers.geoserver.GeoWebCacheHandler',
                            'osgeo_importer.handlers.geoserver.GeoServerBoundsHandler',
@@ -58,15 +59,18 @@ class FieldConverterHandler(ImportHandler):
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
-        for field_to_convert in set(layer_config.get('convert_to_date', [])):
+        try:
+            for field_to_convert in set(layer_config.get('convert_to_date', [])):
 
-            if not field_to_convert:
-                continue
+                if not field_to_convert:
+                    continue
 
-            new_field, new_field_yr = self.convert_field_to_time(layer, field_to_convert)
+                new_field, new_field_yr = self.convert_field_to_time(layer, field_to_convert)
 
-            # if the start_date or end_date needed to be converted to a date
-            # field, use the newly created field name
-            for date_option in ('start_date', 'end_date'):
-                if layer_config.get(date_option) == field_to_convert:
-                    layer_config[date_option] = new_field.lower()
+                # if the start_date or end_date needed to be converted to a date
+                # field, use the newly created field name
+                for date_option in ('start_date', 'end_date'):
+                    if layer_config.get(date_option) == field_to_convert:
+                        layer_config[date_option] = new_field.lower()
+        except:
+            pass
