@@ -168,7 +168,7 @@ class OGRImport(Import):
 
         data, _ = self.open_source_datastore(filename, *args, **kwargs)
 
-        if data.GetDriver().GetName()=='GTiff':
+        if data.GetDriver().ShortName=='GTiff':
             '''
             File is a GeoTiff, we need to convert into optimized GeoTiff
             and skip any further testing or loading into target_store
@@ -177,7 +177,7 @@ class OGRImport(Import):
             filedir,filebase=os.path.split(filename)
             fileout=increment_filename(os.path.join(RASTER_FILES,filebase))
             raster_import(filename,fileout)
-            self.completed_layers.append([data.GetName(), configuration_options])
+            self.completed_layers.append([fileout, configuration_options[0]])
             return self.completed_layers
 
         target_file, _ = self.open_target_datastore(self.target_store)

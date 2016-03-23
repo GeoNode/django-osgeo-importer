@@ -14,3 +14,5 @@ python-httplib2
 gettext git
 python-pip
 build-essential
+libproj0
+libproj-dev

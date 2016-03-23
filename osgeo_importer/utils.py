@@ -1,5 +1,6 @@
 import ogr
 import gdal
+import osr
 import os
 import re
 import sys
@@ -216,10 +217,8 @@ def load_handler(path, *args, **kwargs):
 def get_kwarg(index,kwargs,default=None):
     if index in kwargs:
         return kwargs[index]
-    elif index in settings:
-        return settings[index]
-    else
-        return default
+    else:
+        return getattr(settings,index,default)
 
 def increment_filename(filename):
     if os.path.exists(filename):
@@ -247,18 +246,21 @@ def raster_import(infile,outfile,*args,**kwargs):
         raise NoDataSourceFound
 
     options=get_kwarg('options',kwargs,['TILED=YES'])
-    t_srs=get_kwarg('t_srs',kwargs,'EPSG:3857')
+    t_srs=get_kwarg('t_srs',kwargs,3857)
+    sr=osr.SpatialReference()
+    sr.ImportFromEPSG(3857)
+    t_srs_prj = sr.ExportToWkt()
     build_overviews=get_kwarg('build_overviews',kwargs,True)
 
     geotiff = gdal.GetDriverByName("GTiff")
     if geotiff is None:
         raise RuntimeError
 
-    indata = gdal.Open(infile,'r')
+    indata = gdal.Open(infile)
     if indata is None:
         raise NoDataSourceFound
 
-    vrt = gdal.AutoCreateWarpedVRT(indata,None,t_srs,gdal.GRA_NearestNeighbor,.125)
+    vrt = gdal.AutoCreateWarpedVRT(indata,None,t_srs_prj,0,.125)
     outdata = geotiff.CreateCopy(outfile,vrt,0,options)
     if build_overviews:
         outdata.BuildOverviews("AVERAGE")

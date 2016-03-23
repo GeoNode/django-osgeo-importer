@@ -29,6 +29,7 @@ RUN \
   touch /usr/lib/python2.7/dist-packages/gdal.pth && \
   echo '/usr/local/lib/gdal/lib/python2.7/site-packages' > /usr/lib/python2.7/dist-packages/gdal.pth && \
   echo '/usr/local/lib/gdal/lib/' >> /etc/ld.so.conf && \
+  ln -s /usr/lib/libproj.so.0 /usr/lib/libproj.so && \
   ldconfig
 
 
