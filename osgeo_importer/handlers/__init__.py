@@ -2,6 +2,7 @@ import requests
 from django import db
 from django.conf import settings
 from osgeo_importer.inspectors import OGRFieldConverter
+from osgeo_importer.utils import setup_db
 
 
 DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
@@ -53,24 +54,35 @@ class FieldConverterHandler(ImportHandler):
         d = db.connections['datastore'].settings_dict
         connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s'" % (d['NAME'], d['USER'],
                                                                         d['PASSWORD'], d['HOST'], d['PORT'])
-
-        with OGRFieldConverter(connection_string) as datasource:
-            return datasource.convert_field(layer, field)
+        conn=db.connections['datastore']
+        cursor=conn.cursor()
+        xdate_col="%s_xd"%(field.lower())
+        xdate_str="%s_str"%(field.lower())
+        query="ALTER TABLE %s ADD COLUMN %s bigdate; "%(layer,xdate_col)
+        query+="ALTER TABLE %s ADD COLUMN %s text; "%(layer,xdate_str)
+        cursor.execute(query)
+        query="UPDATE %s SET %s=xdate_str(%s::text); "%(layer,xdate_str,field)
+        cursor.execute(query)
+        query="UPDATE %s SET %s=xdate_out(%s)*1000 WHERE abs(xdate_out(%s))<9223372036854775; "%(layer,xdate_col,xdate_str,xdate_str)
+        cursor.execute(query)
+        return xdate_col
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
+        setup_db()
         try:
             for field_to_convert in set(layer_config.get('convert_to_date', [])):
 
                 if not field_to_convert:
                     continue
 
-                new_field, new_field_yr = self.convert_field_to_time(layer, field_to_convert)
+                xdate = self.convert_field_to_time(layer, field_to_convert)
 
                 # if the start_date or end_date needed to be converted to a date
                 # field, use the newly created field name
                 for date_option in ('start_date', 'end_date'):
                     if layer_config.get(date_option) == field_to_convert:
-                        layer_config[date_option] = new_field.lower()
-        except:
-            pass
+                        layer_config[date_option] = xdate.lower()
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())

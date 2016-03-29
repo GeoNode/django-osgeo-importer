@@ -16,3 +16,4 @@ python-pip
 build-essential
 libproj0
 libproj-dev
+postgresql-plpython-9.3
