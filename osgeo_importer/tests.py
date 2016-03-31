@@ -282,7 +282,12 @@ class UploaderTests(MapStoryTestMixin):
         This layer has a date and an end date field that are typed correctly.
         """
 
-        layer = self.generic_import('boxes_with_end_date.shp')
+        layer = self.generic_import('boxes_with_end_date.shp',configuration_options=[{'index': 0,
+                                                                                         'convert_to_date': ['date','enddate'],
+                                                                                         'start_date': 'date',
+                                                                                         'end_date': 'enddate',
+                                                                                         'configureTime': True
+                                                                                         }])
 
         date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
         end_date_attr = filter(lambda attr: attr.attribute == 'enddate_xd', layer.attributes)[0]
@@ -309,8 +314,11 @@ class UploaderTests(MapStoryTestMixin):
         Tests the import of mojstrovka.gpx.
         This layer has a date and an end date field that are typed correctly.
         """
-        layer = self.generic_import('mojstrovka.gpx')
-        date_attr = filter(lambda attr: attr.attribute == 'time', layer.attributes)[0]
+        layer = self.generic_import('mojstrovka.gpx',configuration_options=[{'index': 0,
+                                                         'convert_to_date': ['time'],
+                                                         'configureTime': True
+                                                         }])
+        date_attr = filter(lambda attr: attr.attribute == 'time_xd', layer.attributes)[0]
         self.assertEqual(date_attr.attribute_type, u'xsd:long')
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute)
         self.generic_time_check(layer, attribute=date_attr.attribute)
