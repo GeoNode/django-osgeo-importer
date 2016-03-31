@@ -27,7 +27,7 @@ matrix:
 
 
 virtualenv:
-  system_site_packages: true
+  system_site_packages: false
 
 before_install:
   - chmod +x ./scripts/install.sh
