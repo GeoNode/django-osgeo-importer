@@ -2,4 +2,3 @@
 -e git+https://github.com/GeoNode/geonode.git@master#egg=GeoNode
 python-dateutil
 psycopg2
-numpy
