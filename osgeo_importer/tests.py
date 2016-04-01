@@ -156,7 +156,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         Tests raster import
         """
-        layer = self.generic_raster_import('HYP_LR.tif', configuration_options=[{'index':0}])
+        layer = self.generic_raster_import('test_grid.tif', configuration_options=[{'index':0}])
 
     def test_box_with_year_field(self):
         """
