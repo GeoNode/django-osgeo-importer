@@ -44,6 +44,7 @@ fi
 
 pip install -r requirements.txt
 pip install --upgrade  numpy
+pip install --upgrade python-dateutil
 pip install -e .
 pip install awscli
 
