@@ -43,6 +43,7 @@ if [ -n "$1" ]
 fi
 
 pip install -r requirements.txt
+pip install --upgrade  numpy
 pip install -e .
 pip install awscli
 
