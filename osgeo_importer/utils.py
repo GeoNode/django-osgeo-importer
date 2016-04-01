@@ -204,7 +204,7 @@ def launder(string):
     Launders a string.
     (Port of the gdal LaunderName function)
     """
-    for i in ['-', '#']:
+    for i in ['-', '#', '.']:
         string = string.replace(i, '_')
 
     return string.lower()
@@ -351,3 +351,14 @@ SELECT xdate_out(xdate_str($1));
 $$ LANGUAGE SQL;
     """
     cursor.execute(query)
+
+def decode(s, encodings=('ascii', 'utf8', 'latin1')):
+    """
+    Common character encodings.
+    """
+    for encoding in encodings:
+        try:
+            return s.decode(encoding)
+        except UnicodeDecodeError:
+            pass
+    return s.decode('ascii', 'ignore')
