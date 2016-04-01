@@ -3,7 +3,7 @@ import ogr
 import osr
 import gdal
 from .inspectors import GDALInspector, OGRInspector
-from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, increment, increment_filename, raster_import
+from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, increment, increment_filename, raster_import, decode
 from .handlers import IMPORT_HANDLERS
 from django.conf import settings
 from django import db
@@ -235,7 +235,7 @@ class OGRImport(Import):
             for i in range(0, layer.GetFeatureCount()):
                 feature = layer.GetFeature(i)
 
-                if feature:
+                if feature and feature.geometry():
                     if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
                         target_layer.GetGeomType() in range(4, 7):
 
@@ -250,7 +250,17 @@ class OGRImport(Import):
                         geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
                         feature.SetGeometry(conversion_function(geom))
 
-                    target_layer.CreateFeature(feature)
+                    try:
+                        target_layer.CreateFeature(feature)
+                    except:
+                        for field in range(0, feature.GetFieldCount()):
+                            if feature.GetFieldType(field) == ogr.OFTString:
+                                try:
+                                    feature.GetField(field).decode('utf8')
+                                except UnicodeDecodeError:
+                                    feature.SetField(field, decode(feature.GetField(field)))
+
+                        target_layer.CreateFeature(feature)
 
             self.completed_layers.append([target_layer.GetName(), layer_options])
 

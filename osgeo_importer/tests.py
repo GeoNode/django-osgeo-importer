@@ -202,6 +202,13 @@ class UploaderTests(MapStoryTestMixin):
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
         self.generic_time_check(layer, attribute=date_attr.attribute)
 
+    def test_csv_missing_features(self):
+        """
+        Test csv that has some rows without geoms and uses ISO-8859 (Latin 4) encoding.
+        """
+
+        self.generic_import('missing-features.csv', configuration_options=[{'index': 0}])
+
     def test_boxes_with_iso_date(self):
         """
         Tests the import of test_boxes_with_iso_date.
