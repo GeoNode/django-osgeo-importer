@@ -30,7 +30,7 @@ sudo su -c "echo 'export GDAL_DATA=/usr/local/lib/gdal/share/gdal/' >> /etc/prof
 sudo apt-get remove -y postgresql-9.3-postgis-2.1 # Remove postgis from pgdg, will install postgis from ubuntugis-unstable instead
 sudo apt-get install -y --no-install-recommends postgresql-9.3-postgis-2.1 libpq-dev python-dev python-lxml libxslt1-dev
 sudo apt-get install -y python-virtualenv python-imaging python-pyproj python-shapely python-nose python-httplib2 python-httplib2 gettext git
-sudo apt-get install -y libproj0 libproj-dev postgresql-plpython-9.3
+sudo apt-get install -y libproj0 libproj-dev postgresql-plpython-9.3 python-numpy python-dateutil
 
 
 
