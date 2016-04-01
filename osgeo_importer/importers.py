@@ -252,6 +252,7 @@ class OGRImport(Import):
 
                     try:
                         target_layer.CreateFeature(feature)
+
                     except:
                         for field in range(0, feature.GetFieldCount()):
                             if feature.GetFieldType(field) == ogr.OFTString:
@@ -259,6 +260,8 @@ class OGRImport(Import):
                                     feature.GetField(field).decode('utf8')
                                 except UnicodeDecodeError:
                                     feature.SetField(field, decode(feature.GetField(field)))
+                                except AttributeError:
+                                    continue
 
                         target_layer.CreateFeature(feature)
 

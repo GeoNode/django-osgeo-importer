@@ -24,7 +24,7 @@ from osgeo_importer.models import validate_file_extension, ValidationError, vali
 from osgeo_importer.models import UploadedData
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
-from .utils import load_handler
+from .utils import load_handler, launder
 
 setup_test_environment()
 
@@ -236,7 +236,12 @@ class UploaderTests(MapStoryTestMixin):
         self.assertEqual(layers1[0][0], 'test')
         self.assertEqual(layers2[0][0], 'test0')
 
-
+    def test_launder(self):
+        """
+        Ensure the launder function works as expected.
+        """
+        self.assertEqual(launder('tm_world_borders_simpl_0.3'), 'tm_world_borders_simpl_0_3')
+        self.assertEqual(launder('Testing#'), 'testing_')
 
     def test_boxes_with_date_iso_date_zip(self):
         """

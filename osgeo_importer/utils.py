@@ -204,7 +204,7 @@ def launder(string):
     Launders a string.
     (Port of the gdal LaunderName function)
     """
-    for i in ['-', '#']:
+    for i in ['-', '#', '.']:
         string = string.replace(i, '_')
 
     return string.lower()
