@@ -23,4 +23,4 @@ fi
 
 echo 'Starting Geoserver'
 java -Xmx512m -XX:MaxPermSize=256m -Dorg.eclipse.jetty.server.webapp.parentLoaderPriority=true -jar gs/jetty-runner-8.1.8.v20121106.jar --path /geoserver gs/geoserver.war > /dev/null 2>&1 &
-sleep 10
+sleep 100
