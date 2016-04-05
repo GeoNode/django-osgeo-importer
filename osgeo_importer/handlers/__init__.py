@@ -1,7 +1,6 @@
 import requests
 from django import db
 from django.conf import settings
-from osgeo_importer.inspectors import OGRFieldConverter
 from osgeo_importer.utils import setup_db
 
 

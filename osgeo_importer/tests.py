@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.gis.gdal import DataSource
 from osgeo_importer.utils import create_vrt, ensure_defaults
 from osgeo_importer.handlers.geoserver import configure_time
-from osgeo_importer.inspectors import GDALInspector, OGRFieldConverter
+from osgeo_importer.inspectors import GDALInspector
 from geoserver.catalog import Catalog, FailedRequestError
 from geonode.layers.models import Layer
 from geonode.geoserver.helpers import ogc_server_settings

@@ -59,14 +59,52 @@ def validate_file_extension(value):
     raise ValidationError(u'Invalid File Type')
 
 
+def validate_file_type(value):
+    """
+    Returns the general file type
+    """
+    name = value.name
+    root,extension=os.path.splitext(name.lower())
+    if extension == 'tif':
+        return 'raster'
+    if extension == 'sld':
+        return 'style'
+    if extension == 'xml':
+        return
+
+
 def validate_inspector_can_read(value):
     """
     Validates Geospatial data.
     """
+    name = value.name
+    root,extension=os.path.splitext(name.lower())
 
     temp_directory = tempfile.mkdtemp()
     filename = os.path.join(temp_directory, value.name)
 
+
+    if extension in ['sld','xml']: #allow uploads of sld and xml metadata
+        return
+
+    if extension in ['tif']:
+        with open(filename, 'wb') as f:
+            for chunk in value.chunks():
+                f.write(chunk)
+
+        try:
+            importer = load_handler(OSGEO_IMPORTER, filename)
+            data, inspector = importer.open_source_datastore(filename)
+
+        except NoDataSourceFound:
+            raise ValidationError('Unable to locate raster layer.')
+
+        finally:
+            from .tasks import remove_path
+            remove_path.delay(os.path.split(filename)[0])
+        return
+
+    #Otherwise check if vector
     with open(filename, 'wb') as f:
         for chunk in value.chunks():
             f.write(chunk)
