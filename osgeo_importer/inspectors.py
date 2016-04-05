@@ -290,26 +290,27 @@ class OGRFieldConverter(OGRInspector):
 
     def convert_field(self, layer_name, field):
         field_as_string = str(field)
-        fieldname = '{0}_as_date'.format(field)
-        fieldname_yr = '{0}_as_year'.format(field)
+        xd_col = '{0}_xd'.format(field)
+        parsed_col = '{0}_parsed'.format(field)
+
+
         target_layer = self.data.GetLayerByName(layer_name)
         target_defn = target_layer.GetLayerDefn()
 
-        while target_defn.GetFieldIndex(fieldname) >= 0:
-            fieldname = increment(fieldname)
+        while target_defn.GetFieldIndex(xd_col) >= 0:
+            xd_col = increment(xd_col)
 
-        while target_layer.GetLayerDefn().GetFieldIndex(fieldname_yr) >= 0:
-            fieldname_yr = increment(fieldname_yr)
+        while target_layer.GetLayerDefn().GetFieldIndex(parsed_col) >= 0:
+            parsed_col = increment(parsed_col)
 
         original_field_index = target_defn.GetFieldIndex(field_as_string)
 
-        target_layer.CreateField(ogr.FieldDefn(fieldname, ogr.OFTDateTime))
-        field_index = target_layer.GetLayerDefn().GetFieldIndex(fieldname)
+        target_layer.CreateField(ogr.FieldDefn(xd_col, ogr.OFTInteger64))
+        xd_col_index = target_layer.GetLayerDefn().GetFieldIndex(xd_col)
 
-        target_layer.CreateField(ogr.FieldDefn(fieldname_yr, ogr.OFTInteger))
-        field_yr_index = target_layer.GetLayerDefn().GetFieldIndex(fieldname_yr)
+        target_layer.CreateField(ogr.FieldDefn(parsed_col, ogr.OFTString))
+        parsed_col_index = target_layer.GetLayerDefn().GetFieldIndex(parsed_col)
 
-        field_defn = ogr.FieldDefn(field_as_string, ogr.OFTDateTime)
         for feat in target_layer:
 
             if not feat:
@@ -318,18 +319,15 @@ class OGRFieldConverter(OGRInspector):
             string_field = feat[field_as_string]
 
             if string_field:
-                year, month, day, hour, minute, second, microsecond = timeparse(str(string_field))
+                xd, parsed = timeparse(str(string_field))
 
-                feat.SetField(field_index, abs(year), month, day, hour, minute, second, microsecond)
-                feat.SetField(field_yr_index, year)
+                feat.SetField(xd_col_index, xd)
+                feat.SetField(parsed_col_index, parsed)
 
                 target_layer.SetFeature(feat)
 
             # prevent segfaults
             feat = None
 
-        target_layer.DeleteField(original_field_index)
-        field_index = target_defn.GetFieldIndex(fieldname)
-        target_layer.AlterFieldDefn(field_index, field_defn, ogr.ALTER_NAME_FLAG)
 
-        return field_as_string, fieldname_yr
+        return xd_col
