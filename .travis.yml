@@ -43,6 +43,7 @@ script:
   - python manage.py test osgeo_importer
 
 notifications:
+  slack: prominentedge:9VnNQcaSr6mHKSC2XHwEjkam
   email:
     on_success: never
     on_failure: never
