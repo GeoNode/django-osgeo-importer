@@ -4,8 +4,9 @@ import gdal
 import ogr
 from django.conf import settings
 from .utils import import_by_path
-from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse
+from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse,quote_ident
 
+from django import db
 
 OSGEO_INSPECTOR = getattr(settings, 'OSGEO_INSPECTOR', 'osgeo_importer.inspectors.GDALInspector')
 
@@ -290,8 +291,8 @@ class OGRFieldConverter(OGRInspector):
 
     def convert_field(self, layer_name, field):
         field_as_string = str(field)
-        xd_col = '{0}_xd'.format(field)
-        parsed_col = '{0}_parsed'.format(field)
+        xd_col = '{0}_xd'.format(field).lower()
+        parsed_col = '{0}_parsed'.format(field).lower()
 
 
         target_layer = self.data.GetLayerByName(layer_name)
@@ -328,6 +329,19 @@ class OGRFieldConverter(OGRInspector):
 
             # prevent segfaults
             feat = None
+        conn=db.connections['datastore']
+        cursor=conn.cursor()
+        query="""
+        DO $$
+        BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='bigdate') THEN
+        CREATE DOMAIN bigdate bigint;
+        END IF;
+        END;
+        $$;
 
+        ALTER TABLE %s ALTER COLUMN %s TYPE bigdate;
+        """%(quote_ident(layer_name),quote_ident(xd_col))
+        cursor.execute(query)
 
         return xd_col

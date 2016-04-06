@@ -286,71 +286,14 @@ def raster_import(infile,outfile,*args,**kwargs):
     outdata = None
     return outfile
 
-def setup_db():
+def quote_ident(str):
     conn=db.connections['datastore']
     cursor=conn.cursor()
-    query="""
-CREATE EXTENSION IF NOT EXISTS plpythonu;
-DO $$
-BEGIN
-IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='bigdate') THEN
-CREATE DOMAIN bigdate bigint;
-END IF;
-END;
-$$;
+    query="SELECT quote_ident(%s);"
+    cursor.execute(query,(str,))
+    return cursor.fetchone()[0]
 
 
-
-CREATE OR REPLACE FUNCTION xdate_str(IN timestr text, OUT text) AS $$
-from datetime import datetime
-from dateutil.parser import parse
-import numpy
-import re
-global timestr
-DEFAULT=datetime(1,1,1)
-bc=False
-timestr=timestr.replace(',','')
-if re.search(r'bce?',timestr,flags=re.I):
-    bc = True
-    timestr=re.sub(r'bce?','',timestr,flags=re.I)
-if re.match('-',timestr,flags=re.I):
-    bc = True
-    timestr = timestr.replace('-','',1)
-if re.search(r'ad',timestr,flags=re.I):
-    timestr=re.sub('ad','',timestr,flags=re.I)
-
-if bc==True:
-    timestr="-%s"%(timestr)
-
-timestr=timestr.strip()
-
-try:
-    t = str(numpy.datetime64(timestr).astype('datetime64[s]'))
-    return t
-except:
-    pass
-
-if bc==False: #try just using straight datetime parsing
-    try:
-        dt=parse(timestr,default=DEFAULT)
-        t = str(numpy.datetime64(dt.isoformat()).astype('datetime64[s]'))
-        return t
-    except:
-        pass
-return None
-$$ LANGUAGE plpythonu;
-
-CREATE OR REPLACE FUNCTION xdate_out(IN timestr text, OUT bigint) AS $$
-import numpy
-global timestr
-return numpy.datetime64(timestr).astype('datetime64[s]').astype('int64')
-$$ LANGUAGE plpythonu;
-
-CREATE OR REPLACE FUNCTION xdate(IN timestr text) RETURNS bigint AS $$
-SELECT xdate_out(xdate_str($1));
-$$ LANGUAGE SQL;
-    """
-    cursor.execute(query)
 
 def decode(s, encodings=('ascii', 'utf8', 'latin1')):
     """

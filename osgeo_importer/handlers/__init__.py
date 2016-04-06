@@ -1,7 +1,7 @@
 import requests
 from django import db
 from django.conf import settings
-from osgeo_importer.utils import setup_db
+from osgeo_importer.inspectors import OGRFieldConverter
 
 
 DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
@@ -80,5 +80,5 @@ class FieldConverterHandler(ImportHandlerMixin):
                 for date_option in ('start_date', 'end_date'):
                     if layer_config.get(date_option) == field_to_convert:
                         layer_config[date_option] = xd_col.lower()
-        except:
-            pass
+        except Exception as e:
+            print "Error: %s"%(e)
