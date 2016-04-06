@@ -29,7 +29,7 @@ def ensure_can_run(func):
     return func_wrapper
 
 
-class ImportHandler(object):
+class ImportHandlerMixin(object):
     """
     A mixin providing the basic layout for handlers.
     """
@@ -53,7 +53,7 @@ class ImportHandler(object):
         return True
 
 
-class FieldConverterHandler(ImportHandler):
+class FieldConverterHandler(ImportHandlerMixin):
     """
     Converts fields based on the layer_configuration.
     """

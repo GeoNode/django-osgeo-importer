@@ -1,6 +1,6 @@
 from geonode.layers.models import Layer
 from osgeo_importer.models import UploadLayer
-from osgeo_importer.handlers import ImportHandler
+from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from geonode.geoserver.helpers import gs_slurp
 from django.contrib.auth import get_user_model
@@ -11,7 +11,7 @@ import re
 User = get_user_model()
 
 
-class GeoNodePublishHandler(ImportHandler):
+class GeoNodePublishHandler(ImportHandlerMixin):
     """
     Creates a GeoNode Layer from a layer in Geoserver.
     """

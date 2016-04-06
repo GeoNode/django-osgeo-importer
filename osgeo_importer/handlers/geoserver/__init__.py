@@ -1,6 +1,6 @@
 import requests
 from decimal import Decimal, InvalidOperation
-from osgeo_importer.handlers import ImportHandler
+from osgeo_importer.handlers import ImportHandlerMixin
 from geoserver.catalog import FailedRequestError
 from osgeo_importer.handlers import ensure_can_run
 from geonode.upload.utils import create_geoserver_db_featurestore
@@ -21,7 +21,7 @@ def configure_time(resource, name='time', enabled=True, presentation='LIST', res
     return resource.catalog.save(resource)
 
 
-class GeoServerTimeHandler(ImportHandler):
+class GeoServerTimeHandler(ImportHandlerMixin):
     """
     Enables time in Geoserver for a layer.
     """
@@ -50,7 +50,7 @@ class GeoServerTimeHandler(ImportHandler):
                        end_attribute=layer_config.get('end_date'))
 
 
-class GeoserverPublishHandler(ImportHandler):
+class GeoserverPublishHandler(ImportHandlerMixin):
     catalog = gs_catalog
     workspace = 'geonode'
     srs = 'EPSG:4326'
@@ -135,7 +135,7 @@ class GeoserverPublishHandler(ImportHandler):
         return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config), self.srs)
 
 
-class GeoserverPublishCoverageHandler(ImportHandler):
+class GeoserverPublishCoverageHandler(ImportHandlerMixin):
     catalog = gs_catalog
     workspace = 'geonode'
 
@@ -160,7 +160,7 @@ class GeoserverPublishCoverageHandler(ImportHandler):
         return self.catalog.create_coveragestore(name,layer,workspace,False)
 
 
-class GeoWebCacheHandler(ImportHandler):
+class GeoWebCacheHandler(ImportHandlerMixin):
     """
     Configures GeoWebCache for a layer in Geoserver.
     """
@@ -252,7 +252,7 @@ class GeoWebCacheHandler(ImportHandler):
                                          body=self.config(regex_parameter_filter=regex_filter, name=self.layer.name))
 
 
-class GeoServerBoundsHandler(ImportHandler):
+class GeoServerBoundsHandler(ImportHandlerMixin):
     """
     Sets the lat/long bounding box of a layer to the max extent of WGS84 if the values of the current lat/long
     bounding box fail the Decimal quantize method (which Django uses internally when validating decimals).
