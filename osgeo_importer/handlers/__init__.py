@@ -30,17 +30,25 @@ def ensure_can_run(func):
 
 
 class ImportHandler(object):
-
+    """
+    A mixin providing the basic layout for handlers.
+    """
     def __init__(self, importer, *args, **kwargs):
         self.importer = importer
 
     @ensure_can_run
     def handle(self, layer, layerconfig, *args, **kwargs):
+        """
+        This method is executed by each Importer.
+
+        :param layer: The name of the imported layer.
+        :param layerconfig: The configuration options of the layer (dict).
+        """
         raise NotImplementedError('Subclass should implement this.')
 
     def can_run(self, layer, layer_config, *args, **kwargs):
         """
-        Returns true if the configuration has enough information to run the handler.
+        Returns True if the handler has enough information to execute.
         """
         return True
 

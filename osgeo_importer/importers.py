@@ -14,7 +14,13 @@ ogr.UseExceptions()
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 RASTER_FILES = getattr(settings, 'RASTER_FILES','/tmp')
 
+
 class Import(object):
+    """
+    Importers are responsible for opening incoming geospatial datasets (using one or many inspectors) and
+    copying features to a target location.
+
+    """
     _import_handlers = []
     handler_results = []
     enabled_handlers = IMPORT_HANDLERS
@@ -23,6 +29,12 @@ class Import(object):
     valid_extensions = ['gpx', 'geojson', 'json', 'zip', 'tar', 'kml', 'csv', 'shp']
 
     def filter_handler_results(self, handler_name):
+        """
+        Filters handler results to just the results returned from a specific handler.
+
+        :param handler_name: The name of the handler.
+        :return: A List of handlers and their results.
+        """
         return filter(lambda results: handler_name in results.keys(), self.handler_results)
 
     def _initialize_handlers(self):
@@ -40,9 +52,22 @@ class Import(object):
         return self._import_handlers
 
     def import_file(self, filename, **kwargs):
+        """
+        Subclass this to provide import logic.
+
+        :param filename: the path to the data source.
+        :param kwargs: keyword arguments for the import process.  `configuration_options` should be
+        provided in these kwargs.
+        :return: A list of lists where each value is [layername, configuratuon_options].
+        """
         raise NotImplementedError
 
     def file_extension_not_allowed(self, request, *args, **kwargs):
+        """
+        Method called when an incoming dataset has an extension that is not allowed.
+
+        TODO: Should "request" be removed as an argument?
+        """
         raise FileTypeNotAllowed
 
     def handle(self, configuration_options=[{'index':0}], *args, **kwargs):
@@ -51,6 +76,10 @@ class Import(object):
         1) Imports the dataset from the source dataset to the target.
         2) Executes arbitrary handlers that can modify the data set.
         3) Executes arbitrary publish handlers to publish the data set.
+
+        :param configuration_options: A list of configuration options that are sent to the
+        import method and subsequently to the handlers.
+        :return: The response from the import_file method.
         """
 
         layers = self.import_file(configuration_options=configuration_options)
@@ -62,7 +91,12 @@ class Import(object):
 
     def run_import_handlers(self, layer, layer_config, *args, **kwargs):
         """
-        Handlers that are run on each layer of a data set.
+        Handlers that are run on each layer of a data set. Each handler expects at least two arguments,
+        the layer name and the layer configuration.
+
+        :param layer: The name of the layer (returned from the import method).
+        :param layer_config: Layer configuration options (dict) that is passed through to each handler.
+        :return: A list of handler results.
         """
         self.handler_results = []
 
@@ -73,7 +107,12 @@ class Import(object):
 
     def open_datastore(self, connection_string, inspectors, *args, **kwargs):
         """
-        Opens the source source data set using GDAL/OGR.
+        Opens the source source data set using one or many inspectors.
+
+        :param configuration_options: A list of configuration options that are sent to the
+        import method and subsequently to the handlers.
+        :param inspectors: A list of inspector classes that are run through in order.
+        :return: The response from the first inspctor providing a response that is not None.
         """
 
         for inspector in inspectors:
@@ -84,10 +123,13 @@ class Import(object):
 
     def open_source_datastore(self, connection_string, *args, **kwargs):
         """
-        Opens the source source data set using GDAL/OGR.
+        Opens the source source data.
+
+        :param configuration_options: A list of configuration options that are sent to the
+        import method and subsequently to the handlers.
+        :return the response from the open_datastore.
         """
         return self.open_datastore(connection_string, self.source_inspectors, *args, **kwargs)
-
 
 
 class OGRImport(Import):
