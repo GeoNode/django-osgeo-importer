@@ -8,11 +8,11 @@ osgeo-importer is a Django application that helps you create custom pipelines fo
 `pip install git+https://github.com/ProminentEdge/django-osgeo-importer.git`
 
 
-## Settings ##
-`OSGEO_IMPORTER`: The default Importer to use for uploads.
-`OSGEO_INSPECTOR`: The default Inspector to use for uploads.
-`OSGEO_IMPORTER_GEONODE_ENABLED`: If `True`, the osgeo_importer will expose the [GeoNode-flavored](osgeo_importer/geonode_apis.py) APIs vs a vanilla API.
-`IMPORT_HANDLERS`: A list of handlers that each layer is passed through during the import process. Changing this setting allows complete customization – even replacement – of the osgeo-importer import process.
+## Settings
+* `OSGEO_IMPORTER`: The default Importer to use for uploads.
+* `OSGEO_INSPECTOR`: The default Inspector to use for uploads.
+* `OSGEO_IMPORTER_GEONODE_ENABLED`: If `True`, the osgeo_importer will expose the [GeoNode-flavored](osgeo_importer/geonode_apis.py) APIs vs a vanilla API.
+* `IMPORT_HANDLERS`: A list of handlers that each layer is passed through during the import process. Changing this setting allows complete customization – even replacement – of the osgeo-importer import process.
 
 ## Running test cases.
 
