@@ -7,7 +7,7 @@ class UploadAdmin(admin.ModelAdmin):
 
 
 class UploadedLayerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'layer','feature_count', 'task_id')
+    list_display = ('name', 'layer', 'feature_count', 'task_id')
 
 
 class UploadedDataAdmin(admin.ModelAdmin):

@@ -1,18 +1,17 @@
 import json
-from tastypie.fields import IntegerField, DictField, ListField, CharField, ToManyField, ForeignKey
+from tastypie.fields import DictField, ListField, CharField, ToManyField, ForeignKey
 from django.contrib.auth import get_user_model
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource
 from .models import UploadedData, UploadLayer, UploadFile
 from tastypie.authentication import SessionAuthentication
-from tastypie.authorization import DjangoAuthorization, Authorization
+from tastypie.authorization import Authorization
 from tastypie.utils import trailing_slash
 from tastypie import http
 from django.conf.urls import url
 from tastypie.bundle import Bundle
 from .tasks import import_object
 from tastypie.exceptions import ImmediateHttpResponse
-from django.utils.text import slugify
 
 
 class UserResource(ModelResource):
@@ -90,7 +89,7 @@ class UploadedLayerResource(ModelResource):
 
     def prepend_urls(self):
         return [url(r"^(?P<resource_name>{0})/(?P<pk>\w[\w/-]*)/configure{1}$".format(self._meta.resource_name,
-                                                                                     trailing_slash()),
+                                                                                      trailing_slash()),
                 self.wrap_view('import_layer'), name="importer_configure"),
                 ]
 

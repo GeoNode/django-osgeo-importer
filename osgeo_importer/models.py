@@ -23,6 +23,7 @@ import tempfile
 
 from celery.result import AsyncResult
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
@@ -30,14 +31,11 @@ from djcelery.models import TaskState
 from jsonfield import JSONField
 
 
-from django.contrib.contenttypes.models import ContentType
-
 try:
     from django.contrib.contenttypes.fields import GenericForeignKey
 except ImportError:
     from django.contrib.contenttypes.generic import GenericForeignKey
 
-from .inspectors import GDALInspector
 from .importers import OSGEO_IMPORTER
 from .utils import NoDataSourceFound
 from .utils import sizeof_fmt, load_handler
@@ -64,7 +62,7 @@ def validate_file_type(value):
     Returns the general file type
     """
     name = value.name
-    root,extension=os.path.splitext(name.lower())
+    root, extension = os.path.splitext(name.lower())
     if extension == 'tif':
         return 'raster'
     if extension == 'sld':
@@ -78,13 +76,12 @@ def validate_inspector_can_read(value):
     Validates Geospatial data.
     """
     name = value.name
-    root,extension=os.path.splitext(name.lower())
+    root, extension = os.path.splitext(name.lower())
 
     temp_directory = tempfile.mkdtemp()
     filename = os.path.join(temp_directory, value.name)
 
-
-    if extension in ['sld','xml']: #allow uploads of sld and xml metadata
+    if extension in ['sld', 'xml']:  # allow uploads of sld and xml metadata
         return
 
     if extension in ['tif']:
@@ -104,7 +101,7 @@ def validate_inspector_can_read(value):
             remove_path.delay(os.path.split(filename)[0])
         return
 
-    #Otherwise check if vector
+    #  Otherwise check if vector
     with open(filename, 'wb') as f:
         for chunk in value.chunks():
             f.write(chunk)
@@ -216,7 +213,6 @@ class UploadLayer(models.Model):
                                         'url': self.layer.get_absolute_url()}
         return params
 
-
     @property
     def status(self):
         """
@@ -265,13 +261,15 @@ class UploadException(models.Model):
     traceback = models.TextField(blank=True, null=True)
     verbose_traceback = models.TextField(blank=True, null=True, help_text='A humanized exception message.')
 
-    """
-    A method to create a new saved exception.
-    """
     @classmethod
     def raise_exception(cls, error, task_id, upload_layer, verbose_message):
+        """
+        A method to create a new saved exception.
+        """
+
         if verbose_message is None:
             verbose_message = error
+
         exception = cls(error=error, verbose_traceback=verbose_message, task_id=task_id, upload_layer=upload_layer)
         exception.save()
         return exception

@@ -1,4 +1,3 @@
-import requests
 from django import db
 from django.conf import settings
 from osgeo_importer.inspectors import OGRFieldConverter
@@ -79,7 +78,8 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
     def convert_field_to_time(self, layer, field):
         d = db.connections['datastore'].settings_dict
         connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s'" % (d['NAME'], d['USER'],
-                                                                        d['PASSWORD'], d['HOST'], d['PORT'])
+                                                                                            d['PASSWORD'], d['HOST'],
+                                                                                            d['PORT'])
 
         with OGRFieldConverter(connection_string) as datasource:
             return datasource.convert_field(layer, field)
@@ -104,4 +104,4 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
                         layer_config[date_option] = xd_col.lower()
 
         except Exception as e:
-            print "Error: %s"%(e)
+            print "Error: %s" % e

@@ -47,6 +47,7 @@ pip install -e .
 pip install awscli
 pip install --upgrade  numpy
 pip install --upgrade python-dateutil
+pip install flake8
 
 sudo mkdir -p -m 777 importer-test-files
 aws s3 sync s3://mapstory-data/importer-test-files/ importer-test-files

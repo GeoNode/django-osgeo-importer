@@ -1,10 +1,10 @@
 import os
 import shutil
-from .importers import OSGEO_IMPORTER
-from .models import UploadFile, UploadLayer
+from .models import UploadFile
 from celery.task import task
 
 from .views import OSGEO_IMPORTER
+
 
 @task
 def import_object(upload_file_id, configuration_options):
@@ -18,6 +18,7 @@ def import_object(upload_file_id, configuration_options):
 
     gi = OSGEO_IMPORTER(upload_file.file.path, upload_file=upload_file)
     return gi.handle(configuration_options=configuration_options)
+
 
 @task
 def remove_path(path):

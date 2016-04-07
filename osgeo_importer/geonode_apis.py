@@ -1,11 +1,11 @@
 import os
-from .api import *
+from .api import *  # noqa
 from geonode.api.api import ProfileResource
 from geonode.geoserver.helpers import ogc_server_settings
 from tastypie.fields import ForeignKey
 
 
-class UploadedDataResource(UploadedDataResource):
+class UploadedDataResource(UploadedDataResource):  # noqa
     """
     API for accessing UploadedData.
     """
@@ -13,7 +13,7 @@ class UploadedDataResource(UploadedDataResource):
     user = ForeignKey(ProfileResource, 'user')
 
 
-class UploadedLayerResource(UploadedLayerResource):
+class UploadedLayerResource(UploadedLayerResource):  # noqa
     def clean_configuration_options(self, request, obj, configuration_options):
 
         if configuration_options.get('geoserver_store'):

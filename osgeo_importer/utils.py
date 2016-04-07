@@ -1,11 +1,13 @@
-import ogr
 import gdal
+import logging
+import numpy
+import ogr
 import osr
 import os
 import re
 import sys
 import tempfile
-import logging
+
 from csv import DictReader
 from cStringIO import StringIO
 from datetime import datetime
@@ -15,7 +17,7 @@ from django.utils.module_loading import import_by_path
 from django.conf import settings
 from django import db
 logger = logging.getLogger(__name__)
-import numpy
+
 
 ogr.UseExceptions()
 gdal.UseExceptions()
@@ -50,40 +52,42 @@ BASE_VRT = '''
     </OGRVRTLayer>
 </OGRVRTDataSource>'''
 
+
 def timeparse(timestr):
-    DEFAULT=datetime(1,1,1)
-    bc=False
-    if re.search(r'bce?',timestr,flags=re.I):
+    DEFAULT = datetime(1, 1, 1)
+    bc = False
+    if re.search(r'bce?', timestr, flags=re.I):
         bc = True
-        timestr=re.sub(r'bce?','',timestr,flags=re.I)
-    if re.match('-',timestr,flags=re.I):
+        timestr = re.sub(r'bce?', '', timestr, flags=re.I)
+    if re.match('-', timestr, flags=re.I):
         bc = True
-        timestr = timestr.replace('-','',1)
-    if re.search(r'ad',timestr,flags=re.I):
-        timestr=re.sub('ad','',timestr,flags=re.I)
+        timestr = timestr.replace('-', '', 1)
+    if re.search(r'ad', timestr, flags=re.I):
+        timestr = re.sub('ad', '', timestr, flags=re.I)
 
-    if bc==True:
-        timestr="-%s"%(timestr)
+    if bc is True:
+        timestr = "-%s" % timestr
 
-    timestr=timestr.strip()
+    timestr = timestr.strip()
 
     try:
         t = numpy.datetime64(timestr).astype('datetime64[s]').astype('int64')
-        return t,str(numpy.datetime64(t,'s'))
+        return t, str(numpy.datetime64(t, 's'))
+
     except:
         pass
 
-    if bc==False: #try just using straight datetime parsing
+    #  try just using straight datetime parsing
+    if bc is False:
         try:
-            logger.debug('trying %s as direct parse',timestr)
-            dt=parse(timestr,default=DEFAULT)
+            logger.debug('trying %s as direct parse', timestr)
+            dt = parse(timestr, default=DEFAULT)
             t = numpy.datetime64(dt.isoformat()).astype('datetime64[s]').astype('int64')
-            return t,str(numpy.datetime64(t,'s'))
+            return t, str(numpy.datetime64(t, 's'))
         except:
             pass
 
     return None, None
-
 
 
 def ensure_defaults(layer):
@@ -138,10 +142,12 @@ def create_vrt(file_path):
 
 
 class StdOutCapture(list):
+
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
         return self
+
     def __exit__(self, *args):
         self.extend(self._stringio.getvalue().splitlines())
         sys.stdout = self._stdout
@@ -232,23 +238,29 @@ def load_handler(path, *args, **kwargs):
     """
     return import_by_path(path)(*args, **kwargs)
 
-def get_kwarg(index,kwargs,default=None):
+
+def get_kwarg(index, kwargs, default=None):
+
     if index in kwargs:
         return kwargs[index]
     else:
-        return getattr(settings,index,default)
+        return getattr(settings, index, default)
+
 
 def increment_filename(filename):
     if os.path.exists(filename):
-        file_base=os.path.basename(filename)
-        file_dir=os.path.dirname(filename)
+        file_base = os.path.basename(filename)
+        file_dir = os.path.dirname(filename)
         file_root, file_ext = os.path.splitext(file_base)
-        i=1
+        i = 1
         while i <= 100:
-            testfile="%s/%s%s.%s"%(file_dir,file_root,i,file_ext)
+            testfile = "%s/%s%s.%s" % (file_dir, file_root, i, file_ext)
+
             if not os.path.exists(testfile):
                 break
+
             i += 1
+
         if not os.path.exists(testfile):
             return testfile
         else:
@@ -256,19 +268,20 @@ def increment_filename(filename):
     else:
         return filename
 
-def raster_import(infile,outfile,*args,**kwargs):
+
+def raster_import(infile, outfile, *args, **kwargs):
+
     if os.path.exists(outfile):
         raise FileExists
 
     if not os.path.exists(infile):
         raise NoDataSourceFound
 
-    options=get_kwarg('options',kwargs,['TILED=YES'])
-    t_srs=get_kwarg('t_srs',kwargs,3857)
-    sr=osr.SpatialReference()
+    options = get_kwarg('options', kwargs, ['TILED=YES'])
+    sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)
     t_srs_prj = sr.ExportToWkt()
-    build_overviews=get_kwarg('build_overviews',kwargs,True)
+    build_overviews = get_kwarg('build_overviews', kwargs, True)
 
     geotiff = gdal.GetDriverByName("GTiff")
     if geotiff is None:
@@ -278,21 +291,21 @@ def raster_import(infile,outfile,*args,**kwargs):
     if indata is None:
         raise NoDataSourceFound
 
-    vrt = gdal.AutoCreateWarpedVRT(indata,None,t_srs_prj,0,.125)
-    outdata = geotiff.CreateCopy(outfile,vrt,0,options)
+    vrt = gdal.AutoCreateWarpedVRT(indata, None, t_srs_prj, 0, .125)
+    outdata = geotiff.CreateCopy(outfile, vrt, 0, options)
+
     if build_overviews:
         outdata.BuildOverviews("AVERAGE")
-    indata = None
-    outdata = None
+
     return outfile
 
-def quote_ident(str):
-    conn=db.connections['datastore']
-    cursor=conn.cursor()
-    query="SELECT quote_ident(%s);"
-    cursor.execute(query,(str,))
-    return cursor.fetchone()[0]
 
+def quote_ident(str):
+    conn = db.connections['datastore']
+    cursor = conn.cursor()
+    query = "SELECT quote_ident(%s);"
+    cursor.execute(query, (str,))
+    return cursor.fetchone()[0]
 
 
 def decode(s, encodings=('ascii', 'utf8', 'latin1')):

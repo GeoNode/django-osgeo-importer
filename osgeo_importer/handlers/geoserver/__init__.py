@@ -3,7 +3,6 @@ from decimal import Decimal, InvalidOperation
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin
 from geoserver.catalog import FailedRequestError
 from osgeo_importer.handlers import ensure_can_run
-from geonode.upload.utils import create_geoserver_db_featurestore
 from django import db
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
@@ -65,7 +64,7 @@ class GeoserverPublishHandler(ImportHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-        if re.search(r'\.tif$',layer):
+        if re.search(r'\.tif$', layer):
             return False
 
         return True
@@ -149,7 +148,7 @@ class GeoserverPublishCoverageHandler(ImportHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-        if re.search(r'\.tif$',layer):
+        if re.search(r'\.tif$', layer):
             return True
 
         return False
@@ -160,10 +159,9 @@ class GeoserverPublishCoverageHandler(ImportHandlerMixin):
         Publishes a Coverage layer to GeoServer.
         """
         name = os.path.splitext(os.path.basename(layer))[0]
-        file = 'file:' + layer
-        workspace=self.catalog.get_workspace(self.workspace)
+        workspace = self.catalog.get_workspace(self.workspace)
 
-        return self.catalog.create_coveragestore(name,layer,workspace,False)
+        return self.catalog.create_coveragestore(name, layer, workspace, False)
 
 
 class GeoWebCacheHandler(ImportHandlerMixin):

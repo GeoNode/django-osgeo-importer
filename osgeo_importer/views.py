@@ -11,6 +11,7 @@ from .utils import import_by_path
 OSGEO_INSPECTOR = import_by_path(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_by_path(OSGEO_IMPORTER)
 
+
 class JSONResponseMixin(object):
     """
     A mixin that can be used to render a JSON response.
