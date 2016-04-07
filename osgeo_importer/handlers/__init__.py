@@ -52,7 +52,26 @@ class ImportHandlerMixin(object):
         return True
 
 
-class FieldConverterHandler(ImportHandlerMixin):
+class GetModifiedFieldsMixin(object):
+
+    @staticmethod
+    def update_date_attributes(layer_config):
+        """
+        Updates the start_date, end_date and convert_to_date to use modified fields if needed.
+        """
+        modified_fields = layer_config.get('modified_fields', {})
+        layer_config['start_date'] = modified_fields.get(layer_config.get('start_date'), layer_config.get('start_date'))
+        layer_config['end_date'] = modified_fields.get(layer_config.get('end_date'), layer_config.get('end_date'))
+
+        convert_to_date = []
+
+        for field in layer_config.get('convert_to_date', []):
+            convert_to_date.append(modified_fields.get(field, field))
+
+        layer_config['convert_to_date'] = convert_to_date
+
+
+class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
     """
     Converts fields based on the layer_configuration.
     """
@@ -67,6 +86,8 @@ class FieldConverterHandler(ImportHandlerMixin):
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
+        self.update_date_attributes(layer_config)
+
         try:
             for field_to_convert in set(layer_config.get('convert_to_date', [])):
 
@@ -77,8 +98,10 @@ class FieldConverterHandler(ImportHandlerMixin):
 
                 # if the start_date or end_date needed to be converted to a date
                 # field, use the newly created field name
+
                 for date_option in ('start_date', 'end_date'):
                     if layer_config.get(date_option) == field_to_convert:
                         layer_config[date_option] = xd_col.lower()
+
         except Exception as e:
             print "Error: %s"%(e)

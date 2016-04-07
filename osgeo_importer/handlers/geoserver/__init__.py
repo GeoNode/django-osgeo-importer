@@ -1,6 +1,6 @@
 import requests
 from decimal import Decimal, InvalidOperation
-from osgeo_importer.handlers import ImportHandlerMixin
+from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin
 from geoserver.catalog import FailedRequestError
 from osgeo_importer.handlers import ensure_can_run
 from geonode.upload.utils import create_geoserver_db_featurestore
@@ -21,7 +21,7 @@ def configure_time(resource, name='time', enabled=True, presentation='LIST', res
     return resource.catalog.save(resource)
 
 
-class GeoServerTimeHandler(ImportHandlerMixin):
+class GeoServerTimeHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
     """
     Enables time in Geoserver for a layer.
     """
@@ -38,15 +38,6 @@ class GeoServerTimeHandler(ImportHandlerMixin):
             return False
 
         return True
-
-    @staticmethod
-    def update_date_attributes(layer_config):
-        """
-        Updates the start_date and end_date to use modified fields if needed.
-        """
-        modified_fields = layer_config.get('modified_fields', {})
-        layer_config['start_date'] = modified_fields.get(layer_config.get('start_date'), layer_config.get('start_date'))
-        layer_config['end_date'] = modified_fields.get(layer_config.get('end_date'), layer_config.get('end_date'))
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):

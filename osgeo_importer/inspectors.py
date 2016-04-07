@@ -298,10 +298,12 @@ class OGRFieldConverter(OGRInspector):
         target_layer = self.data.GetLayerByName(layer_name)
         target_defn = target_layer.GetLayerDefn()
 
-        while target_defn.GetFieldIndex(xd_col) >= 0:
+        # target_layer.GetLayerDefn().GetFieldIndex(parsed_col) raises errors when the field does not
+        # exist with older versions of OGR
+        while target_layer.FindFieldIndex(xd_col, 1) >= 0:
             xd_col = increment(xd_col)
 
-        while target_layer.GetLayerDefn().GetFieldIndex(parsed_col) >= 0:
+        while target_layer.FindFieldIndex(parsed_col, 1) >= 0:
             parsed_col = increment(parsed_col)
 
         original_field_index = target_defn.GetFieldIndex(field_as_string)
