@@ -30,10 +30,23 @@ class GeoServerTimeHandler(ImportHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-        if not all([layer_config.get('configureTime', False), layer_config.get('start_date', None)]):
+
+        if not layer_config.get('configureTime', None):
+            return False
+
+        if not any([layer_config.get('start_date', None), layer_config.get('end_date', None)]):
             return False
 
         return True
+
+    @staticmethod
+    def update_date_attributes(layer_config):
+        """
+        Updates the start_date and end_date to use modified fields if needed.
+        """
+        modified_fields = layer_config.get('modified_fields', {})
+        layer_config['start_date'] = modified_fields.get(layer_config.get('start_date'), layer_config.get('start_date'))
+        layer_config['end_date'] = modified_fields.get(layer_config.get('end_date'), layer_config.get('end_date'))
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
@@ -45,9 +58,11 @@ class GeoServerTimeHandler(ImportHandlerMixin):
         "start_date": Passed as the start time to Geoserver.
         "end_date" (optional): Passed as the end attribute to Geoserver.
         """
+
         lyr = gs_catalog.get_layer(layer)
+        self.update_date_attributes(layer_config)
         configure_time(lyr.resource, attribute=layer_config.get('start_date'),
-                       end_attribute=layer_config.get('end_date'))
+                       end_attribute=layer_config.get('start_date'))
 
 
 class GeoserverPublishHandler(ImportHandlerMixin):

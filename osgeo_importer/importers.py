@@ -231,6 +231,7 @@ class OGRImport(Import):
             target_create_options.append('PRECISION=NO')
 
         for layer_options in configuration_options:
+            layer_options['modified_fields'] = {}
             layer = data.GetLayer(layer_options.get('index'))
             layer_name = layer_options.get('name', layer.GetName().lower())
             layer_type = self.get_layer_type(layer, data)
@@ -272,7 +273,15 @@ class OGRImport(Import):
             layer_definition = ogr.Feature(layer.GetLayerDefn())
 
             for i in range(layer_definition.GetFieldCount()):
-                target_layer.CreateField(layer_definition.GetFieldDefnRef(i))
+
+                field_def = layer_definition.GetFieldDefnRef(i)
+
+                target_layer.CreateField(field_def)
+                new_name = target_layer.GetLayerDefn().GetFieldDefn(i).GetName()
+                old_name = field_def.GetName()
+
+                if new_name != old_name:
+                    layer_options['modified_fields'][old_name] = new_name
 
             for i in range(0, layer.GetFeatureCount()):
                 feature = layer.GetFeature(i)
