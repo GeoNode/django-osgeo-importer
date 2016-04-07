@@ -36,11 +36,7 @@ for use in your application.
 Inspectors are Python classes that are responsible for reading incoming geospatial datasets.  Custom inspectors should
  implement the methods exposed in the `InspectorMixin`.
 
-### Importers
-Importers are Python classes that are responsible for opening incoming geospatial datasets (using one or many inspectors) and
-copying features to a target location - typically a PostGIS database.
-
-#### GDALInspector
+##### GDALInspector
 Uses the GDAL library to read geospatial data.
 
 GDALInspector settings:
@@ -49,11 +45,16 @@ GDALInspector settings:
 `IMPORT_CSV_Y_FIELDS` : List of fields passed in as the Y_POSSIBLE_NAMES open options to the CSV Driver.
 `IMPORT_CSV_GEOM_FIELDS` : List of fields passed in as the GEOM_POSSIBLE_NAMES open options to the CSV Driver.
 
-#### OGRInspector
+##### OGRInspector
 Uses the OGR library to read geospatial data.
 
 ### Handlers
 Handlers are Python classes which are executed in order by the Importer after the import process has succeeded.  The response from
 the Importer's `import` method is sent to each handler which includes the configuration options provided at upload.
+
+
+### Importers
+Importers are Python classes that are responsible for opening incoming geospatial datasets (using one or many inspectors) and
+copying features to a target location - typically a PostGIS database.
 
 
