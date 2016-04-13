@@ -13,10 +13,14 @@ from cStringIO import StringIO
 from datetime import datetime
 from dateutil.parser import parse
 from django.template import Context, Template
-from django.utils.module_loading import import_by_path
 from django.conf import settings
 from django import db
 logger = logging.getLogger(__name__)
+
+try:
+    from django.utils.module_loading import import_string
+except ImportError:
+    from django.utils.module_loading import import_by_path as import_string
 
 
 ogr.UseExceptions()
@@ -236,7 +240,7 @@ def load_handler(path, *args, **kwargs):
         >>> load_handler('django.core.files.uploadhandler.TemporaryFileUploadHandler', request)
         <TemporaryFileUploadHandler object at 0x...>
     """
-    return import_by_path(path)(*args, **kwargs)
+    return import_string(path)(*args, **kwargs)
 
 
 def get_kwarg(index, kwargs, default=None):

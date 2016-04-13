@@ -6,10 +6,10 @@ from .forms import UploadFileForm
 from .models import UploadedData, UploadLayer, DEFAULT_LAYER_CONFIGURATION
 from .importers import OSGEO_IMPORTER
 from .inspectors import OSGEO_INSPECTOR
-from .utils import import_by_path
+from .utils import import_string
 
-OSGEO_INSPECTOR = import_by_path(OSGEO_INSPECTOR)
-OSGEO_IMPORTER = import_by_path(OSGEO_IMPORTER)
+OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
+OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
 
 
 class JSONResponseMixin(object):
