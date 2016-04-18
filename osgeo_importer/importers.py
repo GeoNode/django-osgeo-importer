@@ -273,6 +273,7 @@ class OGRImport(Import):
 
             # adding fields to new layer
             layer_definition = ogr.Feature(layer.GetLayerDefn())
+            source_fid = None
 
             for i in range(layer_definition.GetFieldCount()):
 
@@ -284,6 +285,9 @@ class OGRImport(Import):
 
                 if new_name != old_name:
                     layer_options['modified_fields'][old_name] = new_name
+
+                if old_name == target_layer.GetFIDColumn() and not layer.GetFIDColumn():
+                    source_fid = i
 
             for i in range(0, layer.GetFeatureCount()):
                 feature = layer.GetFeature(i)
@@ -302,6 +306,8 @@ class OGRImport(Import):
 
                         geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
                         feature.SetGeometry(conversion_function(geom))
+                        if source_fid is not None:
+                            feature.SetFID(feature.GetField(source_fid))
 
                     try:
                         target_layer.CreateFeature(feature)

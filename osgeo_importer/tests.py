@@ -864,5 +864,12 @@ class UploaderTests(MapStoryTestMixin):
         self.assertTrue('time' in layer.resource.metadata)
         self.assertEqual('year', layer.resource.metadata['time'].attribute)
 
+    def test_fid_field(self):
+        """
+        Regression test for preserving an FID field when target layer supports it but source does not.
+        """
+        self.generic_import('noaa_paleoclimate.zip', configuration_options=[{'index': 0}])
+
+
 if __name__ == '__main__':
     unittest.main()
