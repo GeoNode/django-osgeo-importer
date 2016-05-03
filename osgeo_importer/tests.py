@@ -242,6 +242,7 @@ class UploaderTests(MapStoryTestMixin):
         """
         self.assertEqual(launder('tm_world_borders_simpl_0.3'), 'tm_world_borders_simpl_0_3')
         self.assertEqual(launder('Testing#'), 'testing_')
+        self.assertEqual(launder('   '), '_')
 
     def test_boxes_with_date_iso_date_zip(self):
         """

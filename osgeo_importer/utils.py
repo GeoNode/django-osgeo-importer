@@ -214,10 +214,9 @@ def launder(string):
     Launders a string.
     (Port of the gdal LaunderName function)
     """
-    for i in ['-', '#', '.']:
-        string = string.replace(i, '_')
+    return re.sub('[^0-9a-zA-Z]+', '_', string.lower())
 
-    return string.lower()
+
 
 
 def sizeof_fmt(num):
