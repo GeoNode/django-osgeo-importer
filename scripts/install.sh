@@ -43,7 +43,7 @@ if [ -n "$1" ]
 fi
 
 pip install -r requirements.txt
-pip install -e git+https://github.com/GeoNode/geonode.git@master#egg=GeoNode
+pip install -e git+https://github.com/GeoNode/geonode.git@a647c5adea2c896f0f3f998cacd8b427952b933f#egg=GeoNode
 pip install -e .
 pip install awscli
 pip install --upgrade  numpy
