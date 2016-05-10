@@ -358,12 +358,12 @@
     })
 
   .directive('upload',
-      function($http, UploadedData) {
+      function($http, UploadedData, $sce) {
         return {
           restrict: 'E',
           replace: true,
           templateUrl: function(elem,attrs) {
-           return attrs.templateUrl || '/static/osgeo_importer/partials/upload.html'
+           return $sce.trustAsResourceUrl(attrs.templateUrl || '/static/osgeo_importer/partials/upload.html');
           },
           scope: {
               upload: '=uploadObject',
