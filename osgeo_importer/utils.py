@@ -217,8 +217,6 @@ def launder(string):
     return re.sub('[^0-9a-zA-Z]+', '_', string.lower())
 
 
-
-
 def sizeof_fmt(num):
     """
     Returns human-friendly file sizes.
