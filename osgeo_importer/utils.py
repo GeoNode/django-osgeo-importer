@@ -76,7 +76,7 @@ def timeparse(timestr):
 
     try:
         t = numpy.datetime64(timestr).astype('datetime64[s]').astype('int64')
-        return t, str(numpy.datetime64(t, 's'))
+        return t, str(numpy.datetime64(t, 'ms'))
 
     except:
         pass
