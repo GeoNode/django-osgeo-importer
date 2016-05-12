@@ -5,8 +5,8 @@ sudo apt-get install -y --force-yes openjdk-7-jdk --no-install-recommends
 mkdir gs
 pushd gs
 wget http://repo2.maven.org/maven2/org/mortbay/jetty/jetty-runner/8.1.8.v20121106/jetty-runner-8.1.8.v20121106.jar
-wget http://ares.boundlessgeo.com/geoserver/${GS_VERSION}/geoserver-${GS_VERSION}-latest-war.zip
-wget http://build.geonode.org/geoserver/latest/geoserver.war
+wget http://ares.boundlessgeo.com/geoserver/${GS_VERSION}/geoserver-${GS_VERSION}-latest-war.zip -O geoserver.war
+#wget http://build.geonode.org/geoserver/latest/geoserver.war
 chmod +x jetty-runner-8.1.8.v20121106.jar
 chmod +x geoserver-${GS_VERSION}-latest-war.zip
 popd
