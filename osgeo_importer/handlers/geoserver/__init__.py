@@ -1,13 +1,13 @@
-import requests
-from decimal import Decimal, InvalidOperation
-from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin
-from geoserver.catalog import FailedRequestError
-from osgeo_importer.handlers import ensure_can_run
-from django import db
-from geonode.geoserver.helpers import gs_catalog
-from geoserver.support import DimensionInfo
 import re
 import os
+import requests
+
+from decimal import Decimal, InvalidOperation
+from django import db
+from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
+from geoserver.catalog import FailedRequestError
+from geonode.geoserver.helpers import gs_catalog
+from geoserver.support import DimensionInfo
 
 
 def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
@@ -20,7 +20,14 @@ def configure_time(resource, name='time', enabled=True, presentation='LIST', res
     return resource.catalog.save(resource)
 
 
-class GeoServerTimeHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
+class GeoserverHandlerMixin(ImportHandlerMixin):
+    """
+    A Mixin for Geoserver handlers.
+    """
+    catalog = gs_catalog
+
+
+class GeoServerTimeHandler(GetModifiedFieldsMixin, GeoserverHandlerMixin):
     """
     Enables time in Geoserver for a layer.
     """
@@ -49,14 +56,13 @@ class GeoServerTimeHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
         "end_date" (optional): Passed as the end attribute to Geoserver.
         """
 
-        lyr = gs_catalog.get_layer(layer)
+        lyr = self.catalog.get_layer(layer)
         self.update_date_attributes(layer_config)
         configure_time(lyr.resource, attribute=layer_config.get('start_date'),
                        end_attribute=layer_config.get('start_date'))
 
 
-class GeoserverPublishHandler(ImportHandlerMixin):
-    catalog = gs_catalog
+class GeoserverPublishHandler(GeoserverHandlerMixin):
     workspace = 'geonode'
     srs = 'EPSG:4326'
 
@@ -140,8 +146,7 @@ class GeoserverPublishHandler(ImportHandlerMixin):
         return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config), self.srs)
 
 
-class GeoserverPublishCoverageHandler(ImportHandlerMixin):
-    catalog = gs_catalog
+class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
     workspace = 'geonode'
 
     def can_run(self, layer, layer_config, *args, **kwargs):
@@ -164,12 +169,10 @@ class GeoserverPublishCoverageHandler(ImportHandlerMixin):
         return self.catalog.create_coveragestore(name, layer, workspace, False)
 
 
-class GeoWebCacheHandler(ImportHandlerMixin):
+class GeoWebCacheHandler(GeoserverHandlerMixin):
     """
     Configures GeoWebCache for a layer in Geoserver.
     """
-    catalog = gs_catalog
-    workspace = 'geonode'
 
     @staticmethod
     def config(**kwargs):
@@ -256,16 +259,13 @@ class GeoWebCacheHandler(ImportHandlerMixin):
                                          body=self.config(regex_parameter_filter=regex_filter, name=self.layer.name))
 
 
-class GeoServerBoundsHandler(ImportHandlerMixin):
+class GeoServerBoundsHandler(GeoserverHandlerMixin):
     """
     Sets the lat/long bounding box of a layer to the max extent of WGS84 if the values of the current lat/long
     bounding box fail the Decimal quantize method (which Django uses internally when validating decimals).
 
     This can occur when the native bounding box contain Infinity values.
     """
-
-    catalog = gs_catalog
-    workspace = 'geonode'
 
     def can_run(self, layer, layer_config, *args, **kwargs):
         """
