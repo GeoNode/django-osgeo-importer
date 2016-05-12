@@ -75,8 +75,8 @@ def timeparse(timestr):
     timestr = timestr.strip()
 
     try:
-        t = numpy.datetime64(timestr).astype('datetime64[s]').astype('int64')
-        return t, str(numpy.datetime64(t, 's'))
+        t = numpy.datetime64(timestr).astype('datetime64[ms]').astype('int64')
+        return t, str(numpy.datetime64(t, 'ms'))
 
     except:
         pass
@@ -86,8 +86,8 @@ def timeparse(timestr):
         try:
             logger.debug('trying %s as direct parse', timestr)
             dt = parse(timestr, default=DEFAULT)
-            t = numpy.datetime64(dt.isoformat()).astype('datetime64[s]').astype('int64')
-            return t, str(numpy.datetime64(t, 's'))
+            t = numpy.datetime64(dt.isoformat()).astype('datetime64[ms]').astype('int64')
+            return t, str(numpy.datetime64(t, 'ms'))
         except:
             pass
 
