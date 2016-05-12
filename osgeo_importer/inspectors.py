@@ -3,7 +3,7 @@ import os
 import gdal
 import ogr
 from django.conf import settings
-from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident
+from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
 
 from django import db
 
@@ -291,7 +291,7 @@ class OGRTruncatedConverter(OGRInspector):
         return field_schema
 
 
-class OGRFieldConverter(OGRInspector):
+class BigDateOGRFieldConverter(OGRInspector):
 
     def convert_field(self, layer_name, field):
         field_as_string = str(field)
@@ -347,3 +347,38 @@ class OGRFieldConverter(OGRInspector):
         cursor.execute(query)
 
         return xd_col
+
+
+class OGRFieldConverter(OGRInspector):
+    """
+    Uses dateutil.parse to parse date times.
+    """
+
+    def convert_field(self, layer_name, field):
+        fieldname = '{0}_as_date'.format(field)
+        target_layer = self.data.GetLayerByName(layer_name)
+
+        while target_layer.GetLayerDefn().GetFieldIndex(fieldname) >= 0:
+            fieldname = increment(fieldname)
+
+        target_layer.CreateField(ogr.FieldDefn(fieldname, ogr.OFTDateTime))
+        field_index = target_layer.GetLayerDefn().GetFieldIndex(fieldname)
+
+        for feat in target_layer:
+
+            if not feat:
+                continue
+
+            string_field = feat[str(field)]
+
+            if string_field:
+                pars = parse(str(string_field))
+
+                feat.SetField(field_index, pars.year, pars.month, pars.day, pars.hour, pars.minute, pars.second,
+                              pars.microsecond)
+
+                target_layer.SetFeature(feat)
+
+            feat = None
+
+        return fieldname

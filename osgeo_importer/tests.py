@@ -165,8 +165,8 @@ class UploaderTests(MapStoryTestMixin):
 
         layer = self.generic_import('boxes_with_year_field.shp', configuration_options=[{'index': 0,
                                                                                          'convert_to_date': ['date']}])
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
 
@@ -183,8 +183,8 @@ class UploaderTests(MapStoryTestMixin):
                                                                                    'configureTime': True
                                                                                    }])
 
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
         self.generic_time_check(layer, attribute=date_attr.attribute)
@@ -196,8 +196,8 @@ class UploaderTests(MapStoryTestMixin):
 
         layer = self.generic_import('boxes_with_date.csv', configuration_options=[{'index': 0,
                                                                                          'convert_to_date': ['date']}])
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
         self.generic_time_check(layer, attribute=date_attr.attribute)
@@ -215,10 +215,9 @@ class UploaderTests(MapStoryTestMixin):
         """
 
         layer = self.generic_import('boxes_with_date_iso_date.shp', configuration_options=[{'index': 0,
-                                                                                         'convert_to_date': ['date']}])
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
-
+                                                                                            'convert_to_date': ['date']}])
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
 
         self.generic_time_check(layer, attribute=date_attr.attribute)
@@ -250,9 +249,9 @@ class UploaderTests(MapStoryTestMixin):
         """
 
         layer = self.generic_import('boxes_with_date_iso_date.zip', configuration_options=[{'index': 0,
-                                                                                         'convert_to_date': ['date']}])
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
+                                                                                          'convert_to_date': ['date']}])
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
 
@@ -266,8 +265,8 @@ class UploaderTests(MapStoryTestMixin):
         layer = self.generic_import('boxes_with_dates_bc.shp', configuration_options=[{'index': 0,
                                                                                          'convert_to_date': ['date']}])
 
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
 
@@ -283,8 +282,8 @@ class UploaderTests(MapStoryTestMixin):
 
         # OGR will name geojson layers 'ogrgeojson' we rename to the path basename
         self.assertTrue(layer.name.startswith('point_with_date'))
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
         self.generic_time_check(layer, attribute=date_attr.attribute)
@@ -302,11 +301,11 @@ class UploaderTests(MapStoryTestMixin):
                                                                                          'configureTime': True
                                                                                          }])
 
-        date_attr = filter(lambda attr: attr.attribute == 'date_xd', layer.attributes)[0]
-        end_date_attr = filter(lambda attr: attr.attribute == 'enddate_xd', layer.attributes)[0]
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        end_date_attr = filter(lambda attr: attr.attribute == 'enddate_as_date', layer.attributes)[0]
 
-        self.assertEqual(date_attr.attribute_type, 'xsd:long')
-        self.assertEqual(end_date_attr.attribute_type, 'xsd:long')
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
+        self.assertEqual(end_date_attr.attribute_type, 'xsd:dateTime')
 
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,
                        end_attribute=end_date_attr.attribute)
@@ -331,8 +330,8 @@ class UploaderTests(MapStoryTestMixin):
                                                          'convert_to_date': ['time'],
                                                          'configureTime': True
                                                          }])
-        date_attr = filter(lambda attr: attr.attribute == 'time_xd', layer.attributes)[0]
-        self.assertEqual(date_attr.attribute_type, u'xsd:long')
+        date_attr = filter(lambda attr: attr.attribute == 'time_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, u'xsd:dateTime')
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute)
         self.generic_time_check(layer, attribute=date_attr.attribute)
 
@@ -361,7 +360,7 @@ class UploaderTests(MapStoryTestMixin):
         layer = self.generic_import(filename, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
         self.assertTrue(layer.name.startswith('us_shootings'))
 
-        date_field = 'date_xd'
+        date_field = 'date'
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_field)
         self.generic_time_check(layer, attribute=date_field)
 

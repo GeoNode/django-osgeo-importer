@@ -1,6 +1,6 @@
 from django import db
 from django.conf import settings
-from osgeo_importer.inspectors import OGRFieldConverter
+from osgeo_importer.inspectors import OGRFieldConverter, BigDateOGRFieldConverter
 
 
 DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
@@ -74,6 +74,7 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
     """
     Converts fields based on the layer_configuration.
     """
+    field_converter = OGRFieldConverter
 
     def convert_field_to_time(self, layer, field):
         d = db.connections['datastore'].settings_dict
@@ -81,7 +82,7 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
                                                                                             d['PASSWORD'], d['HOST'],
                                                                                             d['PORT'])
 
-        with OGRFieldConverter(connection_string) as datasource:
+        with self.field_converter(connection_string) as datasource:
             return datasource.convert_field(layer, field)
 
     @ensure_can_run
@@ -94,14 +95,24 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
                 if not field_to_convert:
                     continue
 
-                xd_col = self.convert_field_to_time(layer, field_to_convert)
+                new_col = self.convert_field_to_time(layer, field_to_convert)
 
                 # if the start_date or end_date needed to be converted to a date
-                # field, use the newly created field name
-
+                # field, use the newly created field name/
                 for date_option in ('start_date', 'end_date'):
                     if layer_config.get(date_option) == field_to_convert:
-                        layer_config[date_option] = xd_col.lower()
+                        layer_config[date_option] = new_col.lower()
 
         except Exception as e:
             print "Error: %s" % e
+
+
+class BigDateFieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
+    """
+    Uses the Big Date field converter.
+
+    Note: Using this class with Geoserver requires a special build of GeoTools.
+    https://github.com/MapStory/geotools/commits/postgis-xdate-udt-12.x
+    """
+
+    field_converter = BigDateOGRFieldConverter
