@@ -8,7 +8,7 @@ pushd gs
 wget http://repo2.maven.org/maven2/org/mortbay/jetty/jetty-runner/8.1.8.v20121106/jetty-runner-8.1.8.v20121106.jar
 wget http://ares.boundlessgeo.com/geoserver/${GS_VERSION}/geoserver-${GS_VERSION}-latest-war.zip
 chmod +x jetty-runner-8.1.8.v20121106.jar
-unzip geoserver-${GS_VERSION}-latest-war.zip -d .
+unzip -o geoserver-${GS_VERSION}-latest-war.zip -d .
 popd
 # postgis
 sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y # For postgresql-9.1-postgis-2.1
