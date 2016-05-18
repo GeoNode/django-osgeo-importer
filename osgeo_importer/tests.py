@@ -810,6 +810,17 @@ class UploaderTests(MapStoryTestMixin):
 
         self.generic_import('PhoenixFirstDues.zip', configuration_options=[{'index': 0}])
 
+
+    def test_non_4326_SR(self):
+        """
+        Tests shapefile with multipart polygons.
+        """
+
+        res = self.generic_import('Istanbul.zip', configuration_options=[{'index': 0}])
+        featuretype = self.cat.get_resource(res.name)
+        self.assertEqual(featuretype.projection, 'EPSG:32635')
+
+
     def test_gwc_handler(self):
         """
         Tests the GeoWebCache handler
