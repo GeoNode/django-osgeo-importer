@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # When explicitly defining a VM, the name used replaces the token 'default'.
   config.vm.define "django-osgeo-importer"
   config.vm.provision "shell", path: "scripts/install.sh", env: {:AWS_ACCESS_KEY_ID => AWS_ACCESS_KEY_ID,
-  :AWS_SECRET_ACCESS_KEY=>AWS_SECRET_ACCESS_KEY}, args: "/vagrant"
+  :AWS_SECRET_ACCESS_KEY=>AWS_SECRET_ACCESS_KEY, :GS_VERSION=> '2.8.x'}, args: "/vagrant"
 
  config.vm.provision "shell", path: "scripts/before_script.sh", args: "/vagrant"
 
