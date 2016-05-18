@@ -108,7 +108,7 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
             print "Error: %s" % e
 
 
-class BigDateFieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
+class BigDateFieldConverterHandler(FieldConverterHandler):
     """
     Uses the Big Date field converter.
 
