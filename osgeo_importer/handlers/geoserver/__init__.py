@@ -135,15 +135,15 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         Handler specific params:
         "geoserver_store": Connection parameters used to get/create the geoserver store.
-
+        "srs": The native srs authority and code (ie EPSG:4326) for this data source.
         """
-
         store = self.get_or_create_datastore(layer_config)
 
         if getattr(store, 'type', '').lower() == 'geogig':
             self.geogig_handler(store, layer, layer_config)
 
-        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config), self.srs)
+        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config),
+                                                layer_config.get('srs', self.srs))
 
 
 class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
@@ -289,3 +289,26 @@ class GeoServerBoundsHandler(GeoserverHandlerMixin):
         except InvalidOperation:
             resource.latlon_bbox = ['-180', '180', '-90', '90', 'EPSG:4326']
             self.catalog.save(resource)
+
+
+class GenericSLDHandler(GeoserverHandlerMixin):
+    """
+    Handles cases in Geoserver 2.8x+ where the generic sld is used.  The generic style causes service exceptions.
+    """
+
+    def can_run(self, layer, layer_config, *args, **kwargs):
+        """
+        Only run this handler if the layer is found in Geoserver and the layer's style is the generic style.
+        """
+        self.catalog._cache.clear()
+        self.layer = self.catalog.get_layer(layer)
+
+        return self.layer and self.layer.default_style and self.layer.default_style.name == 'generic'
+
+    @ensure_can_run
+    def handle(self, layer, layer_config, *args, **kwargs):
+        """
+        Replace the generic layer with the 'point' layer.
+        """
+        self.layer.default_style = 'point'
+        self.catalog.save(self.layer)

@@ -9,6 +9,7 @@ DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
                            'osgeo_importer.handlers.geoserver.GeoServerTimeHandler',
                            'osgeo_importer.handlers.geoserver.GeoWebCacheHandler',
                            'osgeo_importer.handlers.geoserver.GeoServerBoundsHandler',
+                           'osgeo_importer.handlers.geoserver.GenericSLDHandler',
                            'osgeo_importer.handlers.geonode.GeoNodePublishHandler']
 
 IMPORT_HANDLERS = getattr(settings, 'IMPORT_HANDLERS', DEFAULT_IMPORT_HANDLERS)
@@ -107,7 +108,7 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
             print "Error: %s" % e
 
 
-class BigDateFieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
+class BigDateFieldConverterHandler(FieldConverterHandler):
     """
     Uses the Big Date field converter.
 

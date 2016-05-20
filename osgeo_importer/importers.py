@@ -251,6 +251,10 @@ class OGRImport(Import):
                 srs = osr.SpatialReference()
                 srs.ImportFromEPSG(4326)
 
+            # pass the srs authority code to handlers
+            if srs.AutoIdentifyEPSG() == 0:
+                layer_options['srs'] = '{0}:{1}'.format(srs.GetAuthorityName(None), srs.GetAuthorityCode(None))
+
             n = 0
             while True:
                 n += 1
@@ -306,8 +310,9 @@ class OGRImport(Import):
 
                         geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
                         feature.SetGeometry(conversion_function(geom))
-                        if source_fid is not None:
-                            feature.SetFID(feature.GetField(source_fid))
+
+                    if source_fid is not None:
+                        feature.SetFID(feature.GetField(source_fid))
 
                     try:
                         target_layer.CreateFeature(feature)

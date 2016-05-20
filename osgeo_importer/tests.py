@@ -109,7 +109,7 @@ class UploaderTests(MapStoryTestMixin):
         self.non_admin_username, self.non_admin_password = self.create_user('non_admin', 'non_admin')
         self.cat = Catalog(ogc_server_settings.internal_rest, *ogc_server_settings.credentials)
         if self.cat.get_workspace('geonode') == None:
-            self.cat.create_workspace('geonode', 'http://geonode.org')
+            self.cat.create_workspace('geonode', 'http://www.geonode.org/')
         self.workspace = 'geonode'
         self.datastore = self.create_datastore(self.postgis, self.cat)
 
@@ -809,6 +809,17 @@ class UploaderTests(MapStoryTestMixin):
         """
 
         self.generic_import('PhoenixFirstDues.zip', configuration_options=[{'index': 0}])
+
+
+    def test_non_4326_SR(self):
+        """
+        Tests shapefile with multipart polygons.
+        """
+
+        res = self.generic_import('Istanbul.zip', configuration_options=[{'index': 0}])
+        featuretype = self.cat.get_resource(res.name)
+        self.assertEqual(featuretype.projection, 'EPSG:32635')
+
 
     def test_gwc_handler(self):
         """
