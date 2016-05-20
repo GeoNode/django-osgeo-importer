@@ -8,12 +8,18 @@ from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, 
 from .handlers import IMPORT_HANDLERS
 from django.conf import settings
 from django import db
+from django.core.files.storage import FileSystemStorage
 
 ogr.UseExceptions()
 
 
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
-RASTER_FILES = getattr(settings, 'RASTER_FILES', '/tmp')
+MEDIA_ROOT = FileSystemStorage().location
+RASTER_FILES = '%s/rasterfiles' % MEDIA_ROOT
+try:
+    os.makedirs(RASTER_FILES)
+except:
+    pass
 
 
 class Import(object):

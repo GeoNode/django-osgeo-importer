@@ -8,6 +8,9 @@ from django import db
 import os
 import re
 
+import logging
+log = logging.getLogger(__name__)
+
 User = get_user_model()
 
 
@@ -63,7 +66,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
         if self.importer.upload_file and results['layers'][0]['status'] == 'created':
             matched_layer = Layer.objects.get(name=results['layers'][0]['name'])
-            upload_layer = UploadLayer.objects.get(upload=self.importer.upload_file.upload,
+            upload_layer = UploadLayer.objects.get(upload_file=self.importer.upload_file,
                                                    index=layer_config.get('index'))
             upload_layer.layer = matched_layer
             upload_layer.save()

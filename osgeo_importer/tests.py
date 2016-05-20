@@ -119,6 +119,40 @@ class UploaderTests(MapStoryTestMixin):
         """
         self.cat.delete(self.datastore, recurse=True)
 
+    def generic_api_upload(self, files, configuration_options=None):
+        """
+        Tests the import api.
+        """
+        c = AdminClient()
+        c.login_as_non_admin()
+        if isinstance(files, type(str())):
+            files = [files]
+        outfiles = []
+        handles = {}
+        for file in files:
+            f = os.path.join(
+                os.path.dirname(__file__),
+                '..',
+                'importer-test-files',
+                file)
+            handles[file] = open(f)
+            outfiles.append(SimpleUploadedFile(file, handles[file].read()))
+        response = c.post(
+            reverse('uploads-multi-json'),
+            {'file': outfiles,
+             'json': json.dumps(configuration_options)},
+            follow=True)
+        # Clean up file handles
+        for file, handle in handles.items():
+            handle.close()
+
+        print response.content
+        content = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content['id'], 1)
+        return content
+
     def generic_import(self, file, configuration_options=[{'index': 0}]):
 
         f = file
@@ -151,6 +185,24 @@ class UploaderTests(MapStoryTestMixin):
         l = gdal.OpenEx(layerfile)
         self.assertTrue(l.GetDriver().ShortName,'GTiff')
         return layer
+
+    def test_multi_upload(self):
+        """
+        Tests Uploading Multiple Files
+        """
+        upload = self.generic_api_upload(
+            ['boxes_with_year_field.zip',
+             'boxes_with_date.zip',
+             'point_with_date.geojson'],
+              [{'upload_file_name': 'boxes_with_year_field.shp',
+                'config': [{'index': 0}]},
+               {'upload_file_name': 'boxes_with_date.shp',
+               'config': [{'index': 0}]},
+               {'upload_file_name': 'point_with_date.geojson',
+                'config': [{'index': 0}]}
+               ]
+        )
+        self.assertEqual(9, upload['count'])
 
     def test_raster(self):
         """

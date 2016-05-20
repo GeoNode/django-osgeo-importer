@@ -3,11 +3,11 @@ import os
 import shutil
 from zipfile import ZipFile
 from django.http import HttpResponse, Http404
-from django.views.generic import View,FormView, ListView, TemplateView
+from django.views.generic import View, FormView, ListView, TemplateView
 from django.core.urlresolvers import reverse_lazy
 from django.core.files.storage import FileSystemStorage
 from .forms import UploadFileForm
-from .models import UploadedData, UploadLayer,UploadFile, DEFAULT_LAYER_CONFIGURATION
+from .models import UploadedData, UploadLayer, UploadFile, DEFAULT_LAYER_CONFIGURATION
 from .importers import OSGEO_IMPORTER
 from .inspectors import OSGEO_INSPECTOR
 from .utils import import_string, CheckFile
@@ -17,6 +17,7 @@ log = logging.getLogger(__name__)
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
+MEDIA_ROOT = FileSystemStorage().location
 
 from .tasks import import_object
 
@@ -43,7 +44,7 @@ class JSONResponseMixin(object):
         # to do much more complex handling to ensure that arbitrary
         # objects -- such as Django model instances or querysets
         # -- can be serialized as JSON.
-        return json.dumps(context)
+        return json.dumps(context, default=lambda x:None)
 
 
 class JSONView(JSONResponseMixin, TemplateView):
@@ -100,6 +101,7 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
             configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
             configuration_options.update({'index': layer.get('index')})
             upload.uploadlayer_set.add(UploadLayer(name=layer.get('name'),
+                                                   upload_file=upload_file,
                                                    fields=layer.get('fields', {}),
                                                    index=layer.get('index'),
                                                    feature_count=layer.get('feature_count'),
@@ -162,7 +164,7 @@ def configure_layers(configs, upload_id=None):
 
 
 class MultiUpload(View, ImportHelper, JSONResponseMixin):
-    json = False
+    json = True
 
     def post(self, request):
         log.debug("File List: %s", request.FILES.getlist('file'))

@@ -141,9 +141,10 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         if getattr(store, 'type', '').lower() == 'geogig':
             self.geogig_handler(store, layer, layer_config)
-
-        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config),
+        ft = self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config),
                                                 layer_config.get('srs', self.srs))
+        ftjs = {'title':ft.title, 'projection':ft.projection, 'attributes':ft.attributes}
+        return ftjs
 
 
 class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
