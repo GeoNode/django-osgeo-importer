@@ -319,3 +319,45 @@ def decode(s, encodings=('ascii', 'utf8', 'latin1')):
         except UnicodeDecodeError:
             pass
     return s.decode('ascii', 'ignore')
+
+
+class CheckFile(object):
+    def __init__(self, file=None):
+        self.RASTER_EXTENSIONS = getattr(
+            settings, 'OSGEO_IMPORTER_RASTER_EXTENSIONS', ['tif'])
+        self.VECTOR_EXTENSIONS = getattr(
+            settings, 'OSGEO_IMPORTER_VECTOR_EXTENSIONS', [
+                'gpx', 'geojson', 'json', 'zip', 'tar', 'kml', 'csv', 'shp'])
+        self.SUPPORT_EXTENSIONS = getattr(
+            settings, 'OSGEO_IMPORTER_SUPPORT_EXTENSIONS', [
+                'xml', 'sld', 'prj', 'dbf', 'shx'])
+        self.DATA_EXTENSIONS = self.RASTER_EXTENSIONS + self.VECTOR_EXTENSIONS
+        self.VALID_EXTENSIONS = self.DATA_EXTENSIONS + self.SUPPORT_EXTENSIONS
+        try:
+            self.name = file.name
+        except:
+            self.name = file
+        if self.name != '' and self.name is not None:
+            self.basename = os.path.basename(self.name)
+            self.dirname = os.path.dirname(self.name)
+            self.root = os.path.splitext(self.basename)[0]
+            self.ext = self.file_ext()
+            self.raster = self.validate_extension(self.RASTER_EXTENSIONS)
+            self.vector = self.validate_extension(self.VECTOR_EXTENSIONS)
+            self.support = self.validate_extension(self.SUPPORT_EXTENSIONS)
+            self.datafile = self.validate_extension(self.DATA_EXTENSIONS)
+            self.valid_extension = self.validate_extension(
+                self.VALID_EXTENSIONS)
+            if self.ext == 'zip':
+                self.zip = True
+            else:
+                self.zip = False
+
+    def file_ext(self):
+        return os.path.splitext(self.name.lower())[1].replace('.', '')
+
+    def validate_extension(self, extlist):
+        if self.ext in extlist:
+            return True
+        else:
+            return False
