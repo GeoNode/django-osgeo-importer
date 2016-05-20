@@ -310,8 +310,9 @@ class OGRImport(Import):
 
                         geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
                         feature.SetGeometry(conversion_function(geom))
-                        if source_fid is not None:
-                            feature.SetFID(feature.GetField(source_fid))
+
+                    if source_fid is not None:
+                        feature.SetFID(feature.GetField(source_fid))
 
                     try:
                         target_layer.CreateFeature(feature)
