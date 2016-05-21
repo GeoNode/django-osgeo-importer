@@ -11,6 +11,7 @@ from .models import UploadedData, UploadLayer, UploadFile, DEFAULT_LAYER_CONFIGU
 from .importers import OSGEO_IMPORTER
 from .inspectors import OSGEO_INSPECTOR
 from .utils import import_string, CheckFile
+from .tasks import import_object
 
 import logging
 log = logging.getLogger(__name__)
@@ -18,8 +19,6 @@ log = logging.getLogger(__name__)
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
 MEDIA_ROOT = FileSystemStorage().location
-
-from .tasks import import_object
 
 
 class JSONResponseMixin(object):
@@ -44,7 +43,7 @@ class JSONResponseMixin(object):
         # to do much more complex handling to ensure that arbitrary
         # objects -- such as Django model instances or querysets
         # -- can be serialized as JSON.
-        return json.dumps(context, default=lambda x:None)
+        return json.dumps(context, default=lambda x: None)
 
 
 class JSONView(JSONResponseMixin, TemplateView):

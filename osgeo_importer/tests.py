@@ -145,8 +145,6 @@ class UploaderTests(MapStoryTestMixin):
         # Clean up file handles
         for file, handle in handles.items():
             handle.close()
-
-        print response.content
         content = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
@@ -203,6 +201,28 @@ class UploaderTests(MapStoryTestMixin):
                ]
         )
         self.assertEqual(9, upload['count'])
+
+    def test_upload_with_slds(self):
+        """
+        Tests Uploading Multiple Files
+        """
+        upload = self.generic_api_upload(
+            ['boxes_with_date.zip',
+             'boxes.sld',
+             'boxes1.sld'],
+              [{'upload_file_name': 'boxes_with_date.shp',
+               'config': [{'index': 0, 'default_style': 'boxes.sld',
+                           'styles': ['boxes.sld', 'boxes1.sld']}]}
+               ]
+        )
+        self.assertEqual(6, upload['count'])
+        layerid = upload['uploaded'][0]['pk'];
+        layer = Layer.objects.get(pk=layerid)
+        gslayer = self.cat.get_layer(layer.name)
+        default_style = gslayer.default_style
+        self.cat._cache.clear()
+        self.assertEqual('boxes.sld',default_style.filename)
+        self.assertEqual('boxes1.sld',gslayer.styles[1].filename)
 
     def test_raster(self):
         """
