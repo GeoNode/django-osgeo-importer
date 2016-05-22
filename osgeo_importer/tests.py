@@ -204,7 +204,7 @@ class UploaderTests(MapStoryTestMixin):
 
     def test_upload_with_slds(self):
         """
-        Tests Uploading Multiple Files
+        Tests Uploading sld
         """
         upload = self.generic_api_upload(
             ['boxes_with_date.zip',
@@ -223,6 +223,23 @@ class UploaderTests(MapStoryTestMixin):
         self.cat._cache.clear()
         self.assertEqual('boxes.sld',default_style.filename)
         self.assertEqual('boxes1.sld',gslayer.styles[1].filename)
+
+    def test_upload_with_metadata(self):
+        """
+        Tests Uploading metadata
+        """
+        upload = self.generic_api_upload(
+            ['boxes_with_date.zip',
+             'samplemetadata.xml',],
+              [{'upload_file_name': 'boxes_with_date.shp',
+               'config': [{'index': 0, 'metadata': 'samplemetadata.xml'}]}
+               ]
+        )
+        self.assertEqual(5, upload['count'])
+        layerid = upload['uploaded'][0]['pk'];
+        layer = Layer.objects.get(pk=layerid)
+        self.assertEqual(layer.language, 'eng')
+        self.assertEqual(layer.title, 'Old_Americas_LSIB_Polygons_Detailed_2013Mar')
 
     def test_raster(self):
         """

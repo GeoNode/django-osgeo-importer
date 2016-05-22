@@ -151,6 +151,8 @@ def configure_layers(configs, upload_id=None):
                 log.exception('Cannot Determine File ID')
                 continue
         cfg = config.get('config')
+        cfg[0]['upload_id'] = upload_id
+        cfg[0]['upload_file_id'] = file_id
         log.debug(cfg)
         log.debug('upfile id %s', file_id)
         if cfg is not None and file_id is not None:
@@ -259,6 +261,4 @@ class MultiUpload(View, ImportHelper, JSONResponseMixin):
             complete_layers = configure_layers(config, upload_id=upload.pk)
             response['layers'] = complete_layers
 
-        if self.json:
-            return self.render_to_json_response(response)
-        return HttpResponse('<html><body>Woohoo!</body></html>')
+        return self.render_to_json_response(response)
