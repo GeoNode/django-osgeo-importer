@@ -55,7 +55,7 @@ RUN pip install -e .
 
 ADD downloads/importer-test-files /django-osgeo-uploader/importer-test-files
 
-CMD /bin/bash -c "service postgresql start; scripts/before_script.sh; /bin/bash"
+CMD /bin/bash -c "service postgresql start;  scripts/before_script.sh; /bin/bash"
 
 EXPOSE 80
 EXPOSE 8080
