@@ -222,7 +222,7 @@ class UploaderTests(MapStoryTestMixin):
         default_style = gslayer.default_style
         self.cat._cache.clear()
         self.assertEqual('boxes.sld',default_style.filename)
-        #self.assertEqual('boxes1.sld',gslayer.styles[1].filename)
+        ##self.assertEqual('boxes1.sld',gslayer.styles[1].filename)
 
     def test_upload_with_metadata(self):
         """
