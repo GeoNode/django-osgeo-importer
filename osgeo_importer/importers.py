@@ -8,7 +8,9 @@ from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, 
 from .handlers import IMPORT_HANDLERS
 from django.conf import settings
 from django import db
+import logging
 
+logger = logging.getLogger(__name__)
 ogr.UseExceptions()
 
 
@@ -279,24 +281,39 @@ class OGRImport(Import):
             layer_definition = ogr.Feature(layer.GetLayerDefn())
             source_fid = None
 
+            wkb_field = 0
+
             for i in range(layer_definition.GetFieldCount()):
 
                 field_def = layer_definition.GetFieldDefnRef(i)
 
-                target_layer.CreateField(field_def)
-                new_name = target_layer.GetLayerDefn().GetFieldDefn(i).GetName()
-                old_name = field_def.GetName()
+                if field_def.GetName() == target_layer.GetFIDColumn() and field_def.GetType() != 0:
+                    field_def.SetType(0)
 
-                if new_name != old_name:
-                    layer_options['modified_fields'][old_name] = new_name
+                if field_def.GetName() != 'wkb_geometry':
+                    target_layer.CreateField(field_def)
+                    new_name = target_layer.GetLayerDefn().GetFieldDefn(i - wkb_field).GetName()
+                    old_name = field_def.GetName()
 
-                if old_name == target_layer.GetFIDColumn() and not layer.GetFIDColumn():
-                    source_fid = i
+                    if new_name != old_name:
+                        layer_options['modified_fields'][old_name] = new_name
+
+                    if old_name == target_layer.GetFIDColumn() and not layer.GetFIDColumn():
+                        source_fid = i
+                else:
+                    wkb_field = 1
+
+            if wkb_field is not 0:
+                layer.SetIgnoredFields(['wkb_geometry'])
 
             for i in range(0, layer.GetFeatureCount()):
                 feature = layer.GetFeature(i)
 
                 if feature and feature.geometry():
+
+                    if not layer.GetFIDColumn():
+                        feature.SetFID(-1)
+
                     if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
                             target_layer.GetGeomType() in range(4, 7):
 
@@ -326,8 +343,11 @@ class OGRImport(Import):
                                     feature.SetField(field, decode(feature.GetField(field)))
                                 except AttributeError:
                                     continue
-
-                        target_layer.CreateFeature(feature)
+                        try:
+                            target_layer.CreateFeature(feature)
+                        except err as e:
+                            logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
+                            raise e
 
             self.completed_layers.append([target_layer.GetName(), layer_options])
 

@@ -881,6 +881,15 @@ class UploaderTests(MapStoryTestMixin):
         """
         self.generic_import('noaa_paleoclimate.zip', configuration_options=[{'index': 0}])
 
+    def test_csv_with_wkb_geometry(self):
+        """
+        Tests problems with the CSV files with multiple geometries.
+        """
+        files = ['police_csv.csv', 'police_csv_nOGC.csv', 'police_csv_noLatLon.csv', 'police_csv_WKR.csv', 'police_csv_nFID.csv',
+        'police_csv_nOGFID.csv', 'police_csv_noWKB.csv']
+
+        for i in files:
+            self.generic_import(i, {"configureTime":True,"convert_to_date":["date_time"],"editable":True,"index":0,"name":i.lower(),"permissions":{"users":{"AnonymousUser":["change_layer_data","download_resourcebase","view_resourcebase"]}},"start_date":"date_time",})
 
 if __name__ == '__main__':
     unittest.main()
