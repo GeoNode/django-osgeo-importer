@@ -116,12 +116,15 @@ class UploaderTests(DjagnoOsgeoMixin):
         """
         self.cat.delete(self.datastore, recurse=True)
 
-    def generic_import(self, file, configuration_options=[{'index': 0}]):
+    def generic_import(self, file, local=True, configuration_options=[{'index': 0}]):
 
         f = file
-        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
+        if local:
+            filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
+        else:
+            filename = f
 
-        res = self.import_file(filename, configuration_options=configuration_options)
+        res = self.import_file(filename, local, configuration_options=configuration_options)
 
         layer_results=[]
 
@@ -416,6 +419,23 @@ class UploaderTests(DjagnoOsgeoMixin):
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_field)
         self.generic_time_check(layer, attribute=date_field)
 
+
+    def test_us_shootings_csv_remote(self):
+        """
+        Tests the import of US_Shootings.csv.
+        """
+        if osgeo.ogr.GetDriverByName('HTTP') is None:
+            self.skipTest('HTTP Driver Not Available')
+
+        filename = 'https://mapstory-static.s3.amazonaws.com/media/uploads/US_Shootings.csv'
+        layer = self.generic_import(filename, local=False, configuration_options=[{'index': 0, 'convert_to_date': ['Date']}])
+        self.assertTrue(layer.name.startswith('us_shootings'))
+
+        date_field = 'date'
+        configure_time(self.cat.get_layer(layer.name).resource, attribute=date_field)
+        self.generic_time_check(layer, attribute=date_field)
+
+
     def test_sitins(self):
         """
         Tests the import of US_Civil_Rights_Sitins0.csv
@@ -436,11 +456,16 @@ class UploaderTests(DjagnoOsgeoMixin):
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         self.generic_import(filename, configuration_options=[{'index': 0,  'convert_to_date': ['date']}])
 
-    def import_file(self, in_file, configuration_options=[]):
+    def import_file(self, in_file, local=True, configuration_options=[]):
         """
         Imports the file.
         """
-        self.assertTrue(os.path.exists(in_file))
+        if local:
+            self.assertTrue(os.path.exists(in_file))
+        else:
+            import requests
+            request = requests.get(in_file)
+            self.assertTrue(request.status_code == 200)
 
         # run ogr2ogr
         gi = OGRImport(in_file)
