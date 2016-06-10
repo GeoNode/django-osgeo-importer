@@ -73,6 +73,8 @@ class OGRInspector(InspectorMixin):
 class GDALInspector(InspectorMixin):
 
     INVALID_GEOMETRY_TYPES = ['None']
+    SCHEMES = {'gzip': 'gzip', 'zip': 'zip', 'tar': 'tar', 'https': 'curl',
+           'http': 'curl', 's3': 's3'}
 
     def __init__(self, connection_string, *args, **kwargs):
         self.file = connection_string
@@ -91,6 +93,45 @@ class GDALInspector(InspectorMixin):
 
         if file_type:
             return file_type.replace('.', '')
+
+    def vsi_path(self, path, archive=None, scheme=None, **kwargs):
+        """Convert a parsed path to a GDAL VSI path."""
+        # If a VSF and archive file are specified, we convert the path to
+        # a GDAL VSI path (see cpl_vsi.h).
+        if scheme and scheme.startswith('http'):
+            result = "/vsicurl/{0}://{1}".format(scheme, path)
+            oo = kwargs.get('open_options', [])
+            oo.append('-ro -al -so')
+        elif scheme and scheme == 's3':
+            result = "/vsis3/{0}".format(path)
+        elif scheme and scheme != 'file':
+            path = path.strip(os.path.sep)
+            result = os.path.sep.join(
+                ['/vsi{0}'.format(scheme), archive, path])
+        else:
+            result = path
+        return result
+
+    def parse_path(self, path, vfs=None):
+        """Parse a file path or Apache VFS URL into its parts."""
+        archive = scheme = None
+        if vfs:
+            parts = vfs.split("://")
+            scheme = parts.pop(0) if parts else None
+            archive = parts.pop(0) if parts else None
+        else:
+            parts = path.split("://")
+            path = parts.pop() if parts else None
+            scheme = parts.pop() if parts else None
+            if scheme in self.SCHEMES:
+                parts = path.split('!')
+                path = parts.pop() if parts else None
+                archive = parts.pop() if parts else None
+            elif scheme in (None, 'file'):
+                pass
+            else:
+                raise ValueError("VFS scheme {0} is unknown".format(scheme))
+        return path, archive, scheme
 
     def prepare_csv(self, filename, *args, **kwargs):
         """
@@ -129,7 +170,10 @@ class GDALInspector(InspectorMixin):
         """
         Opens the file.
         """
-        filename = self.file
+        
+        path, archive, scheme = self.parse_path(self.file)
+        
+        filename = self.vsi_path(path, archive, scheme, **kwargs)
 
         prepare_method = 'prepare_{0}'.format(self.method_safe_filetype)
 
