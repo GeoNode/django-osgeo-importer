@@ -4,9 +4,6 @@
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
-AWS_ACCESS_KEY_ID=ENV['AWS_ACCESS_KEY_ID']
-AWS_SECRET_ACCESS_KEY=ENV['AWS_SECRET_ACCESS_KEY']
-
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.box = "ubuntu/trusty"
@@ -15,8 +12,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # When explicitly defining a VM, the name used replaces the token 'default'.
   config.vm.define "django-osgeo-importer"
-  config.vm.provision "shell", path: "scripts/install.sh", env: {:AWS_ACCESS_KEY_ID => AWS_ACCESS_KEY_ID,
-  :AWS_SECRET_ACCESS_KEY=>AWS_SECRET_ACCESS_KEY, :GS_VERSION=> '2.8.x'}, args: "/vagrant"
+  config.vm.provision "shell", path: "scripts/install.sh", env: {:GS_VERSION=> '2.8.x'}, args: "/vagrant"
 
  config.vm.provision "shell", path: "scripts/before_script.sh", args: "/vagrant"
 
