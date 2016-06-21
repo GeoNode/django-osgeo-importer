@@ -33,6 +33,7 @@ setup(
         'Framework :: Django',
     ],
     install_requires=[
+        'numpy==1.11.0'
     ],
     include_package_data=True,
     zip_safe=False,
