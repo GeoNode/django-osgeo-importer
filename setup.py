@@ -33,7 +33,7 @@ setup(
         'Framework :: Django',
     ],
     install_requires=[
-        'django-tastypie==0.11.0',
+        'numpy==1.11.0'
     ],
     include_package_data=True,
     zip_safe=False,
