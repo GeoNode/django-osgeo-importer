@@ -9,5 +9,5 @@ wget -N https://s3.amazonaws.com/django-osgeo-importer/gdal-2.1.0-linux-bin.tar.
 
 pip install awscli
 sudo mkdir -p -m 777 importer-test-files
-aws s3 sync s3://mapstory-data/importer-test-files/ importer-test-files
+aws --no-sign-request s3 sync s3://mapstory-data/importer-test-files/ importer-test-files
 popd
