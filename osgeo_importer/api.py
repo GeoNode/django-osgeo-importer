@@ -1,4 +1,5 @@
 import json
+import logging
 from tastypie.fields import DictField, ListField, CharField, ToManyField, ForeignKey
 from django.contrib.auth import get_user_model
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
@@ -12,6 +13,8 @@ from django.conf.urls import url
 from tastypie.bundle import Bundle
 from .tasks import import_object
 from tastypie.exceptions import ImmediateHttpResponse
+
+logger = logging.getLogger(__name__)
 
 
 class UserResource(ModelResource):
