@@ -6,27 +6,18 @@
   var layerService_ = null;
   var q_ = null;
 
-  angular.module('mapstory.uploader', [
+  angular.module('osgeoImporter.uploader', [
       'ngResource',
       'ui.bootstrap',
-      'mapstory.factories',
+      'osgeoImporter.factories',
       'angularFileUpload',
       'ngCookies',
       'mgo-angular-wizard'
   ])
 
   .config(function($interpolateProvider, $httpProvider, $sceDelegateProvider) {
-    //$interpolateProvider.startSymbol('{[');
-    //$interpolateProvider.endSymbol(']}');
     $httpProvider.defaults.xsrfCookieName = 'csrftoken';
     $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-    $sceDelegateProvider.resourceUrlWhitelist([
-    // Allow same origin resource loads.
-    'self',
-    // Allow loading from our assets domain.  Notice the difference between * and **.
-    'http://mapstory-static.s3.amazonaws.com/**',
-    'https://mapstory-static.s3.amazonaws.com/**'
-  ]);
   })
 
   .provider('layerService', function() {

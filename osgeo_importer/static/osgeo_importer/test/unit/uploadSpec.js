@@ -2,7 +2,7 @@ describe('Importer', function() {
 
   // You need to load modules that you want to test,
   // it loads only the "ng" module by default.
-  beforeEach(module('mapstory.uploader'));
+  beforeEach(module('osgeoImporter.uploader'));
 
 
   // inject() is used to inject arguments of all given functions

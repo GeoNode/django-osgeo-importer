@@ -21,7 +21,7 @@ class UploadedLayerResource(UploadedLayerResource):  # noqa
             if store.get('type', str).lower() == 'geogig':
                 store.setdefault('branch', 'master')
                 store.setdefault('create', 'true')
-                store.setdefault('name', '{0}-storylayers'.format(request.user.username))
+                store.setdefault('name', '{0}-layers'.format(request.user.username))
                 store['geogig_repository'] = os.path.join(ogc_server_settings.GEOGIG_DATASTORE_DIR,
                                                           store.get('name'))
 
