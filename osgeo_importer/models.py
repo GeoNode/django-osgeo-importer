@@ -40,7 +40,7 @@ from .importers import OSGEO_IMPORTER
 from .utils import NoDataSourceFound
 from .utils import sizeof_fmt, load_handler
 
-DEFAULT_LAYER_CONFIGURATION = {'configureTime': True,
+DEFAULT_LAYER_CONFIGURATION = {'configureTime': False,
                                'editable': True,
                                'convert_to_date': []}
 
