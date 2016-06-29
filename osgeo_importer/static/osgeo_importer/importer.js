@@ -6,10 +6,10 @@
   var layerService_ = null;
   var q_ = null;
 
-  angular.module('mapstory.uploader', [
+  angular.module('osgeoImporter.uploader', [
       'ngResource',
       'ui.bootstrap',
-      'mapstory.factories',
+      'osgeoImporter.factories',
       'angularFileUpload',
       'ngCookies',
       'mgo-angular-wizard'
