@@ -1,5 +1,6 @@
 import re
 import os
+import logging
 import requests
 
 from decimal import Decimal, InvalidOperation
@@ -8,6 +9,8 @@ from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, 
 from geoserver.catalog import FailedRequestError
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
+
+logger = logging.getLogger(__name__)
 
 
 def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
