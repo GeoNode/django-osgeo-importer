@@ -21,7 +21,7 @@
             <div class="col-sm-8 col-md-8 col-lg-8 col-md-offset-2" style="padding-top: 5px; padding-left: 2px;" ng-controller="UploaderController">
 
                 <h3 ng-show="appending() === false"><strong>Upload your data.</strong></h3>
-                <p ng-show="appending() === false ">You can upload data in .csv, .geojson, .gpx, .kml,  .tif, and zipped shapefile formats.</p>
+                <p ng-show="appending() === false ">You can upload data in .csv, .geojson, .gpx, .kml, .tif, and zipped shapefile formats.</p>
 
                 <h3 ng-show="appending()"><strong>Upload your feature edits.</strong></h3>
                 <p ng-show="appending()">Upload the blank file you downloaded earlier that now has your new feature edits added. Once your append is complete, you should see all of your new features added as edits to this layer.</p>
@@ -102,9 +102,13 @@
             </form>
         </wz-step>
         <wz-step title="Permissions" wz-disabled="{{appending(true)}}">
+<<<<<<< dcac14822ba041ed8b3ff3bf538432461b1d3a22
             <img class="import-wizard-image" ng-src="static/osgeo_importer/img/edit.png"/>
             <h3><strong>Allow other users to edit this data?</strong></h3>
             <p>Would you like to enable editing?</p>
+=======
+            <h3><strong>Enable version history?</strong></h3>
+>>>>>>> minor grammar fix & rewording
             <div class="btn-group">
                 <label class="btn btn-success"  ng-model='layer.configuration_options.editable' uib-btn-radio="true">Yes</label>
                 <label class="btn" ng-model='layer.configuration_options.editable' uib-btn-radio="false">No</label>
