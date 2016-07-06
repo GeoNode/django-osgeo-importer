@@ -1,7 +1,7 @@
 'use strict';
 
 (function() {
-    angular.module('mapstory.factories', ['ngResource'])
+    angular.module('osgeoImporter.factories', ['ngResource'])
 
     .factory('UploadedData', function ($resource) {
         return $resource('/importer-api/data/:id/', {}, {'query': {
