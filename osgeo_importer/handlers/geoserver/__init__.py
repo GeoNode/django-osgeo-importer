@@ -107,55 +107,46 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         return self.catalog.get_store(connection_string['name'])
 
     def geogig_handler(self, store, layer, layer_config):
-        request_headers = {'Accept-Encoding': 'identity'}
+        """
+        Facilitates the workflow required to import data from PostGIS into GeoGIG via the GeoGIG-Geoserver
+        REST interface.
+        """
+
+        # Accept-Encoding: identity handles a work-around for
+        # handling double gzipped GeoGIG responses: https://github.com/locationtech/geogig/issues/9.
+        request_params = dict(auth=(self.catalog.username, self.catalog.password),
+                              headers={'Accept-Encoding': 'identity'})
 
         repo = store.connection_parameters['geogig_repository']
-        auth = (self.catalog.username, self.catalog.password)
         repo_url = self.catalog.service_url.replace('/rest', '/geogig/{0}/'.format(repo))
         transaction_url = repo_url + 'beginTransaction.json'
-        transaction = requests.get(transaction_url, auth=auth,
-                                   headers=request_headers)
+        transaction = requests.get(transaction_url, **request_params)
+
         logger.debug("""response status_code {} \n
                         response headers {} \n
                         request headers {} \n
-                     """.format(
-                         transaction.status_code,
-                         transaction.headers,
-                         transaction.request.headers))
+                     """.format(transaction.status_code,
+                                transaction.headers,
+                                transaction.request.headers))
+
         transaction_id = transaction.json()['response']['Transaction']['ID']
         params = self.get_default_store()
         params['password'] = params['passwd']
         params['table'] = layer
         params['transactionId'] = transaction_id
 
-        import_command = requests.get(
-            repo_url + 'postgis/import.json',
-            params=params,
-            auth=auth,
-            headers=request_headers)
+        import_command = requests.get(repo_url + 'postgis/import.json', params=params, **request_params)
         task = import_command.json()['task']
 
         status = 'NOT RUN'
         while status != 'FINISHED':
-            check_task = requests.get(
-                task['href'],
-                auth=auth,
-                headers=request_headers)
+            check_task = requests.get(task['href'], **request_params)
             status = check_task.json()['task']['status']
 
         if status == 'FINISHED':
-            requests.get(repo_url + 'add.json',
-                         params={'transactionId': transaction_id},
-                         auth=auth,
-                         headers=request_headers)
-            requests.get(repo_url + 'commit.json',
-                         params={'transactionId': transaction_id},
-                         auth=auth,
-                         headers=request_headers)
-            requests.get(repo_url + 'endTransaction.json',
-                         params={'transactionId': transaction_id},
-                         auth=auth,
-                         headers=request_headers)
+            requests.get(repo_url + 'add.json', params={'transactionId': transaction_id}, **request_params)
+            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id}, **request_params)
+            requests.get(repo_url + 'endTransaction.json', params={'transactionId': transaction_id}, **request_params)
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
