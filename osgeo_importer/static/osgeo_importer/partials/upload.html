@@ -92,7 +92,7 @@
                                                 <span style="color:#FF4136;" ng-show="hasFailure()">This import has failed.  Adjust configuration above.</span>
                                                 <span style="color:#3D9970;" ng-show="successful()">The import has finished successfully. View the <a href="{{layer.geonode_layer.url}}" style="font-weight: 600">Layer</a>.</span>
                                             </div>
-                                            <div class="btn btn-sm col-xs-offset-4 col-sm-offset-4 col-md-offset-4 col-md-3 btn-success import-button" ng-click="open(layer, staticUrl + '/osgeo_importer/partials/uploadWizard.html', 'static/mapstory/img/mapstory-icon.png', staticUrl)" ng-controller="ImportController" ng-class="{'disabled': !isValid()}">&gt;&gt;Import
+                                            <div class="btn btn-sm col-xs-offset-4 col-sm-offset-4 col-md-offset-4 col-md-3 btn-success import-button" ng-click="open(layer, staticUrl + '/osgeo_importer/partials/uploadWizard.html', staticUrl + 'geonode/img/logo.png', staticUrl)" ng-controller="ImportController" ng-class="{'disabled': !isValid()}">&gt;&gt;Import
                                                 <i class="fa" ng-class="{'fa-circle-o-notch fa-spin': processing(), 'fa-arrow-circle-right': !processing()}"></i>
                                             </div>
 
