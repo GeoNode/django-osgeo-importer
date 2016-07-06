@@ -1,5 +1,6 @@
 import re
 import os
+import logging
 import requests
 
 from decimal import Decimal, InvalidOperation
@@ -8,6 +9,8 @@ from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, 
 from geoserver.catalog import FailedRequestError
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
+
+logger = logging.getLogger(__name__)
 
 
 def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
@@ -104,29 +107,55 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         return self.catalog.get_store(connection_string['name'])
 
     def geogig_handler(self, store, layer, layer_config):
+        request_headers = {'Accept-Encoding': 'identity'}
 
         repo = store.connection_parameters['geogig_repository']
         auth = (self.catalog.username, self.catalog.password)
         repo_url = self.catalog.service_url.replace('/rest', '/geogig/{0}/'.format(repo))
-        transaction = requests.get(repo_url + 'beginTransaction.json', auth=auth)
+        transaction_url = repo_url + 'beginTransaction.json'
+        transaction = requests.get(transaction_url, auth=auth,
+                                   headers=request_headers)
+        logger.debug("""response status_code {} \n
+                        response headers {} \n
+                        request headers {} \n
+                     """.format(
+                         transaction.status_code,
+                         transaction.headers,
+                         transaction.request.headers))
         transaction_id = transaction.json()['response']['Transaction']['ID']
         params = self.get_default_store()
         params['password'] = params['passwd']
         params['table'] = layer
         params['transactionId'] = transaction_id
 
-        import_command = requests.get(repo_url + 'postgis/import.json', params=params, auth=auth)
+        import_command = requests.get(
+            repo_url + 'postgis/import.json',
+            params=params,
+            auth=auth,
+            headers=request_headers)
         task = import_command.json()['task']
 
         status = 'NOT RUN'
         while status != 'FINISHED':
-            check_task = requests.get(task['href'], auth=auth)
+            check_task = requests.get(
+                task['href'],
+                auth=auth,
+                headers=request_headers)
             status = check_task.json()['task']['status']
 
-        if check_task.json()['task']['status'] == 'FINISHED':
-            requests.get(repo_url + 'add.json', params={'transactionId': transaction_id}, auth=auth)
-            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id}, auth=auth)
-            requests.get(repo_url + 'endTransaction.json', params={'transactionId': transaction_id}, auth=auth)
+        if status == 'FINISHED':
+            requests.get(repo_url + 'add.json',
+                         params={'transactionId': transaction_id},
+                         auth=auth,
+                         headers=request_headers)
+            requests.get(repo_url + 'commit.json',
+                         params={'transactionId': transaction_id},
+                         auth=auth,
+                         headers=request_headers)
+            requests.get(repo_url + 'endTransaction.json',
+                         params={'transactionId': transaction_id},
+                         auth=auth,
+                         headers=request_headers)
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
