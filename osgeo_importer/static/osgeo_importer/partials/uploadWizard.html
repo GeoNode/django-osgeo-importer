@@ -65,7 +65,7 @@
         </wz-step>
 
         <wz-step title="Enable Time?">
-            <img class="import-wizard-image" ng-src="static/osgeo_importer/img/time.png"/>
+            <img class="import-wizard-image" ng-src="{{ staticUrl }}/osgeo_importer/img/time.png"/>
             <h3><strong>Does the dataset has time attributes?</strong></h3>
 
             <div class="btn-group">
@@ -102,13 +102,8 @@
             </form>
         </wz-step>
         <wz-step title="Permissions" wz-disabled="{{appending(true)}}">
-<<<<<<< dcac14822ba041ed8b3ff3bf538432461b1d3a22
-            <img class="import-wizard-image" ng-src="static/osgeo_importer/img/edit.png"/>
-            <h3><strong>Allow other users to edit this data?</strong></h3>
-            <p>Would you like to enable editing?</p>
-=======
+            <img class="import-wizard-image" ng-src="{{ staticUrl }}/osgeo_importer/img/edit.png"/>
             <h3><strong>Enable version history?</strong></h3>
->>>>>>> minor grammar fix & rewording
             <div class="btn-group">
                 <label class="btn btn-success"  ng-model='layer.configuration_options.editable' uib-btn-radio="true">Yes</label>
                 <label class="btn" ng-model='layer.configuration_options.editable' uib-btn-radio="false">No</label>
