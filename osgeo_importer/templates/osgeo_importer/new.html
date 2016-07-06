@@ -2,6 +2,7 @@
 {% load i18n %}
 
 {% block extra_head %}
+{{ block.super }}
 <style>
 .errorlist{color:#FF4136; list-style-type: none; padding: 4px; padding-top: 10; font-weight: 600; font-size: 13px}
 .fa-warning{color:#FF4136;}
@@ -39,7 +40,7 @@
             {{form}}
         </div>
         <div class="row">
-            <button type="button" class="btn-info col-md-4 btn" ng-click="chooseFile();">choose file</button>
+            <button type="button" class="btn-info col-md-4 btn" onclick="chooseFile();">choose file</button>
         </div>
         <div class="row">
             <div class="errorlist">
