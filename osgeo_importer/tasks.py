@@ -2,8 +2,10 @@ import os
 import shutil
 from .models import UploadFile
 from celery.task import task
+from .importers import OSGEO_IMPORTER
+from .utils import import_string
 
-from .views import OSGEO_IMPORTER
+OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
 
 
 @task

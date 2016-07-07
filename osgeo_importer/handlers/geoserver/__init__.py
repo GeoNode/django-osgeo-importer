@@ -5,10 +5,16 @@ import requests
 
 from decimal import Decimal, InvalidOperation
 from django import db
+from django.core.files.storage import FileSystemStorage
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
-from geoserver.catalog import FailedRequestError
+from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
+from osgeo_importer.utils import CheckFile, increment_filename
+import logging
+log = logging.getLogger(__name__)
+
+MEDIA_ROOT = FileSystemStorage().location
 
 logger = logging.getLogger(__name__)
 
@@ -161,9 +167,10 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         if getattr(store, 'type', '').lower() == 'geogig':
             self.geogig_handler(store, layer, layer_config)
-
-        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config),
-                                                layer_config.get('srs', self.srs))
+        ft = self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config),
+                                              layer_config.get('srs', self.srs))
+        ftjs = {'title': ft.title, 'projection': ft.projection, 'attributes': ft.attributes}
+        return ftjs
 
 
 class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
@@ -309,6 +316,71 @@ class GeoServerBoundsHandler(GeoserverHandlerMixin):
         except InvalidOperation:
             resource.latlon_bbox = ['-180', '180', '-90', '90', 'EPSG:4326']
             self.catalog.save(resource)
+
+
+class GeoServerStyleHandler(GeoserverHandlerMixin):
+    """
+    Adds styles to GeoServer Layer
+    """
+    catalog = gs_catalog
+    catalog._cache.clear()
+    workspace = 'geonode'
+
+    def can_run(self, layer, layer_config, *args, **kwargs):
+        """
+        Returns true if the configuration has enough information to run the handler.
+        """
+        if not any([layer_config.get('default_style', None), layer_config.get('styles', None)]):
+            log.debug('Could not find any styles in config %s', layer_config)
+            return False
+
+        return True
+
+    @ensure_can_run
+    def handle(self, layer, layer_config, *args, **kwargs):
+        """
+        Handler specific params:
+        "default_sld": SLD to load as default_sld
+        "slds": SLDS to add to layer
+        """
+        log.debug(layer, layer_config)
+        lyr = self.catalog.get_layer(layer)
+        path = "%s/uploads/%s" % (MEDIA_ROOT, layer_config.get('upload_id'))
+        log.debug(path)
+        default_sld = layer_config.get('default_style', None)
+        slds = layer_config.get('styles', None)
+        all_slds = []
+        if default_sld is not None:
+            slds.append(default_sld)
+
+        all_slds = list(set(slds))
+        all_slds = [CheckFile(x) for x in all_slds if x is not None]
+
+        styles = []
+        default_style = None
+        for sld in all_slds:
+            with open("%s/%s" % (path, sld.name)) as s:
+                n = 0
+                sldname = sld.root
+                while True:
+                    n += 1
+                    try:
+                        self.catalog.create_style(sldname, s.read(), overwrite=False, workspace=self.workspace)
+                    except ConflictingDataError:
+                        sldname = increment_filename(sldname)
+                    if n >= 100:
+                        break
+
+                style = self.catalog.get_style(sld.root, workspace=self.workspace)
+                if sld.name == default_sld:
+                    default_style = style
+                styles.append(style)
+
+        lyr.styles = list(set(lyr.styles + styles))
+        if default_style is not None:
+            lyr.default_style = default_style
+        self.catalog.save(lyr)
+        return {'default_style': default_style.filename}
 
 
 class GenericSLDHandler(GeoserverHandlerMixin):

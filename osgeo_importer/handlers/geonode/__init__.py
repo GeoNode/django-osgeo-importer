@@ -3,12 +3,19 @@ from osgeo_importer.models import UploadLayer
 from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from geonode.geoserver.helpers import gs_slurp
+from geonode.layers.metadata import set_metadata
+from geonode.layers.utils import resolve_regions
 from django.contrib.auth import get_user_model
+from django.core.files.storage import FileSystemStorage
 from django import db
 import os
 import re
 
+import logging
+log = logging.getLogger(__name__)
+
 User = get_user_model()
+MEDIA_ROOT = FileSystemStorage().location
 
 
 class GeoNodePublishHandler(ImportHandlerMixin):
@@ -63,9 +70,62 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
         if self.importer.upload_file and results['layers'][0]['status'] == 'created':
             matched_layer = Layer.objects.get(name=results['layers'][0]['name'])
-            upload_layer = UploadLayer.objects.get(upload=self.importer.upload_file.upload,
+            upload_layer = UploadLayer.objects.get(upload_file=self.importer.upload_file,
                                                    index=layer_config.get('index'))
             upload_layer.layer = matched_layer
             upload_layer.save()
 
         return results
+
+
+class GeoNodeMetadataHandler(ImportHandlerMixin):
+    """
+    Import uploaded XML
+    """
+
+    def can_run(self, layer, layer_config, *args, **kwargs):
+        """
+        Only run this handler if the layer is found in Geoserver and the layer's style is the generic style.
+        """
+        if not layer_config.get('metadata', None):
+            log.debug('Could not find any metadata xml in config %s', layer_config)
+            return False
+
+        return True
+
+    @ensure_can_run
+    def handle(self, layer, layer_config, *args, **kwargs):
+        """
+        Update metadata from xml
+        """
+        geonode_layer = Layer.objects.get(name=layer)
+        path = "%s/uploads/%s" % (MEDIA_ROOT, layer_config.get('upload_id'))
+        xmlfile = "%s/%s" % (path, layer_config.get('metadata'))
+        geonode_layer.metadata_uploaded = True
+        identifier, vals, regions, keywords = set_metadata(open(xmlfile).read())
+
+        regions_resolved, regions_unresolved = resolve_regions(regions)
+        keywords.extend(regions_unresolved)
+
+        # set regions
+        regions_resolved = list(set(regions_resolved))
+        if regions:
+            if len(regions) > 0:
+                geonode_layer.regions.add(*regions_resolved)
+
+        # set taggit keywords
+        keywords = list(set(keywords))
+        geonode_layer.keywords.add(*keywords)
+
+        # set model properties
+        for (key, value) in vals.items():
+            if key == "spatial_representation_type":
+                # value = SpatialRepresentationType.objects.get(identifier=value)
+                pass
+            else:
+                log.debug('Adding Metadata %s %s %s', geonode_layer, key, value)
+                setattr(geonode_layer, key, value)
+
+        geonode_layer.save()
+
+        return geonode_layer
