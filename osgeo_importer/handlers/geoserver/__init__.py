@@ -5,6 +5,7 @@ import requests
 
 from decimal import Decimal, InvalidOperation
 from django import db
+from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
 from geoserver.catalog import FailedRequestError
 from geonode.geoserver.helpers import gs_catalog
@@ -79,20 +80,20 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         return True
 
     def get_default_store(self):
-        connection = db.connections['datastore']
-        settings = connection.settings_dict
+        connection = db.connections[settings.OSGEO_DATASTORE]
+        db_settings = connection.settings_dict
 
         return {
-              'database': settings['NAME'],
-              'passwd': settings['PASSWORD'],
+              'database': db_settings['NAME'],
+              'passwd': db_settings['PASSWORD'],
               'namespace': 'http://www.geonode.org/',
               'type': 'PostGIS',
               'dbtype': 'postgis',
-              'host': settings['HOST'],
-              'user': settings['USER'],
-              'port': settings['PORT'],
+              'host': db_settings['HOST'],
+              'user': db_settings['USER'],
+              'port': db_settings['PORT'],
               'enabled': 'True',
-              'name': settings['NAME']}
+              'name': db_settings['NAME']}
 
     def get_or_create_datastore(self, layer_config):
         connection_string = layer_config.get('geoserver_store', self.get_default_store())

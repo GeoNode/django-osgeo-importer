@@ -78,5 +78,6 @@ DATABASES = {
      }
 }
 
+OSGEO_DATASTORE = 'datastore'
 OSGEO_IMPORTER_GEONODE_ENABLED = True
 LOGGING['loggers']['osgeo_importer'] = {"handlers": ["console"], "level": "DEBUG"}

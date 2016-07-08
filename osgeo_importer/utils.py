@@ -302,7 +302,7 @@ def raster_import(infile, outfile, *args, **kwargs):
 
 
 def quote_ident(str):
-    conn = db.connections['datastore']
+    conn = db.connections[settings.OSGEO_DATASTORE]
     cursor = conn.cursor()
     query = "SELECT quote_ident(%s);"
     cursor.execute(query, (str,))

@@ -309,7 +309,6 @@ class BigDateOGRFieldConverter(OGRInspector):
 
         target_layer.CreateField(ogr.FieldDefn(xd_col, ogr.OFTInteger64))
         xd_col_index = target_layer.GetLayerDefn().GetFieldIndex(xd_col)
-
         target_layer.CreateField(ogr.FieldDefn(parsed_col, ogr.OFTString))
         parsed_col_index = target_layer.GetLayerDefn().GetFieldIndex(parsed_col)
 
@@ -330,7 +329,7 @@ class BigDateOGRFieldConverter(OGRInspector):
 
             # prevent segfaults
             feat = None
-        conn = db.connections['datastore']
+        conn = db.connections[settings.OSGEO_DATASTORE]
         cursor = conn.cursor()
         query = """
         DO $$

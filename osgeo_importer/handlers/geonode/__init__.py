@@ -4,6 +4,7 @@ from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from geonode.geoserver.helpers import gs_slurp
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django import db
 import os
 import re
@@ -27,7 +28,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
                 if feature_type and hasattr(feature_type, 'store'):
                     return feature_type.store.name
 
-        return db.connections['datastore'].settings_dict['NAME']
+        return db.connections[settings.OSGEO_DATASTORE].settings_dict['NAME']
 
     def can_run(self, layer, layer_config, *args, **kwargs):
         """
