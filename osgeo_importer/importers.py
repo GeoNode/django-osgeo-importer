@@ -146,7 +146,7 @@ class OGRImport(Import):
         self.completed_layers = []
 
         if target_store is None:
-            d = db.connections['datastore'].settings_dict
+            d = db.connections[settings.OSGEO_DATASTORE].settings_dict
             connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s'" % (d['NAME'], d['USER'],
                                                                                                 d['PASSWORD'],
                                                                                                 d['HOST'], d['PORT'])
