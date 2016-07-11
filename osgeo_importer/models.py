@@ -43,7 +43,8 @@ from .utils import sizeof_fmt, load_handler
 
 DEFAULT_LAYER_CONFIGURATION = {'configureTime': False,
                                'editable': True,
-                               'convert_to_date': []}
+                               'convert_to_date': [],
+                               'index': 0}
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +185,7 @@ class UploadLayer(models.Model):
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
     index = models.IntegerField(default=0)
     name = models.CharField(max_length=64, null=True)
-    fields = JSONField(null=True)
+    fields = JSONField(null=True, default={})
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
     object_id = models.PositiveIntegerField(blank=True, null=True)
     layer = GenericForeignKey('content_type', 'object_id')
