@@ -33,7 +33,7 @@
       layer.configuration_options = layer.configuration_options || {};
 
       if (!layer.hasOwnProperty('index') === true) {
-          layer['index'] = index;
+          layer['index'] = 0;
       }
 
       var checkStartDate = layer.configuration_options.hasOwnProperty('start_date') && layer.configuration_options.start_date != "";
@@ -432,7 +432,7 @@
                   layer.configuration_options = layer.configuration_options || {};
 
                   if (!layer.hasOwnProperty('index') === true) {
-                      layer['index'] = index;
+                      layer['index'] = 0;
                   }
 
                   var checkStartDate = layer.configuration_options.hasOwnProperty('start_date') && layer.configuration_options.start_date != "";
