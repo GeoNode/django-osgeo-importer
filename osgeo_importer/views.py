@@ -14,6 +14,7 @@ OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
 
 logger = logging.getLogger(__name__)
 
+
 class JSONResponseMixin(object):
     """
     A mixin that can be used to render a JSON response.
