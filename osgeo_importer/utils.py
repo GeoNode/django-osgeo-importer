@@ -6,13 +6,10 @@ import osr
 import os
 import re
 import sys
-import tempfile
 
-from csv import DictReader
 from cStringIO import StringIO
 from datetime import datetime
 from dateutil.parser import parse
-from django.template import Context, Template
 from django.conf import settings
 from django import db
 logger = logging.getLogger(__name__)
@@ -45,16 +42,6 @@ GDAL_GEOMETRY_TYPES = {
    6 + -2147483648: 'MultiPolygon',
    7 + -2147483648: 'GeometryCollection',
    }
-
-
-BASE_VRT = '''
-<OGRVRTDataSource>
-    <OGRVRTLayer name="{{name}}">
-        <SrcDataSource>{{file}}</SrcDataSource>
-        <GeometryType>wkbUnknown</GeometryType>
-        <GeometryField encoding="{{enc}}" {{encopt|safe}} />
-    </OGRVRTLayer>
-</OGRVRTDataSource>'''
 
 
 def timeparse(timestr):
@@ -103,46 +90,6 @@ def ensure_defaults(layer):
         fs.dirty['srs'] = 'EPSG:4326'
         fs.dirty['projectionPolicy'] = 'FORCE_DECLARED'
         layer.resource.catalog.save(fs)
-
-
-def create_vrt(file_path):
-    """
-    Creates a VRT file.
-    """
-
-    geo = {}
-    headers = None
-
-    with open(file_path) as csv_file:
-            headers = DictReader(csv_file, dialect='excel').fieldnames
-
-    for header in headers:
-        if re.search(r'\b(lat|latitude|y)\b', header.lower()):
-            geo['y'] = header
-
-        if re.search(r'\b(lon|long|longitude|x)\b', header.lower()):
-            geo['x'] = header
-
-        if re.search(r'\b(geom|thegeom)\b', header.lower()):
-            geo['geom'] = header
-
-    context = {
-        'file': file_path,
-        'name': os.path.basename(file_path).replace('.csv', ''),
-        'enc': 'PointFromColumns',
-        'encopt': 'x="{0}" y="{1}"'.format(geo.get('x'), geo.get('y'))
-    }
-
-    if geo.get('geom'):
-        context['encoding'] = 'WKT'
-        context['encopt'] = 'field="{0}"'.format(geo.geom)
-
-    vrtData = Context(context)
-    template = Template(BASE_VRT)
-    temp_file = tempfile.NamedTemporaryFile(suffix='.vrt')
-    temp_file.write(template.render(vrtData))
-    temp_file.seek(0)
-    return temp_file
 
 
 class StdOutCapture(list):

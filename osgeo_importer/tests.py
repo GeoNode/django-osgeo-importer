@@ -15,7 +15,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.gis.gdal import DataSource
-from osgeo_importer.utils import create_vrt
 from osgeo_importer.handlers.geoserver import configure_time
 from osgeo_importer.inspectors import GDALInspector
 from geoserver.catalog import Catalog, FailedRequestError
@@ -404,24 +403,6 @@ class UploaderTests(DjagnoOsgeoMixin):
         url = datastore.href.replace(".xml", '/featuretypes.xml'.format(name=name))
         headers, response = catalog.http.request(url, "POST ", data, headers)
         return response
-
-    def test_create_vrt(self):
-        """
-        Tests the create_vrt function.
-        """
-        if osgeo.ogr.GetDriverByName('VRT') is None:
-           self.skipTest('VRT Driver Not Available')
-
-        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_Shootings.csv')
-
-        vrt = create_vrt(f)
-        vrt.seek(0)
-        output = vrt.read()
-
-        self.assertTrue('name="US_Shootings"' in output)
-        self.assertTrue('<SrcDataSource>{0}</SrcDataSource>'.format(f) in output)
-        self.assertTrue('<GeometryField encoding="PointFromColumns" x="Longitude" y="Latitude" />'.format(f) in output)
-        self.assertEqual(os.path.splitext(vrt.name)[1], '.vrt')
 
     def test_file_add_view(self):
         """
