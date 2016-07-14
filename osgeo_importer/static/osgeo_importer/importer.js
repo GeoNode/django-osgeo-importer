@@ -15,9 +15,10 @@
       'mgo-angular-wizard'
   ])
 
-  .config(function($interpolateProvider, $httpProvider, $sceDelegateProvider) {
+  .config(function($interpolateProvider, $httpProvider, $sceDelegateProvider, $resourceProvider) {
     //$interpolateProvider.startSymbol('{[');
     //$interpolateProvider.endSymbol(']}');
+    $resourceProvider.defaults.stripTrailingSlashes = false;
     $httpProvider.defaults.xsrfCookieName = 'csrftoken';
     $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
     $sceDelegateProvider.resourceUrlWhitelist([
