@@ -50,10 +50,10 @@
       var dates = [];
       layer.configuration_options.convert_to_date = [];
 
-        if (layer.configuration_options.always_geogig == true) {
+        if (layer.configuration_options.always_geogig === true) {
             layer.configuration_options.geoserver_store = {'type': 'geogig'};
 
-            if (layer.configuration_options.editable == false) {
+            if (layer.configuration_options.editable === false) {
                 layer.configuration_options.permissions = {'users': {'AnonymousUser': ['download_resourcebase', 'view_resourcebase']}};
             }
         } else {
@@ -205,7 +205,7 @@
                 csv_link: function () {
                     return csv_link;
                 },
-                always_geogig: function() {
+                always_geogig: function () {
                     return always_geogig;
                 }
             }
@@ -251,7 +251,7 @@
         }
 
           $scope.layer.configuration_options.always_geogig = $scope.always_geogig;
-        $scope.layer.configuration_options.editable = true;
+          $scope.layer.configuration_options.editable = true;
       };
 
       $scope.appending = function(asString) {
