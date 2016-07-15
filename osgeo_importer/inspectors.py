@@ -158,7 +158,7 @@ class GDALInspector(InspectorMixin):
             return GDAL_GEOMETRY_TYPES[number]
         except KeyError:
             return
-    
+
     def describe_fields(self):
         """
         Returns a dict of the layers with fields and field types.
@@ -168,7 +168,6 @@ class GDALInspector(InspectorMixin):
 
         if not opened_file:
             opened_file = self.open()
-        
         driver = opened_file.GetDriver().LongName
 
         # Get Vector Layers
@@ -181,7 +180,7 @@ class GDALInspector(InspectorMixin):
                                  'fields': [],
                                  'index': n,
                                  'geom_type': self.geometry_type(layer.GetGeomType()),
-                                 'raster': False, 'driver':driver}
+                                 'raster': False, 'driver': driver}
 
             layer_definition = layer.GetLayerDefn()
             for i in range(layer_definition.GetFieldCount()):
@@ -197,19 +196,19 @@ class GDALInspector(InspectorMixin):
         # Get main layer
         if opened_file.GetMetadataItem('AREA_OR_POINT'):
             layer_description = {'index': len(description),
-                                'layer_name': self.file,
-                                'path': self.file,
-                                'raster': True, 'driver':driver}
+                                 'layer_name': self.file,
+                                 'path': self.file,
+                                 'raster': True, 'driver': driver}
             description.append(layer_description)
         # Get sub layers
         raster_list = opened_file.GetSubDatasets()
-        for m in range(0,raster_list.__len__()):
+        for m in range(0, raster_list.__len__()):
             layer = gdal.OpenEx(raster_list[m][0])
             layer_description = {'index': len(description),
                                  'subdataset_index': m,
                                  'path': raster_list[m][0],
                                  'layer_name': raster_list[m][0].split(':')[-1],
-                                 'raster': True, 'driver':driver}
+                                 'raster': True, 'driver': driver}
             description.append(layer_description)
 
         return description

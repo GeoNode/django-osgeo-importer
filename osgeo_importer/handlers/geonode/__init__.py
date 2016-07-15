@@ -7,11 +7,11 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django import db
 import os
-import re
 import logging
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+
 
 class GeoNodePublishHandler(ImportHandlerMixin):
     """
@@ -49,8 +49,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         if isinstance(owner, str) or isinstance(owner, unicode):
             owner = User.objects.filter(username=owner).first()
 
-        #if re.search(r'\.tif$', layer):
-        if layer_config.get('raster') == True:
+        if layer_config.get('raster'):
             store_name = os.path.splitext(os.path.basename(layer))[0]
             filter = None
         else:

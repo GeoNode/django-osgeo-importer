@@ -275,9 +275,6 @@ def raster_import(infile, outfile, *args, **kwargs):
     if os.path.exists(outfile):
         raise FileExists
 
-    #if not os.path.exists(infile):
-    #    raise NoDataSourceFound
-
     options = get_kwarg('options', kwargs, ['TILED=YES'])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)

@@ -29,7 +29,7 @@ class Import(object):
     enabled_handlers = IMPORT_HANDLERS
     source_inspectors = []
     target_inspectors = []
-    valid_extensions = ['gpx', 'geojson', 'json', 'zip', 'tar', 'kml', 'csv', 'shp', 
+    valid_extensions = ['gpx', 'geojson', 'json', 'zip', 'tar', 'kml', 'csv', 'shp',
                         'tif', 'tiff', 'geotiff', 'gpkg']
 
     def filter_handler_results(self, handler_name):
@@ -213,13 +213,13 @@ class OGRImport(Import):
             configuration_options = [configuration_options]
 
         data, inspector = self.open_source_datastore(filename, *args, **kwargs)
-        
+
         datastore_layers = inspector.describe_fields()
 
         if len(datastore_layers) == 0:
             logger.debug('No Dataset found')
 
-        layers_info=[]
+        layers_info = []
         # Add index for any layers configured by name
         for layer_configuration in configuration_options:
             if 'layername' in layer_configuration:
@@ -232,9 +232,9 @@ class OGRImport(Import):
                     if datastore_layer.get('index') == layer_configuration.get('index'):
                         layer_configuration.update(datastore_layer)
                         layers_info.append(layer_configuration)
-        
+
         for layer_options in layers_info:
-            if layer_options['raster'] == True:
+            if layer_options['raster']:
                 """
                 File is a raster, we need to convert into optimized GeoTiff
                 and skip any further testing or loading into target_store
@@ -279,9 +279,9 @@ class OGRImport(Import):
                     n += 1
                     try:
                         target_layer = self.create_target_dataset(target_file, layer_name, srs, layer_type,
-                                                                options=target_create_options)
+                                                                  options=target_create_options)
                     except RuntimeError as e:
-                        #logger.exception('exception in creating target dataset')
+                        # logger.exception('exception in creating target dataset')
                         # the layer already exists in the target store, increment the name
                         if 'Use the layer creation option OVERWRITE=YES to replace it.' in e.message:
                             layer_name = increment(layer_name)
