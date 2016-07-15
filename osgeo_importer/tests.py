@@ -123,24 +123,32 @@ class UploaderTests(DjagnoOsgeoMixin):
 
         res = self.import_file(filename, configuration_options=configuration_options)
 
-        layer = Layer.objects.get(name=res[0][0])
-        self.assertEqual(layer.srid, 'EPSG:4326')
-        self.assertEqual(layer.store, self.datastore.name)
-        self.assertEqual(layer.storeType, 'dataStore')
+        layer_results=[]
 
-        if not filename.endswith('zip'):
-            self.assertTrue(layer.attributes.count() >= DataSource(filename)[0].num_fields)
+        for result in res:
+            if result[1].get('raster') == True:
+                layerfile = result[0]
+                layername = os.path.splitext(os.path.basename(layerfile))[0]
+                layer = Layer.objects.get(name=layername)
+                self.assertTrue(layerfile.endswith('.tif'))
+                self.assertTrue(os.path.exists(layerfile))
+                l = gdal.OpenEx(layerfile)
+                self.assertTrue(l.GetDriver().ShortName, 'GTiff')
+                layer_results.append(layer)
+            else:
+                layer = Layer.objects.get(name=result[0])
+                self.assertEqual(layer.srid, 'EPSG:4326')
+                self.assertEqual(layer.store, self.datastore.name)
+                self.assertEqual(layer.storeType, 'dataStore')
 
-        # make sure we have at least one dateTime attribute
-        self.assertTrue('xsd:dateTime' or 'xsd:date' in [n.attribute_type for n in layer.attributes.all()])
+                if not filename.endswith('zip'):
+                    self.assertTrue(layer.attributes.count() >= DataSource(filename)[0].num_fields)
 
-        return layer
+                # make sure we have at least one dateTime attribute
+                self.assertTrue('xsd:dateTime' or 'xsd:date' in [n.attribute_type for n in layer.attributes.all()])
+                layer_results.append(layer)
 
-    def test_geopackage_gdal_support(self):
-        f = 'boxes_plus_raster.gpkg'
-        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
-        l = gdal.OpenEx(filename)
-        self.assertTrue(l.GetDriver().ShortName, 'GPKG')
+        return layer_results[0]
 
     def generic_raster_import(self, file, configuration_options=[{'index': 0}]):
         f = file
@@ -185,6 +193,47 @@ class UploaderTests(DjagnoOsgeoMixin):
                                                                                    'start_date': 'date',
                                                                                    'configureTime': True
                                                                                    }])
+
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
+
+        configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
+        self.generic_time_check(layer, attribute=date_attr.attribute)
+
+    def test_boxes_with_date_gpkg(self):
+        """
+        Tests the import of test_boxes_with_date.gpkg.
+        """
+
+        layer = self.generic_import('boxes_with_date.gpkg', configuration_options=[{'index': 0,
+                                                                                   'convert_to_date': ['date'],
+                                                                                   'start_date': 'date',
+                                                                                   'configureTime': True
+                                                                                   }])
+
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
+
+        configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
+        self.generic_time_check(layer, attribute=date_attr.attribute)
+
+    def test_boxes_plus_raster_gpkg_by_index(self):
+        """
+        Tests the import of multilayer vector + raster geopackage using index
+        """
+
+        layer = self.generic_import('boxes_plus_raster.gpkg', configuration_options=[{'index': 0,
+                                                                                   'convert_to_date': ['date'],
+                                                                                   'start_date': 'date',
+                                                                                   'configureTime': True
+                                                                                   },
+                                                                                   {'index':1},
+                                                                                   {'index':2},
+                                                                                   {'index':3},
+                                                                                   {'index':4},
+                                                                                   {'index':5},
+                                                                                   {'index':6},
+                                                                                   {'index':7},])
 
         date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
@@ -410,6 +459,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         headers, response = catalog.http.request(url, "POST ", data, headers)
         return response
 
+
     def test_file_add_view(self):
         """
         Tests the file_add_view.
@@ -473,7 +523,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         with GDALInspector(f) as f:
             layers = f.describe_fields()
 
-        self.assertTrue(layers[0]['name'], 'us_shootings')
+        self.assertTrue(layers[0]['layer_name'], 'us_shootings')
         self.assertEqual([n['name'] for n in layers[0]['fields']], ['Date', 'Shooter', 'Killed',
                                                                     'Wounded', 'Location', 'City',
                                                                     'Longitude', 'Latitude'])

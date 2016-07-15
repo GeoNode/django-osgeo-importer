@@ -89,8 +89,6 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         upload.save()
 
         description = self.get_fields(upload_file.file.path)
-
-        #  TODO: replace this with explicit raster/vector check.
         if not description:
             logger.debug("No layers detected; assuming raster")
             configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()

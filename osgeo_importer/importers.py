@@ -29,8 +29,8 @@ class Import(object):
     enabled_handlers = IMPORT_HANDLERS
     source_inspectors = []
     target_inspectors = []
-    valid_extensions = ['gpx', 'geojson', 'json', 'zip', 'tar', 'kml', 'csv',
-                        'shp', 'tif']
+    valid_extensions = ['gpx', 'geojson', 'json', 'zip', 'tar', 'kml', 'csv', 'shp',
+                        'tif', 'tiff', 'geotiff', 'gpkg']
 
     def filter_handler_results(self, handler_name):
         """
@@ -212,144 +212,161 @@ class OGRImport(Import):
         if isinstance(configuration_options, dict):
             configuration_options = [configuration_options]
 
-        data, _ = self.open_source_datastore(filename, *args, **kwargs)
+        data, inspector = self.open_source_datastore(filename, *args, **kwargs)
 
-        if data.GetDriver().ShortName == 'GTiff':
-            """
-            File is a GeoTiff, we need to convert into optimized GeoTiff
-            and skip any further testing or loading into target_store
-            """
-            #  Increment filename to make sure target doesn't exists
-            filedir, filebase = os.path.split(filename)
-            fileout = increment_filename(os.path.join(RASTER_FILES, filebase))
-            raster_import(filename, fileout)
-            layer_options = configuration_options[0]
-            self.completed_layers.append([fileout, layer_options])
-            return self.completed_layers
+        datastore_layers = inspector.describe_fields()
 
-        target_file, _ = self.open_target_datastore(self.target_store)
-        target_create_options = []
+        if len(datastore_layers) == 0:
+            logger.debug('No Dataset found')
 
-        # Prevent numeric field overflow for shapefiles https://trac.osgeo.org/gdal/ticket/5241
-        if target_file.GetDriver().GetName() == 'PostgreSQL':
-            target_create_options.append('PRECISION=NO')
+        layers_info = []
+        # Add index for any layers configured by name
+        for layer_configuration in configuration_options:
+            if 'layername' in layer_configuration:
+                for datastore_layer in datastore_layers:
+                    if datastore_layer.get('layer_name') == layer_configuration.get('layername'):
+                        layer_configuration.update(datastore_layer)
+                        layers_info.append(layer_configuration)
+            elif 'index' in layer_configuration:
+                for datastore_layer in datastore_layers:
+                    if datastore_layer.get('index') == layer_configuration.get('index'):
+                        layer_configuration.update(datastore_layer)
+                        layers_info.append(layer_configuration)
 
-        for layer_options in configuration_options:
-            layer_options['modified_fields'] = {}
-            layer = data.GetLayer(layer_options.get('index'))
-            layer_name = layer_options.get('name', layer.GetName().lower())
-            layer_type = self.get_layer_type(layer, data)
-            srs = layer.GetSpatialRef()
+        for layer_options in layers_info:
+            if layer_options['raster']:
+                """
+                File is a raster, we need to convert into optimized GeoTiff
+                and skip any further testing or loading into target_store
+                """
+                #  Increment filename to make sure target doesn't exists
+                filedir, filebase = os.path.split(filename)
+                outfile = '%s.tif' % os.path.splitext(filebase)[0]
+                fileout = increment_filename(os.path.join(RASTER_FILES, outfile))
+                raster_import(layer_options['path'], fileout)
+                self.completed_layers.append([fileout, layer_options])
+            else:
+                target_file, _ = self.open_target_datastore(self.target_store)
+                target_create_options = []
+                # Prevent numeric field overflow for shapefiles https://trac.osgeo.org/gdal/ticket/5241
+                if target_file.GetDriver().GetName() == 'PostgreSQL':
+                    target_create_options.append('PRECISION=NO')
+                layer_options['modified_fields'] = {}
+                layer = data.GetLayer(layer_options.get('index'))
+                layer_name = layer_options.get('name', layer.GetName().lower())
+                layer_type = self.get_layer_type(layer, data)
+                srs = layer.GetSpatialRef()
 
-            if layer_name == 'ogrgeojson':
-                try:
-                    layer_name = os.path.splitext(os.path.basename(filename))[0].lower()
-                except IndexError:
-                    pass
-
-            layer_name = launder(str(layer_name))
-
-            # default the layer to 4326 if a spatial reference is not provided
-            if not srs:
-                srs = osr.SpatialReference()
-                srs.ImportFromEPSG(4326)
-
-            # pass the srs authority code to handlers
-            if srs.AutoIdentifyEPSG() == 0:
-                layer_options['srs'] = '{0}:{1}'.format(srs.GetAuthorityName(None), srs.GetAuthorityCode(None))
-
-            n = 0
-            while True:
-                n += 1
-                try:
-                    target_layer = self.create_target_dataset(target_file, layer_name, srs, layer_type,
-                                                              options=target_create_options)
-                except RuntimeError as e:
-                    # the layer already exists in the target store, increment the name
-                    if 'Use the layer creation option OVERWRITE=YES to replace it.' in e.message:
-                        layer_name = increment(layer_name)
-
-                        # try 100 times to increment then break
-                        if n >= 100:
-                            break
-
-                        continue
-                    else:
-                        raise e
-                break
-
-            # adding fields to new layer
-            layer_definition = ogr.Feature(layer.GetLayerDefn())
-            source_fid = None
-
-            wkb_field = 0
-
-            for i in range(layer_definition.GetFieldCount()):
-
-                field_def = layer_definition.GetFieldDefnRef(i)
-
-                if field_def.GetName() == target_layer.GetFIDColumn() and field_def.GetType() != 0:
-                    field_def.SetType(0)
-
-                if field_def.GetName() != 'wkb_geometry':
-                    target_layer.CreateField(field_def)
-                    new_name = target_layer.GetLayerDefn().GetFieldDefn(i - wkb_field).GetName()
-                    old_name = field_def.GetName()
-
-                    if new_name != old_name:
-                        layer_options['modified_fields'][old_name] = new_name
-
-                    if old_name == target_layer.GetFIDColumn() and not layer.GetFIDColumn():
-                        source_fid = i
-                else:
-                    wkb_field = 1
-
-            if wkb_field is not 0:
-                layer.SetIgnoredFields(['wkb_geometry'])
-
-            for i in range(0, layer.GetFeatureCount()):
-                feature = layer.GetFeature(i)
-
-                if feature and feature.geometry():
-
-                    if not layer.GetFIDColumn():
-                        feature.SetFID(-1)
-
-                    if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
-                            target_layer.GetGeomType() in range(4, 7):
-
-                        conversion_function = ogr.ForceToMultiPolygon
-
-                        if target_layer.GetGeomType() == 5:
-                            conversion_function = ogr.ForceToMultiLineString
-
-                        elif target_layer.GetGeomType() == 4:
-                            conversion_function = ogr.ForceToMultiPoint
-
-                        geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
-                        feature.SetGeometry(conversion_function(geom))
-
-                    if source_fid is not None:
-                        feature.SetFID(feature.GetField(source_fid))
-
+                if layer_name.lower() == 'ogrgeojson':
                     try:
-                        target_layer.CreateFeature(feature)
+                        layer_name = os.path.splitext(os.path.basename(filename))[0].lower()
+                    except IndexError:
+                        pass
 
-                    except:
-                        for field in range(0, feature.GetFieldCount()):
-                            if feature.GetFieldType(field) == ogr.OFTString:
-                                try:
-                                    feature.GetField(field).decode('utf8')
-                                except UnicodeDecodeError:
-                                    feature.SetField(field, decode(feature.GetField(field)))
-                                except AttributeError:
-                                    continue
+                layer_name = launder(str(layer_name))
+
+                # default the layer to 4326 if a spatial reference is not provided
+                if not srs:
+                    srs = osr.SpatialReference()
+                    srs.ImportFromEPSG(4326)
+
+                # pass the srs authority code to handlers
+                if srs.AutoIdentifyEPSG() == 0:
+                    layer_options['srs'] = '{0}:{1}'.format(srs.GetAuthorityName(None), srs.GetAuthorityCode(None))
+
+                n = 0
+                while True:
+                    n += 1
+                    try:
+                        target_layer = self.create_target_dataset(target_file, layer_name, srs, layer_type,
+                                                                  options=target_create_options)
+                    except RuntimeError as e:
+                        # logger.exception('exception in creating target dataset')
+                        # the layer already exists in the target store, increment the name
+                        if 'Use the layer creation option OVERWRITE=YES to replace it.' in e.message:
+                            layer_name = increment(layer_name)
+
+                            # try 100 times to increment then break
+                            if n >= 100:
+                                break
+
+                            continue
+                        else:
+                            raise e
+                    break
+
+                # adding fields to new layer
+                layer_definition = ogr.Feature(layer.GetLayerDefn())
+                source_fid = None
+
+                wkb_field = 0
+
+                for i in range(layer_definition.GetFieldCount()):
+
+                    field_def = layer_definition.GetFieldDefnRef(i)
+
+                    if field_def.GetName() == target_layer.GetFIDColumn() and field_def.GetType() != 0:
+                        field_def.SetType(0)
+
+                    if field_def.GetName() != 'wkb_geometry':
+                        target_layer.CreateField(field_def)
+                        new_name = target_layer.GetLayerDefn().GetFieldDefn(i - wkb_field).GetName()
+                        old_name = field_def.GetName()
+
+                        if new_name != old_name:
+                            layer_options['modified_fields'][old_name] = new_name
+
+                        if old_name == target_layer.GetFIDColumn() and not layer.GetFIDColumn():
+                            source_fid = i
+                    else:
+                        wkb_field = 1
+
+                if wkb_field is not 0:
+                    layer.SetIgnoredFields(['wkb_geometry'])
+
+                for i in range(0, layer.GetFeatureCount()):
+                    feature = layer.GetFeature(i)
+
+                    if feature and feature.geometry():
+
+                        if not layer.GetFIDColumn():
+                            feature.SetFID(-1)
+
+                        if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
+                                target_layer.GetGeomType() in range(4, 7):
+
+                            conversion_function = ogr.ForceToMultiPolygon
+
+                            if target_layer.GetGeomType() == 5:
+                                conversion_function = ogr.ForceToMultiLineString
+
+                            elif target_layer.GetGeomType() == 4:
+                                conversion_function = ogr.ForceToMultiPoint
+
+                            geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
+                            feature.SetGeometry(conversion_function(geom))
+
+                        if source_fid is not None:
+                            feature.SetFID(feature.GetField(source_fid))
+
                         try:
                             target_layer.CreateFeature(feature)
-                        except err as e:
-                            logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
-                            raise e
 
-            self.completed_layers.append([target_layer.GetName(), layer_options])
+                        except:
+                            for field in range(0, feature.GetFieldCount()):
+                                if feature.GetFieldType(field) == ogr.OFTString:
+                                    try:
+                                        feature.GetField(field).decode('utf8')
+                                    except UnicodeDecodeError:
+                                        feature.SetField(field, decode(feature.GetField(field)))
+                                    except AttributeError:
+                                        continue
+                            try:
+                                target_layer.CreateFeature(feature)
+                            except err as e:
+                                logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
+                                raise e
+
+                self.completed_layers.append([target_layer.GetName(), layer_options])
 
         return self.completed_layers

@@ -1,8 +1,6 @@
-import re
 import os
 import logging
 import requests
-
 from decimal import Decimal, InvalidOperation
 from django import db
 from django.conf import settings
@@ -74,9 +72,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-        if re.search(r'\.tif$', layer):
+        if layer_config.get('raster'):
             return False
-
         return True
 
     def get_default_store(self):
@@ -174,7 +171,7 @@ class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-        if re.search(r'\.tif$', layer):
+        if layer_config.get('raster'):
             return True
 
         return False
