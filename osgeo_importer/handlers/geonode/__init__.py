@@ -8,9 +8,10 @@ from django.conf import settings
 from django import db
 import os
 import re
+import logging
 
 User = get_user_model()
-
+logger = logging.getLogger(__name__)
 
 class GeoNodePublishHandler(ImportHandlerMixin):
     """
@@ -44,12 +45,12 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         Handler specific params:
         "layer_owner": Sets the owner of the layer.
         """
-
         owner = layer_config.get('layer_owner')
         if isinstance(owner, str) or isinstance(owner, unicode):
             owner = User.objects.filter(username=owner).first()
 
-        if re.search(r'\.tif$', layer):
+        #if re.search(r'\.tif$', layer):
+        if layer_config.get('raster') == True:
             store_name = os.path.splitext(os.path.basename(layer))[0]
             filter = None
         else:
