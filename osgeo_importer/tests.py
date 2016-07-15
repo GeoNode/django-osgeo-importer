@@ -136,6 +136,12 @@ class UploaderTests(DjagnoOsgeoMixin):
 
         return layer
 
+    def test_geopackage_gdal_support(self):
+        f = 'boxes_plus_raster.gpkg'
+        filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
+        l = gdal.OpenEx(filename)
+        self.assertTrue(l.GetDriver().ShortName, 'GPKG')
+
     def generic_raster_import(self, file, configuration_options=[{'index': 0}]):
         f = file
         filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
