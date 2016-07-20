@@ -171,7 +171,6 @@ class GDALInspector(InspectorMixin):
         driver = opened_file.GetDriver().LongName
 
         # Get Vector Layers
-        n = 0
         for n in range(0, opened_file.GetLayerCount()):
             layer = opened_file.GetLayer(n)
             layer_name = layer.GetName()
@@ -180,9 +179,11 @@ class GDALInspector(InspectorMixin):
                                  'fields': [],
                                  'index': n,
                                  'geom_type': self.geometry_type(layer.GetGeomType()),
-                                 'raster': False, 'driver': driver}
+                                 'raster': False,
+                                 'driver': driver}
 
             layer_definition = layer.GetLayerDefn()
+
             for i in range(layer_definition.GetFieldCount()):
                 field_desc = {}
                 field = layer_definition.GetFieldDefn(i)
@@ -198,8 +199,10 @@ class GDALInspector(InspectorMixin):
             layer_description = {'index': len(description),
                                  'layer_name': self.file,
                                  'path': self.file,
-                                 'raster': True, 'driver': driver}
+                                 'raster': True,
+                                 'driver': driver}
             description.append(layer_description)
+
         # Get sub layers
         raster_list = opened_file.GetSubDatasets()
         for m in range(0, raster_list.__len__()):

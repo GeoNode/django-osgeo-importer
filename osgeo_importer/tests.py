@@ -126,7 +126,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         layer_results=[]
 
         for result in res:
-            if result[1].get('raster') == True:
+            if result[1].get('raster'):
                 layerfile = result[0]
                 layername = os.path.splitext(os.path.basename(layerfile))[0]
                 layer = Layer.objects.get(name=layername)
@@ -167,7 +167,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         """
         Tests raster import
         """
-        layer = self.generic_raster_import('test_grid.tif', configuration_options=[{'index':0}])
+        layer = self.generic_raster_import('test_grid.tif', configuration_options=[{'index': 0}])
 
     def test_box_with_year_field(self):
         """

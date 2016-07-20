@@ -220,18 +220,20 @@ class OGRImport(Import):
             logger.debug('No Dataset found')
 
         layers_info = []
+
         # Add index for any layers configured by name
         for layer_configuration in configuration_options:
-            if 'layername' in layer_configuration:
-                for datastore_layer in datastore_layers:
-                    if datastore_layer.get('layer_name') == layer_configuration.get('layername'):
-                        layer_configuration.update(datastore_layer)
-                        layers_info.append(layer_configuration)
-            elif 'index' in layer_configuration:
-                for datastore_layer in datastore_layers:
-                    if datastore_layer.get('index') == layer_configuration.get('index'):
-                        layer_configuration.update(datastore_layer)
-                        layers_info.append(layer_configuration)
+            lookup = 'layername'
+
+            if lookup not in layer_configuration and 'index' in layer_configuration:
+                lookup = 'index'
+            else:
+                continue
+
+            for datastore_layer in datastore_layers:
+                if datastore_layer.get(lookup) == layer_configuration.get(lookup):
+                    layer_configuration.update(datastore_layer)
+                    layers_info.append(layer_configuration)
 
         for layer_options in layers_info:
             if layer_options['raster']:
@@ -248,9 +250,11 @@ class OGRImport(Import):
             else:
                 target_file, _ = self.open_target_datastore(self.target_store)
                 target_create_options = []
+
                 # Prevent numeric field overflow for shapefiles https://trac.osgeo.org/gdal/ticket/5241
                 if target_file.GetDriver().GetName() == 'PostgreSQL':
                     target_create_options.append('PRECISION=NO')
+
                 layer_options['modified_fields'] = {}
                 layer = data.GetLayer(layer_options.get('index'))
                 layer_name = layer_options.get('name', layer.GetName().lower())
