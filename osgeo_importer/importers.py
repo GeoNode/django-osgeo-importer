@@ -85,7 +85,6 @@ class Import(object):
         import method and subsequently to the handlers.
         :return: The response from the import_file method.
         """
-
         layers = self.import_file(configuration_options=configuration_options)
 
         for layer, config in layers:
@@ -223,11 +222,13 @@ class OGRImport(Import):
 
         # Add index for any layers configured by name
         for layer_configuration in configuration_options:
-            lookup = 'layername'
-
-            if lookup not in layer_configuration and 'index' in layer_configuration:
+            if 'layer_name' in layer_configuration:
+                lookup = 'layer_name'
+            elif 'index' in layer_configuration:
                 lookup = 'index'
             else:
+                lookup = None
+                logger.debug('could not find lookup')
                 continue
 
             for datastore_layer in datastore_layers:

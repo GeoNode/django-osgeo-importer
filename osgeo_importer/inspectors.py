@@ -150,10 +150,14 @@ class GDALInspector(InspectorMixin):
         return self.data
 
     @staticmethod
-    def geometry_type(number):
+    def geometry_type(layer):
         """
         Returns a string of the geometry type based on the number.
         """
+        try:
+            number = layer.GetGeomType()
+        except RuntimeError:
+            return
         try:
             return GDAL_GEOMETRY_TYPES[number]
         except KeyError:
@@ -168,28 +172,31 @@ class GDALInspector(InspectorMixin):
 
         if not opened_file:
             opened_file = self.open()
-        driver = opened_file.GetDriver().LongName
+        driver = opened_file.GetDriver().ShortName
 
         # Get Vector Layers
         for n in range(0, opened_file.GetLayerCount()):
             layer = opened_file.GetLayer(n)
             layer_name = layer.GetName()
+            geometry_type = self.geometry_type(layer)
             layer_description = {'layer_name': layer_name,
-                                 'feature_count': layer.GetFeatureCount(),
+                                 'feature_count': None,
                                  'fields': [],
                                  'index': n,
-                                 'geom_type': self.geometry_type(layer.GetGeomType()),
+                                 'geom_type': geometry_type,
                                  'raster': False,
-                                 'driver': driver}
+                                 'driver': driver,
+                                 'layer_definition': None}
+            if driver != 'WFS':
+                layer_description['feature_count'] = layer.GetFeatureCount()
+                layer_definition = layer.GetLayerDefn()
 
-            layer_definition = layer.GetLayerDefn()
-
-            for i in range(layer_definition.GetFieldCount()):
-                field_desc = {}
-                field = layer_definition.GetFieldDefn(i)
-                field_desc['name'] = field.GetName()
-                field_desc['type'] = field.GetFieldTypeName(i)
-                layer_description['fields'].append(field_desc)
+                for i in range(layer_definition.GetFieldCount()):
+                    field_desc = {}
+                    field = layer_definition.GetFieldDefn(i)
+                    field_desc['name'] = field.GetName()
+                    field_desc['type'] = field.GetFieldTypeName(i)
+                    layer_description['fields'].append(field_desc)
 
             description.append(layer_description)
 
