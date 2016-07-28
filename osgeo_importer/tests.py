@@ -122,7 +122,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
 
         res = self.import_file(filename, configuration_options=configuration_options)
-
+        print res
         layer_results=[]
 
         for result in res:
@@ -441,10 +441,10 @@ class UploaderTests(DjagnoOsgeoMixin):
         """
         Tests the import from a WFS Endpoint
         """
-        wfs = 'WFS:http://www.geoservicos.ibge.gov.br/geoserver/ows?service=wfs&version=1.1.0'
+        wfs = 'WFS:http://demo.boundlessgeo.com/geoserver/wfs'
         gi = OGRImport(wfs)
-        layers = gi.handle(configuration_options=[{'layer_name':'CGEO:C05_taxa_liquid_migra_metropole_2010'},
-                                                   {'layer_name':'CGEO:C05_numero_pessoas_cuiaba_2010'}])
+        layers = gi.handle(configuration_options=[{'layer_name':'og:bugsites'},
+                                                   {'layer_name':'topp:states'}])
         for result in layers:
             layer = Layer.objects.get(name=result[0])
             self.assertEqual(layer.srid, 'EPSG:4326')

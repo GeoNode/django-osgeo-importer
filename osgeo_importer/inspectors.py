@@ -174,21 +174,25 @@ class GDALInspector(InspectorMixin):
         for n in range(0, opened_file.GetLayerCount()):
             layer = opened_file.GetLayer(n)
             layer_name = layer.GetName()
+            try:
+                geometry_type = self.geometry_type(layer.GetGeomType())
+            except:
+                geometry_type = None
             if driver == 'WFS':
                 layer_description = {'layer_name': layer_name,
-                                 'fields': [],
-                                 'index': n,
-                                 'geom_type': self.geometry_type(layer.GetGeomType()),
-                                 'raster': False,
-                                 'driver': driver}
+                                     'fields': [],
+                                     'index': n,
+                                     'geom_type': geometry_type,
+                                     'raster': False,
+                                     'driver': driver}
             else:
                 layer_description = {'layer_name': layer_name,
-                                    'feature_count': layer.GetFeatureCount(),
-                                    'fields': [],
-                                    'index': n,
-                                    'geom_type': self.geometry_type(layer.GetGeomType()),
-                                    'raster': False,
-                                    'driver': driver}
+                                     'feature_count': layer.GetFeatureCount(),
+                                     'fields': [],
+                                     'index': n,
+                                     'geom_type': self.geometry_type(layer.GetGeomType()),
+                                     'raster': False,
+                                     'driver': driver}
 
                 layer_definition = layer.GetLayerDefn()
 
