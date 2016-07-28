@@ -436,7 +436,6 @@ class UploaderTests(DjagnoOsgeoMixin):
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         self.generic_import(filename, configuration_options=[{'index': 0,  'convert_to_date': ['date']}])
 
-
     def test_wfs(self):
         """
         Tests the import from a WFS Endpoint
@@ -450,7 +449,6 @@ class UploaderTests(DjagnoOsgeoMixin):
             self.assertEqual(layer.srid, 'EPSG:4326')
             self.assertEqual(layer.store, self.datastore.name)
             self.assertEqual(layer.storeType, 'dataStore')
-        
 
     def import_file(self, in_file, configuration_options=[]):
         """
