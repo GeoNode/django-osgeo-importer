@@ -10,6 +10,7 @@ from django.conf import settings
 from django import db
 import logging
 
+logging.basicConfig(filename='/vagrant/debug.log',filemode='w',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 ogr.UseExceptions()
 
@@ -85,7 +86,7 @@ class Import(object):
         import method and subsequently to the handlers.
         :return: The response from the import_file method.
         """
-
+        logger.debug('Importing %s %s',self.file,configuration_options)
         layers = self.import_file(configuration_options=configuration_options)
 
         for layer, config in layers:
@@ -215,6 +216,7 @@ class OGRImport(Import):
         data, inspector = self.open_source_datastore(filename, *args, **kwargs)
 
         datastore_layers = inspector.describe_fields()
+        logger.debug('number of datastore layers %s',len(datastore_layers))
 
         if len(datastore_layers) == 0:
             logger.debug('No Dataset found')
@@ -223,14 +225,16 @@ class OGRImport(Import):
 
         # Add index for any layers configured by name
         for layer_configuration in configuration_options:
-            lookup = 'layername'
-
-            if lookup not in layer_configuration and 'index' in layer_configuration:
+            if 'layer_name' in layer_configuration:
+                lookup = 'layer_name'
+            elif 'index' in layer_configuration:
                 lookup = 'index'
             else:
+                logger.debug('could not find lookup')
                 continue
 
             for datastore_layer in datastore_layers:
+                logger.debug('ds loop %s %s %s',lookup,datastore_layer.get(lookup),layer_configuration.get(lookup))
                 if datastore_layer.get(lookup) == layer_configuration.get(lookup):
                     layer_configuration.update(datastore_layer)
                     layers_info.append(layer_configuration)

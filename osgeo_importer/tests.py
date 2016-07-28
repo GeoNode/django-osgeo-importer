@@ -436,6 +436,22 @@ class UploaderTests(DjagnoOsgeoMixin):
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', filename)
         self.generic_import(filename, configuration_options=[{'index': 0,  'convert_to_date': ['date']}])
 
+
+    def test_wfs(self):
+        """
+        Tests the import from a WFS Endpoint
+        """
+        wfs = 'WFS:http://www.geoservicos.ibge.gov.br/geoserver/ows?service=wfs&version=1.1.0'
+        gi = OGRImport(wfs)
+        layers = gi.handle(configuration_options=[{'layer_name':'CGEO:C05_taxa_liquid_migra_metropole_2010'},
+                                                   {'layer_name':'CGEO:C05_numero_pessoas_cuiaba_2010'}])
+        for result in layers:
+            layer = Layer.objects.get(name=result[0])
+            self.assertEqual(layer.srid, 'EPSG:4326')
+            self.assertEqual(layer.store, self.datastore.name)
+            self.assertEqual(layer.storeType, 'dataStore')
+        
+
     def import_file(self, in_file, configuration_options=[]):
         """
         Imports the file.

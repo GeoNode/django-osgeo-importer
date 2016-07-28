@@ -168,28 +168,36 @@ class GDALInspector(InspectorMixin):
 
         if not opened_file:
             opened_file = self.open()
-        driver = opened_file.GetDriver().LongName
+        driver = opened_file.GetDriver().ShortName
 
         # Get Vector Layers
         for n in range(0, opened_file.GetLayerCount()):
             layer = opened_file.GetLayer(n)
             layer_name = layer.GetName()
-            layer_description = {'layer_name': layer_name,
-                                 'feature_count': layer.GetFeatureCount(),
+            if driver == 'WFS':
+                layer_description = {'layer_name': layer_name,
                                  'fields': [],
                                  'index': n,
                                  'geom_type': self.geometry_type(layer.GetGeomType()),
                                  'raster': False,
                                  'driver': driver}
+            else:
+                layer_description = {'layer_name': layer_name,
+                                    'feature_count': layer.GetFeatureCount(),
+                                    'fields': [],
+                                    'index': n,
+                                    'geom_type': self.geometry_type(layer.GetGeomType()),
+                                    'raster': False,
+                                    'driver': driver}
 
-            layer_definition = layer.GetLayerDefn()
+                layer_definition = layer.GetLayerDefn()
 
-            for i in range(layer_definition.GetFieldCount()):
-                field_desc = {}
-                field = layer_definition.GetFieldDefn(i)
-                field_desc['name'] = field.GetName()
-                field_desc['type'] = field.GetFieldTypeName(i)
-                layer_description['fields'].append(field_desc)
+                for i in range(layer_definition.GetFieldCount()):
+                    field_desc = {}
+                    field = layer_definition.GetFieldDefn(i)
+                    field_desc['name'] = field.GetName()
+                    field_desc['type'] = field.GetFieldTypeName(i)
+                    layer_description['fields'].append(field_desc)
 
             description.append(layer_description)
 

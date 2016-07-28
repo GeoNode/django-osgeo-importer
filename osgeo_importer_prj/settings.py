@@ -80,5 +80,23 @@ DATABASES = {
 
 OSGEO_DATASTORE = 'datastore'
 OSGEO_IMPORTER_GEONODE_ENABLED = True
-LOGGING['loggers']['osgeo_importer'] = {"handlers": ["console"], "level": "DEBUG"}
+#LOGGING['loggers']['osgeo_importer'] = {"handlers": ["console"], "level": "DEBUG"}
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/vagrant/debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 DATABASE_ROUTERS = ['osgeo_importer_prj.dbrouters.DefaultOnlyMigrations']
