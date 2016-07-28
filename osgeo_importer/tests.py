@@ -450,6 +450,19 @@ class UploaderTests(DjagnoOsgeoMixin):
             self.assertEqual(layer.store, self.datastore.name)
             self.assertEqual(layer.storeType, 'dataStore')
 
+    def test_arcgisjson(self):
+        """
+        Tests the import from a WFS Endpoint
+        """
+        endpoint = 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&outfields=*&f=json'
+        gi = OGRImport(endpoint)
+        layers = gi.handle(configuration_options=[{'index':0}])
+        for result in layers:
+            layer = Layer.objects.get(name=result[0])
+            self.assertEqual(layer.srid, 'EPSG:4326')
+            self.assertEqual(layer.store, self.datastore.name)
+            self.assertEqual(layer.storeType, 'dataStore')
+
     def import_file(self, in_file, configuration_options=[]):
         """
         Imports the file.
