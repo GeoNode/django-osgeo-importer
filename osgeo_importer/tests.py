@@ -371,7 +371,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         """
         # TODO: Support time in kmls.
 
-        layer = self.generic_import('us_states.kml')
+        layer = self.generic_import('us_states.kml',configuration_options=[{'index': 0}])
 
     def test_mojstrovka_gpx(self):
         """
