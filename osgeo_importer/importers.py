@@ -227,6 +227,7 @@ class OGRImport(Import):
             elif 'index' in layer_configuration:
                 lookup = 'index'
             else:
+                lookup = None
                 logger.debug('could not find lookup')
                 continue
 

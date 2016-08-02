@@ -122,7 +122,6 @@ class UploaderTests(DjagnoOsgeoMixin):
         filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
 
         res = self.import_file(filename, configuration_options=configuration_options)
-        print res
         layer_results=[]
 
         for result in res:
