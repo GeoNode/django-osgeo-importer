@@ -22,7 +22,7 @@ from geonode.layers.models import Layer
 from geonode.geoserver.helpers import ogc_server_settings
 from osgeo_importer.models import UploadLayer
 from osgeo_importer.models import validate_file_extension, ValidationError, validate_inspector_can_read
-from osgeo_importer.models import UploadedData
+from osgeo_importer.models import UploadedData, UploadFile
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
 
@@ -775,6 +775,8 @@ class UploaderTests(DjagnoOsgeoMixin):
         name = 'point-with-a-date'
         with open(f) as fp:
             response = c.post(reverse('uploads-new'), {'file': fp}, follow=True)
+
+        print UploadFile.objects.first()
 
         payload = {'index': 0,
                    'convert_to_date': ['date'],

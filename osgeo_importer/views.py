@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 from django.http import HttpResponse
@@ -8,6 +9,7 @@ from .models import UploadedData, UploadLayer, DEFAULT_LAYER_CONFIGURATION
 from .importers import OSGEO_IMPORTER
 from .inspectors import OSGEO_INSPECTOR
 from .utils import import_string
+from django.conf import settings
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
@@ -76,40 +78,38 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
     template_name = 'osgeo_importer/new.html'
     json = False
 
-    def create_upload_session(self, upload_file):
-        """
-        Creates an upload session from the file.
-        """
-        upload = UploadedData.objects.create(user=self.request.user, state='UPLOADED', complete=True)
-        upload_file.upload = upload
-        upload_file.save()
-        upload.size = upload_file.file.size
-        upload.name = upload_file.name
-        upload.file_type = self.get_file_type(upload_file.file.path)
-        upload.save()
-
-        description = self.get_fields(upload_file.file.path)
-        if not description:
-            logger.debug("No layers detected; assuming raster")
-            configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
-            upload.uploadlayer_set.add(UploadLayer(name=upload.name,
-                                                   configuration_options=configuration_options))
-
-        for layer in description:
-            configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
-            configuration_options.update({'index': layer.get('index')})
-            upload.uploadlayer_set.add(UploadLayer(name=layer.get('layer_name'),
-                                                   fields=layer.get('fields', {}),
-                                                   index=layer.get('index'),
-                                                   feature_count=layer.get('feature_count'),
-                                                   configuration_options=configuration_options))
-        upload.save()
-        return upload
-
     def form_valid(self, form):
+        upload = UploadedData(user=self.request.user)
+        upload.save()
 
-        form.save(commit=True)
-        upload = self.create_upload_session(form.instance)
+        # Create Upload Directory based on Upload PK
+        outpath = os.path.join('/uploads',str(upload.pk))
+        outdir = os.path.join(settings.MEDIA_ROOT,outpath)
+        
+        # Move all files to uploads directory using upload pk
+        # Must be done for all files before saving upfile for validation
+        for each in form.cleaned_data['files']:
+            shutil.move(each.path, os.path.join(outpath,each.name))
+
+        # Loop through and create uploadfiles and uploadlayers
+        for each in form.cleaned_data['files']:
+            upfile = UploadFile(upload=upload)
+            upfile.file.name = os.path.join(outpath,each.name)
+            upfile.save()
+
+            upfile_base, upfile_ext = os.path.splitext(each.name)
+            if upfile_ext.lower() not in ['.xml','.sld','.prj','.dbf','shx']:
+                description = self.get_fields(upload_file.file.path)
+                for layer in description:
+                    configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
+                    configuration_options.update({'index': layer.get('index')})
+                    upload.uploadlayer_set.add(UploadLayer(name=layer.get('name'),
+                                                        fields=layer.get('fields', {}),
+                                                        index=layer.get('index'),
+                                                        feature_count=layer.get('feature_count',None),
+                                                        configuration_options=configuration_options))
+        upload.complete = True
+        upload.state = 'UPLOADED'
 
         if self.json:
             return self.render_to_json_response({'state': upload.state, 'id': upload.id})
