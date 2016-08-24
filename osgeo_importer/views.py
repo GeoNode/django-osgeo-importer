@@ -1,4 +1,5 @@
 import json
+import logging
 from django.http import HttpResponse
 from django.views.generic import FormView, ListView, TemplateView
 from django.core.urlresolvers import reverse_lazy
@@ -10,6 +11,8 @@ from .utils import import_string
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
+
+logger = logging.getLogger(__name__)
 
 
 class JSONResponseMixin(object):
@@ -86,6 +89,11 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         upload.save()
 
         description = self.get_fields(upload_file.file.path)
+        if not description:
+            logger.debug("No layers detected; assuming raster")
+            configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
+            upload.uploadlayer_set.add(UploadLayer(name=upload.name,
+                                                   configuration_options=configuration_options))
 
         for layer in description:
             configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()

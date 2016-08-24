@@ -6,10 +6,10 @@
   var layerService_ = null;
   var q_ = null;
 
-  angular.module('mapstory.uploader', [
+  angular.module('osgeoImporter.uploader', [
       'ngResource',
       'ui.bootstrap',
-      'mapstory.factories',
+      'osgeoImporter.factories',
       'angularFileUpload',
       'ngCookies',
       'mgo-angular-wizard'
@@ -43,7 +43,7 @@
       layer.configuration_options = layer.configuration_options || {};
 
       if (!layer.hasOwnProperty('index') === true) {
-          layer['index'] = index;
+          layer['index'] = 0;
       }
 
       var checkStartDate = layer.configuration_options.hasOwnProperty('start_date') && layer.configuration_options.start_date != "";
@@ -456,7 +456,7 @@
                   layer.configuration_options = layer.configuration_options || {};
 
                   if (!layer.hasOwnProperty('index') === true) {
-                      layer['index'] = index;
+                      layer['index'] = 0;
                   }
 
                   var checkStartDate = layer.configuration_options.hasOwnProperty('start_date') && layer.configuration_options.start_date != "";

@@ -8,12 +8,14 @@ cd geos-3.4.2
 sudo make -j 4
 sudo make install
 
+sudo mkdir -p /srv/gdal
+sudo chown vagrant:vagrant /srv/gdal
 git clone https://github.com/OSGeo/gdal.git /srv/gdal
 cd /srv/gdal/gdal
-./configure --with-python
-./mkbindist.sh -dev $version linux
+./configure --with-python --with-sqlite3 --with-spatialite --with-geopackage --with-curl
+#./mkbindist.sh -dev $version linux
 sed -i 's/#!\/bin\/sh/#!\/bin\/bash/'  mkbindist.sh
-version=$(<VERSION)
+version=$(cat VERSION)
 ./mkbindist.sh -dev $version linux
 cp gdal-${version}-linux-bin.tar.gz /vagrant
 # aws s3 cp gdal-2.1.0-linux-bin.tar.gz s3://django-osgeo-importer --profile=prominentedge

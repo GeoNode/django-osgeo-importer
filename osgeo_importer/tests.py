@@ -1,10 +1,13 @@
 # -*- coding: UTF-8 -*-
 
+from .utils import load_handler, launder
+
 import os
 import json
 import unittest
 import osgeo
 import gdal
+
 from django import db
 from django.test import TestCase, Client
 from django.test.utils import setup_test_environment
@@ -12,19 +15,16 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.gis.gdal import DataSource
-from osgeo_importer.utils import create_vrt, ensure_defaults
 from osgeo_importer.handlers.geoserver import configure_time
 from osgeo_importer.inspectors import GDALInspector
 from geoserver.catalog import Catalog, FailedRequestError
 from geonode.layers.models import Layer
 from geonode.geoserver.helpers import ogc_server_settings
-from geonode.geoserver.helpers import gs_slurp
 from osgeo_importer.models import UploadLayer
 from osgeo_importer.models import validate_file_extension, ValidationError, validate_inspector_can_read
 from osgeo_importer.models import UploadedData
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
-from .utils import load_handler, launder
 
 setup_test_environment()
 
@@ -46,14 +46,11 @@ class AdminClient(Client):
         return self.login(**{'username': username, 'password': password})
 
 
-class MapStoryTestMixin(TestCase):
+class DjagnoOsgeoMixin(TestCase):
 
     def assertLoginRequired(self, response):
         self.assertEqual(response.status_code, 302)
         self.assertTrue('login' in response.url)
-
-    def assertHasGoogleAnalytics(self, response):
-        self.assertTrue('mapstory/google_analytics.html' in [t.name for t in response.templates])
 
     def create_user(self, username, password, **kwargs):
         """
@@ -68,7 +65,7 @@ class MapStoryTestMixin(TestCase):
         return username, password
 
 
-class UploaderTests(MapStoryTestMixin):
+class UploaderTests(DjagnoOsgeoMixin):
     """
     Basic checks to make sure pages load, etc.
     """
@@ -126,37 +123,51 @@ class UploaderTests(MapStoryTestMixin):
 
         res = self.import_file(filename, configuration_options=configuration_options)
 
-        layer = Layer.objects.get(name=res[0][0])
-        self.assertEqual(layer.srid, 'EPSG:4326')
-        self.assertEqual(layer.store, self.datastore.name)
-        self.assertEqual(layer.storeType, 'dataStore')
+        layer_results=[]
 
-        if not filename.endswith('zip'):
-            self.assertTrue(layer.attributes.count() >= DataSource(filename)[0].num_fields)
+        for result in res:
+            if result[1].get('raster'):
+                layerfile = result[0]
+                layername = os.path.splitext(os.path.basename(layerfile))[0]
+                layer = Layer.objects.get(name=layername)
+                self.assertTrue(layerfile.endswith('.tif'))
+                self.assertTrue(os.path.exists(layerfile))
+                l = gdal.OpenEx(layerfile)
+                self.assertTrue(l.GetDriver().ShortName, 'GTiff')
+                layer_results.append(layer)
+            else:
+                layer = Layer.objects.get(name=result[0])
+                self.assertEqual(layer.srid, 'EPSG:4326')
+                self.assertEqual(layer.store, self.datastore.name)
+                self.assertEqual(layer.storeType, 'dataStore')
 
-        # make sure we have at least one dateTime attribute
-        self.assertTrue('xsd:dateTime' or 'xsd:date' in [n.attribute_type for n in layer.attributes.all()])
+                if not filename.endswith('zip'):
+                    self.assertTrue(layer.attributes.count() >= DataSource(filename)[0].num_fields)
 
-        return layer
+                # make sure we have at least one dateTime attribute
+                self.assertTrue('xsd:dateTime' or 'xsd:date' in [n.attribute_type for n in layer.attributes.all()])
+                layer_results.append(layer)
 
-    def generic_raster_import(self,file,configuration_options=[{'index':0}]):
+        return layer_results[0]
+
+    def generic_raster_import(self, file, configuration_options=[{'index': 0}]):
         f = file
         filename = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', f)
         res = self.import_file(filename, configuration_options=configuration_options)
-        layerfile=res[0][0]
+        layerfile = res[0][0]
         layername = os.path.splitext(os.path.basename(layerfile))[0]
         layer = Layer.objects.get(name=layername)
         self.assertTrue(layerfile.endswith('.tif'))
         self.assertTrue(os.path.exists(layerfile))
         l = gdal.OpenEx(layerfile)
-        self.assertTrue(l.GetDriver().ShortName,'GTiff')
+        self.assertTrue(l.GetDriver().ShortName, 'GTiff')
         return layer
 
     def test_raster(self):
         """
         Tests raster import
         """
-        layer = self.generic_raster_import('test_grid.tif', configuration_options=[{'index':0}])
+        layer = self.generic_raster_import('test_grid.tif', configuration_options=[{'index': 0}])
 
     def test_box_with_year_field(self):
         """
@@ -189,13 +200,54 @@ class UploaderTests(MapStoryTestMixin):
         configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
         self.generic_time_check(layer, attribute=date_attr.attribute)
 
+    def test_boxes_with_date_gpkg(self):
+        """
+        Tests the import of test_boxes_with_date.gpkg.
+        """
+
+        layer = self.generic_import('boxes_with_date.gpkg', configuration_options=[{'index': 0,
+                                                                                   'convert_to_date': ['date'],
+                                                                                   'start_date': 'date',
+                                                                                   'configureTime': True
+                                                                                   }])
+
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
+
+        configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
+        self.generic_time_check(layer, attribute=date_attr.attribute)
+
+    def test_boxes_plus_raster_gpkg_by_index(self):
+        """
+        Tests the import of multilayer vector + raster geopackage using index
+        """
+
+        layer = self.generic_import('boxes_plus_raster.gpkg', configuration_options=[{'index': 0,
+                                                                                   'convert_to_date': ['date'],
+                                                                                   'start_date': 'date',
+                                                                                   'configureTime': True
+                                                                                   },
+                                                                                   {'index':1},
+                                                                                   {'index':2},
+                                                                                   {'index':3},
+                                                                                   {'index':4},
+                                                                                   {'index':5},
+                                                                                   {'index':6},
+                                                                                   {'index':7},])
+
+        date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
+
+        configure_time(self.cat.get_layer(layer.name).resource, attribute=date_attr.attribute,)
+        self.generic_time_check(layer, attribute=date_attr.attribute)
+
     def test_boxes_with_date_csv(self):
         """
         Tests a CSV with WKT polygon.
         """
 
         layer = self.generic_import('boxes_with_date.csv', configuration_options=[{'index': 0,
-                                                                                         'convert_to_date': ['date']}])
+                                                                                   'convert_to_date': ['date']}])
         date_attr = filter(lambda attr: attr.attribute == 'date_as_date', layer.attributes)[0]
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
@@ -278,7 +330,7 @@ class UploaderTests(MapStoryTestMixin):
         """
 
         layer = self.generic_import('point_with_date.geojson', configuration_options=[{'index': 0,
-                                                                                         'convert_to_date': ['date']}])
+                                                                                       'convert_to_date': ['date']}])
 
         # OGR will name geojson layers 'ogrgeojson' we rename to the path basename
         self.assertTrue(layer.name.startswith('point_with_date'))
@@ -407,31 +459,11 @@ class UploaderTests(MapStoryTestMixin):
         headers, response = catalog.http.request(url, "POST ", data, headers)
         return response
 
-    def test_create_vrt(self):
-        """
-        Tests the create_vrt function.
-        """
-        if osgeo.ogr.GetDriverByName('VRT') is None:
-           self.skipTest('VRT Driver Not Available')
-
-        f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_Shootings.csv')
-
-        vrt = create_vrt(f)
-        vrt.seek(0)
-        output = vrt.read()
-
-        self.assertTrue('name="US_Shootings"' in output)
-        self.assertTrue('<SrcDataSource>{0}</SrcDataSource>'.format(f) in output)
-        self.assertTrue('<GeometryField encoding="PointFromColumns" x="Longitude" y="Latitude" />'.format(f) in output)
-        self.assertEqual(os.path.splitext(vrt.name)[1], '.vrt')
 
     def test_file_add_view(self):
         """
         Tests the file_add_view.
         """
-
-
-
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'point_with_date.geojson')
         c = AdminClient()
 
@@ -487,12 +519,11 @@ class UploaderTests(MapStoryTestMixin):
         Tests the describe fields functionality.
         """
         f = os.path.join(os.path.dirname(__file__), '..', 'importer-test-files', 'US_Shootings.csv')
-        fields = None
 
         with GDALInspector(f) as f:
             layers = f.describe_fields()
 
-        self.assertTrue(layers[0]['name'], 'us_shootings')
+        self.assertTrue(layers[0]['layer_name'], 'us_shootings')
         self.assertEqual([n['name'] for n in layers[0]['fields']], ['Date', 'Shooter', 'Killed',
                                                                     'Wounded', 'Location', 'City',
                                                                     'Longitude', 'Latitude'])
@@ -802,14 +833,12 @@ class UploaderTests(MapStoryTestMixin):
         """
         self.generic_import('Walmart.zip', configuration_options=[{"configureTime":False,"convert_to_date":["W1_OPENDAT"],"editable":True,"index":0,"name":"Walmart","start_date":"W1_OPENDAT"}])
 
-
     def test_multipolygon_shapefile(self):
         """
         Tests shapefile with multipart polygons.
         """
 
         self.generic_import('PhoenixFirstDues.zip', configuration_options=[{'index': 0}])
-
 
     def test_non_4326_SR(self):
         """
@@ -819,7 +848,6 @@ class UploaderTests(MapStoryTestMixin):
         res = self.generic_import('Istanbul.zip', configuration_options=[{'index': 0}])
         featuretype = self.cat.get_resource(res.name)
         self.assertEqual(featuretype.projection, 'EPSG:32635')
-
 
     def test_gwc_handler(self):
         """

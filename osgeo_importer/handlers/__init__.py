@@ -78,7 +78,7 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
     field_converter = OGRFieldConverter
 
     def convert_field_to_time(self, layer, field):
-        d = db.connections['datastore'].settings_dict
+        d = db.connections[settings.OSGEO_DATASTORE].settings_dict
         connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s'" % (d['NAME'], d['USER'],
                                                                                             d['PASSWORD'], d['HOST'],
                                                                                             d['PORT'])

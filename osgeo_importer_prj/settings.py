@@ -33,7 +33,7 @@ LOCAL_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 WSGI_APPLICATION = "osgeo_importer_prj.wsgi.application"
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 # Load more settings from a file called local_settings.py if it exists
 try:
@@ -78,5 +78,7 @@ DATABASES = {
      }
 }
 
+OSGEO_DATASTORE = 'datastore'
 OSGEO_IMPORTER_GEONODE_ENABLED = True
 LOGGING['loggers']['osgeo_importer'] = {"handlers": ["console"], "level": "DEBUG"}
+DATABASE_ROUTERS = ['osgeo_importer_prj.dbrouters.DefaultOnlyMigrations']

@@ -20,11 +20,12 @@
 
 import os
 import tempfile
+import logging
 
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db import models
 from djcelery.models import TaskState
@@ -40,9 +41,12 @@ from .importers import OSGEO_IMPORTER
 from .utils import NoDataSourceFound
 from .utils import sizeof_fmt, load_handler
 
-DEFAULT_LAYER_CONFIGURATION = {'configureTime': True,
+DEFAULT_LAYER_CONFIGURATION = {'configureTime': False,
                                'editable': True,
-                               'convert_to_date': []}
+                               'convert_to_date': [],
+                               'index': 0}
+
+logger = logging.getLogger(__name__)
 
 
 def validate_file_extension(value):
@@ -181,7 +185,7 @@ class UploadLayer(models.Model):
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
     index = models.IntegerField(default=0)
     name = models.CharField(max_length=64, null=True)
-    fields = JSONField(null=True)
+    fields = JSONField(null=True, default={})
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
     object_id = models.PositiveIntegerField(blank=True, null=True)
     layer = GenericForeignKey('content_type', 'object_id')
@@ -220,8 +224,11 @@ class UploadLayer(models.Model):
         """
         if self.task_id:
             try:
-                return TaskState.objects.get(task_id=self.task_id).state
-            except:
+                state = TaskState.objects.get(task_id=self.task_id).state
+                return state
+            except ObjectDoesNotExist:
+                asyncres = AsyncResult(self.task_id)
+                logger.debug("Import task status: {}".format(asyncres.status))
                 return AsyncResult(self.task_id).status
         return 'UNKNOWN'
 

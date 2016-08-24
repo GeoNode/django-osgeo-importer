@@ -3,6 +3,7 @@
 
 {% block extra_script %}
     {% include 'osgeo_importer/_importer_scripts.html' %}
+    {% include 'osgeo_importer/_importer_styles.html' %}
     {{ block.super }}
 {% endblock %}
 
@@ -13,15 +14,17 @@
   <h2 class="page-title">{% trans "Manage your data" %}</h2>
 </div>
 
-<div class="container" ng-app="mapstory.uploader" ng-controller="uploadList">
+<div class="container" ng-app="osgeoImporter.uploader" ng-controller="uploadList">
     <div class="row">
         <div class="col-md-8">
             <div ng-show="loading" style="margin-right: 50%; margin-left: 50%; margin-top: 30px; margin-bottom: 30px">
                 <i class="fa fa-spinner fa-spin fa-3x"></i>
             </div>
-            <div class="layer-upload-counts">Showing uploads {[offset]}-{[offset+uploads.length]} of {[totalItems]}.</div>
+            {% verbatim %}
+            <div class="layer-upload-counts">Showing uploads {{ offset }}-{{ offset+uploads.length }} of {{ totalItems }}.</div>
+            {% endverbatim %}
             <div ng-repeat="upload in uploads">
-                <upload upload-object="upload" i="$index" template-url="{{ STATIC_URL }}osgeo_importer/partials/upload.html"></upload>
+                <upload upload-object="upload" i="$index" static-url="{{STATIC_URL|default_if_none:"/static"}}" template-url="{{ STATIC_URL|default_if_none:'/static' }}/osgeo_importer/partials/upload.html"></upload>
             </div>
             <pagination total-items="totalItems" ng-init="init('{{user.username}}')" ng-change="pageChanged()" max-size="7" class="pagination-sm" items-per-page="limit" ng-model="currentPage"></pagination>
         </div>

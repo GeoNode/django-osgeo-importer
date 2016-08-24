@@ -4,11 +4,13 @@ from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from geonode.geoserver.helpers import gs_slurp
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django import db
 import os
-import re
+import logging
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class GeoNodePublishHandler(ImportHandlerMixin):
@@ -27,7 +29,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
                 if feature_type and hasattr(feature_type, 'store'):
                     return feature_type.store.name
 
-        return db.connections['datastore'].settings_dict['NAME']
+        return db.connections[settings.OSGEO_DATASTORE].settings_dict['NAME']
 
     def can_run(self, layer, layer_config, *args, **kwargs):
         """
@@ -43,12 +45,11 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         Handler specific params:
         "layer_owner": Sets the owner of the layer.
         """
-
         owner = layer_config.get('layer_owner')
         if isinstance(owner, str) or isinstance(owner, unicode):
             owner = User.objects.filter(username=owner).first()
 
-        if re.search(r'\.tif$', layer):
+        if layer_config.get('raster'):
             store_name = os.path.splitext(os.path.basename(layer))[0]
             filter = None
         else:

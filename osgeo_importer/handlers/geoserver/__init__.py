@@ -1,13 +1,15 @@
-import re
 import os
+import logging
 import requests
-
 from decimal import Decimal, InvalidOperation
 from django import db
+from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
 from geoserver.catalog import FailedRequestError
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
+
+logger = logging.getLogger(__name__)
 
 
 def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
@@ -70,26 +72,25 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-        if re.search(r'\.tif$', layer):
+        if layer_config.get('raster'):
             return False
-
         return True
 
     def get_default_store(self):
-        connection = db.connections['datastore']
-        settings = connection.settings_dict
+        connection = db.connections[settings.OSGEO_DATASTORE]
+        db_settings = connection.settings_dict
 
         return {
-              'database': settings['NAME'],
-              'passwd': settings['PASSWORD'],
+              'database': db_settings['NAME'],
+              'passwd': db_settings['PASSWORD'],
               'namespace': 'http://www.geonode.org/',
               'type': 'PostGIS',
               'dbtype': 'postgis',
-              'host': settings['HOST'],
-              'user': settings['USER'],
-              'port': settings['PORT'],
+              'host': db_settings['HOST'],
+              'user': db_settings['USER'],
+              'port': db_settings['PORT'],
               'enabled': 'True',
-              'name': settings['NAME']}
+              'name': db_settings['NAME']}
 
     def get_or_create_datastore(self, layer_config):
         connection_string = layer_config.get('geoserver_store', self.get_default_store())
@@ -104,29 +105,46 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         return self.catalog.get_store(connection_string['name'])
 
     def geogig_handler(self, store, layer, layer_config):
+        """
+        Facilitates the workflow required to import data from PostGIS into GeoGIG via the GeoGIG-Geoserver
+        REST interface.
+        """
+
+        # Accept-Encoding: identity handles a work-around for
+        # handling double gzipped GeoGIG responses: https://github.com/locationtech/geogig/issues/9.
+        request_params = dict(auth=(self.catalog.username, self.catalog.password),
+                              headers={'Accept-Encoding': 'identity'})
 
         repo = store.connection_parameters['geogig_repository']
-        auth = (self.catalog.username, self.catalog.password)
         repo_url = self.catalog.service_url.replace('/rest', '/geogig/{0}/'.format(repo))
-        transaction = requests.get(repo_url + 'beginTransaction.json', auth=auth)
+        transaction_url = repo_url + 'beginTransaction.json'
+        transaction = requests.get(transaction_url, **request_params)
+
+        logger.debug("""response status_code {} \n
+                        response headers {} \n
+                        request headers {} \n
+                     """.format(transaction.status_code,
+                                transaction.headers,
+                                transaction.request.headers))
+
         transaction_id = transaction.json()['response']['Transaction']['ID']
         params = self.get_default_store()
         params['password'] = params['passwd']
         params['table'] = layer
         params['transactionId'] = transaction_id
 
-        import_command = requests.get(repo_url + 'postgis/import.json', params=params, auth=auth)
+        import_command = requests.get(repo_url + 'postgis/import.json', params=params, **request_params)
         task = import_command.json()['task']
 
         status = 'NOT RUN'
         while status != 'FINISHED':
-            check_task = requests.get(task['href'], auth=auth)
+            check_task = requests.get(task['href'], **request_params)
             status = check_task.json()['task']['status']
 
-        if check_task.json()['task']['status'] == 'FINISHED':
-            requests.get(repo_url + 'add.json', params={'transactionId': transaction_id}, auth=auth)
-            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id}, auth=auth)
-            requests.get(repo_url + 'endTransaction.json', params={'transactionId': transaction_id}, auth=auth)
+        if status == 'FINISHED':
+            requests.get(repo_url + 'add.json', params={'transactionId': transaction_id}, **request_params)
+            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id}, **request_params)
+            requests.get(repo_url + 'endTransaction.json', params={'transactionId': transaction_id}, **request_params)
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
@@ -153,7 +171,7 @@ class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-        if re.search(r'\.tif$', layer):
+        if layer_config.get('raster'):
             return True
 
         return False
