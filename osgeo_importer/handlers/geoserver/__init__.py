@@ -5,9 +5,12 @@ from decimal import Decimal, InvalidOperation
 from django import db
 from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
-from geoserver.catalog import FailedRequestError
+from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
+from django.core.files.storage import FileSystemStorage
+from osgeo_importer.utils import increment_filename
+
 
 logger = logging.getLogger(__name__)
 
@@ -330,3 +333,65 @@ class GenericSLDHandler(GeoserverHandlerMixin):
         """
         self.layer.default_style = 'point'
         self.catalog.save(self.layer)
+
+
+class GeoServerStyleHandler(GeoserverHandlerMixin):
+    """
+    Adds styles to GeoServer Layer
+    """
+    catalog = gs_catalog
+    catalog._cache.clear()
+    workspace = 'geonode'
+
+    def can_run(self, layer, layer_config, *args, **kwargs):
+        """
+        Returns true if the configuration has enough information to run the handler.
+        """
+        if not any([layer_config.get('default_style', None), layer_config.get('styles', None)]):
+            return False
+
+        return True
+
+    @ensure_can_run
+    def handle(self, layer, layer_config, *args, **kwargs):
+        """
+        Handler specific params:
+        "default_sld": SLD to load as default_sld
+        "slds": SLDS to add to layer
+        """
+        lyr = self.catalog.get_layer(layer)
+        path = os.path.join(FileSystemStorage().location,'osgeo_importer_uploads', str(self.importer.upload_file.upload.id))
+        default_sld = layer_config.get('default_style', None)
+        slds = layer_config.get('styles', None)
+        all_slds = []
+        if default_sld is not None:
+            slds.append(default_sld)
+
+        all_slds = list(set(slds))
+        # all_slds = [CheckFile(x) for x in all_slds if x is not None]
+
+        styles = []
+        default_style = None
+        for sld in all_slds:
+            with open(os.path.join(path, sld)) as s:
+                n = 0
+                sldname = os.path.splitext(sld)[0]
+                while True:
+                    n += 1
+                    try:
+                        self.catalog.create_style(sldname, s.read(), overwrite=False, workspace=self.workspace)
+                    except ConflictingDataError:
+                        sldname = increment_filename(sldname)
+                    if n >= 100:
+                        break
+
+                style = self.catalog.get_style(sldname, workspace=self.workspace)
+                if sld == default_sld:
+                    default_style = style
+                styles.append(style)
+
+        lyr.styles = list(set(lyr.styles + styles))
+        if default_style is not None:
+            lyr.default_style = default_style
+        self.catalog.save(lyr)
+        return {'default_style': default_style.filename}

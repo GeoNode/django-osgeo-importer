@@ -1,20 +1,27 @@
 import os
 import json
 import logging
+import shutil
 from django.http import HttpResponse
 from django.views.generic import FormView, ListView, TemplateView
 from django.core.urlresolvers import reverse_lazy
 from .forms import UploadFileForm
-from .models import UploadedData, UploadLayer, DEFAULT_LAYER_CONFIGURATION
+from .models import UploadedData, UploadLayer, UploadFile, DEFAULT_LAYER_CONFIGURATION
 from .importers import OSGEO_IMPORTER
 from .inspectors import OSGEO_INSPECTOR
 from .utils import import_string
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
 
 logger = logging.getLogger(__name__)
+if logger.handlers:
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
+logging.basicConfig(filename='/vagrant/views.log', level=logging.DEBUG)
+
 
 
 class JSONResponseMixin(object):
@@ -79,40 +86,50 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
     json = False
 
     def form_valid(self, form):
-        upload = UploadedData(user=self.request.user)
+        upload = UploadedData.objects.create(user=self.request.user)
         upload.save()
 
         # Create Upload Directory based on Upload PK
-        outpath = os.path.join('/uploads',str(upload.pk))
-        outdir = os.path.join(settings.MEDIA_ROOT,outpath)
+        outpath = os.path.join('osgeo_importer_uploads',str(upload.pk))
+        outdir = os.path.join(FileSystemStorage().location,outpath)
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+        logger.debug("%s",outdir)
+        logger.debug("cleaned_data: %s",form.cleaned_data)
         
         # Move all files to uploads directory using upload pk
         # Must be done for all files before saving upfile for validation
-        for each in form.cleaned_data['files']:
-            shutil.move(each.path, os.path.join(outpath,each.name))
+        finalfiles = []
+        for each in form.cleaned_data['file']:
+            tofile = os.path.join(outdir,os.path.basename(each.name))
+            logger.debug('moving %s to %s', each.name, tofile)
+            shutil.move(each.name, tofile)
+            finalfiles.append(tofile)
 
         # Loop through and create uploadfiles and uploadlayers
-        for each in form.cleaned_data['files']:
-            upfile = UploadFile(upload=upload)
-            upfile.file.name = os.path.join(outpath,each.name)
+        uplayers=[]
+        for each in finalfiles:
+            upfile = UploadFile.objects.create(upload=upload)
+            upfile.file.name = each
             upfile.save()
-
-            upfile_base, upfile_ext = os.path.splitext(each.name)
-            if upfile_ext.lower() not in ['.xml','.sld','.prj','.dbf','shx']:
-                description = self.get_fields(upload_file.file.path)
+            upfile_basename = os.path.basename(each)
+            upfile_root, upfile_ext = os.path.splitext(upfile_basename)
+            if upfile_ext.lower() not in ['.prj','.dbf','.shx']:
+                description = self.get_fields(each)
                 for layer in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
                     configuration_options.update({'index': layer.get('index')})
-                    upload.uploadlayer_set.add(UploadLayer(name=layer.get('name'),
+                    upload.uploadlayer_set.add(UploadLayer(name=upfile_basename,
                                                         fields=layer.get('fields', {}),
                                                         index=layer.get('index'),
                                                         feature_count=layer.get('feature_count',None),
                                                         configuration_options=configuration_options))
         upload.complete = True
         upload.state = 'UPLOADED'
+        upload.save()
 
         if self.json:
-            return self.render_to_json_response({'state': upload.state, 'id': upload.id})
+            return self.render_to_json_response({'state': upload.state, 'id': upload.id, 'count': UploadFile.objects.filter(upload=upload.id).count()})
 
         return super(FileAddView, self).form_valid(form)
 

@@ -79,6 +79,7 @@ def validate_inspector_can_read(value):
     """
     Validates Geospatial data.
     """
+    logger.debug('Inspecting Can Read %s',value.name)
     name = value.name
     root, extension = os.path.splitext(name.lower())
 
