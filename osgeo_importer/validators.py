@@ -1,0 +1,62 @@
+import os
+from .utils import NoDataSourceFound, load_handler
+from .importers import OSGEO_IMPORTER
+import logging
+from django.conf import settings
+
+logger = logging.getLogger(__name__)
+
+VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS', 
+                           ['shp','shx','prj','dbf','kml','geojson','json',
+                           'tif','tiff','gpkg','csv','zip','xml','sld'])
+
+NONDATA_EXTENSIONS = ['shx','prj','dbf','xml','sld']
+
+def validate_extension(filename):
+    logger.debug('Checking Filename %s For Valid Extension',filename)
+    filedir, file = os.path.split(filename)
+    base, extension = os.path.splitext(file)
+    extension = extension.lstrip('.').lower()
+    logger.debug('Extension: %s %s', extension, VALID_EXTENSIONS)
+    if extension not in VALID_EXTENSIONS:
+        return False
+    else:
+        return True
+
+def validate_shapefiles_have_all_parts(filenamelist):
+    shp = []
+    prj = []
+    dbf = []
+    shx = []
+    for file in filenamelist:
+        base, extension = os.path.splitext(file)
+        extension = extension.lstrip('.').lower()
+        if extension == 'shp':
+            shp.append(base)
+        elif extension == 'prj':
+            prj.append(base)
+        elif extension == 'dbf':
+            dbf.append(base)
+        elif extension == 'shx':
+            shx.append(base)
+    if set(shp) == set(prj) == set(dbf) == set(shx):
+        return True
+    else:
+        return False
+
+def validate_inspector_can_read(filename):
+    filedir, file = os.path.split(filename)
+    base, extension = os.path.splitext(file)
+    extension = extension.lstrip('.').lower()
+    if extension in NONDATA_EXTENSIONS:
+        return True
+    try:
+        importer = load_handler(OSGEO_IMPORTER, filename)
+        data, inspector = importer.open_source_datastore(filename)
+        # Ensure the data has a geometry.
+        for description in inspector.describe_fields():
+            if description.get('raster') == False and description.get('geom_type') in inspector.INVALID_GEOMETRY_TYPES:
+                return False
+    except NoDataSourceFound:
+        return False
+    return True

@@ -5,6 +5,7 @@ from decimal import Decimal, InvalidOperation
 from django import db
 from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
+from osgeo_importer.importers import UPLOAD_DIR
 from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
 from geoserver.support import DimensionInfo
@@ -360,7 +361,7 @@ class GeoServerStyleHandler(GeoserverHandlerMixin):
         "slds": SLDS to add to layer
         """
         lyr = self.catalog.get_layer(layer)
-        path = os.path.join(FileSystemStorage().location,'osgeo_importer_uploads', str(self.importer.upload_file.upload.id))
+        path = os.path.join(UPLOAD_DIR, str(self.importer.upload_file.upload.id))
         default_sld = layer_config.get('default_style', None)
         slds = layer_config.get('styles', None)
         all_slds = []
