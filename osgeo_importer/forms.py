@@ -3,6 +3,7 @@ from django import forms
 from .models import UploadFile
 from .utils import NoDataSourceFound, load_handler
 from .importers import OSGEO_IMPORTER
+from .validators import validate_extension, validate_inspector_can_read, validate_shapefiles_have_all_parts
 from zipfile import is_zipfile, ZipFile
 import tempfile
 import logging
@@ -11,54 +12,12 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-class XXXUploadFileForm(forms.ModelForm):
-
-    class Meta:
-        model = UploadFile
-        fields = ['file']
-
 class UploadFileForm(forms.Form):
     file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
 
     class Meta:
         model = UploadFile
         fields = ['file']
-
-    def validate_extension(self,filename):
-        base, extension = os.path.splitext(filename)
-        extension = extension.lstrip('.').lower()
-        if extension not in settings.OSGEO_IMPORTER_VALID_EXTENSIONS:
-            logger.debug('Validation Error: %s files not accepted by importer. file: %s',extension,filename)
-            self.add_error('file',"%s files not accepted by importer. file: %s" % (extension, filename))
-    
-    def validate_shapefile_has_all_parts(self,validfiles):
-        shp = []
-        prj = []
-        dbf = []
-        shx = []
-        for file in validfiles:
-            base, extension = os.path.splitext(file)
-            extension = extension.lstrip('.').lower()
-            if extension == 'shp':
-                shp.append(base)
-            elif extension == 'prj':
-                prj.append(base)
-            elif extension == 'dbf':
-                dbf.append(base)
-            elif extension == 'shx':
-                shx.append(base)
-        if set(shp) == set(prj) == set(dbf) == set(shx):
-            return True
-        else:
-            logger.debug('Validation Error: All Shapefiles must include .shp, .prj, .dbf, and .shx')
-            self.add_error('file',"All Shapefiles must include .shp, .prj, .dbf, and .shx")
-
-    def validate_inspector_can_read(self,filename):
-        try:
-            importer = load_handler(OSGEO_IMPORTER, filename)
-            data, inspector = importer.open_source_datastore(filename)
-        except NoDataSourceFound:
-            self.add_error('file','Unable to open file: %s' % filename)
 
     def clean(self):
         logger.debug('..Cleaning...')
@@ -70,19 +29,25 @@ class UploadFileForm(forms.Form):
         # Create list of all potentially valid files, exploding first level zip files
         for file in files:
             logger.debug('cleaning %s',file.name)
-            self.validate_extension(file.name)
+            if not validate_extension(file.name):
+                self.add_error('file','Filetype not supported.')
+                logger.debug('Filetype not supported')
+                continue
 
             if is_zipfile(file):
                 with ZipFile(file) as zip:
                     for zipname in zip.namelist():
                         logger.debug('Checking extensions in zipfile %s file %s',file,zipname)
-                        self.validate_extension(zipname)
+                        if not validate_extension(zipname):
+                            self.add_error('file','Filetype in zip not supported.')
+                            continue
                         validfiles.append(zipname)
             else:
                 validfiles.append(file.name)
 
         # Make sure shapefiles have all their parts
-        self.validate_shapefile_has_all_parts(validfiles)
+        if not validate_shapefiles_have_all_parts(validfiles):
+            self.add_error('file','Shapefiles must include .shp,.dbf,.shx,.prj')
         logger.debug('valid files found: %s',validfiles)
         # Unpack all zip files and create list of cleaned file objects
         cleaned_files = []
@@ -103,10 +68,14 @@ class UploadFileForm(forms.Form):
                                     cleaned_files.append(outfile)
 
         # After moving files in place make sure they can be opened by inspector
+        inspected_files = []
         for cleaned_file in cleaned_files:
-            logger.debug('About to inspect %s in form',os.path.join(outputdir,file.name))
-            self.validate_inspector_can_read(os.path.join(outputdir,file.name))
+            logger.debug('About to inspect %s in form',os.path.join(outputdir,cleaned_file.name))
+            if not validate_inspector_can_read(os.path.join(outputdir,file.name)):
+                self.add_error('file','Inspector could not read file or file is empty')
+                continue
+            inspected_files.append(cleaned_file)
 
-        logger.debug('cleaned_files %s',cleaned_files)
-        cleaned_data['file'] = cleaned_files
+        logger.debug('inspected_files %s',inspected_files)
+        cleaned_data['file'] = inspected_files
         return cleaned_data

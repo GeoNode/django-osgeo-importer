@@ -11,7 +11,8 @@ DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
                            'osgeo_importer.handlers.geoserver.GeoServerBoundsHandler',
                            'osgeo_importer.handlers.geoserver.GenericSLDHandler',
                            'osgeo_importer.handlers.geonode.GeoNodePublishHandler',
-                           'osgeo_importer.handlers.geoserver.GeoServerStyleHandler']
+                           'osgeo_importer.handlers.geoserver.GeoServerStyleHandler',
+                           'osgeo_importer.handlers.geonode.GeoNodeMetadataHandler']
 
 IMPORT_HANDLERS = getattr(settings, 'IMPORT_HANDLERS', DEFAULT_IMPORT_HANDLERS)
 
