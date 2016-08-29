@@ -10,7 +10,6 @@ from .models import UploadedData, UploadLayer, UploadFile, DEFAULT_LAYER_CONFIGU
 from .importers import OSGEO_IMPORTER
 from .inspectors import OSGEO_INSPECTOR
 from .utils import import_string
-from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
@@ -85,28 +84,27 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         upload.save()
 
         # Create Upload Directory based on Upload PK
-        outpath = os.path.join('osgeo_importer_uploads',str(upload.pk))
-        outdir = os.path.join(FileSystemStorage().location,outpath)
+        outpath = os.path.join('osgeo_importer_uploads', str(upload.pk))
+        outdir = os.path.join(FileSystemStorage().location, outpath)
         if not os.path.exists(outdir):
             os.makedirs(outdir)
-        
+
         # Move all files to uploads directory using upload pk
         # Must be done for all files before saving upfile for validation
         finalfiles = []
         for each in form.cleaned_data['file']:
-            tofile = os.path.join(outdir,os.path.basename(each.name))
+            tofile = os.path.join(outdir, os.path.basename(each.name))
             shutil.move(each.name, tofile)
             finalfiles.append(tofile)
 
         # Loop through and create uploadfiles and uploadlayers
-        uplayers=[]
         for each in finalfiles:
             upfile = UploadFile.objects.create(upload=upload)
             upfile.file.name = each
             upfile.save()
             upfile_basename = os.path.basename(each)
             upfile_root, upfile_ext = os.path.splitext(upfile_basename)
-            if upfile_ext.lower() not in ['.prj','.dbf','.shx']:
+            if upfile_ext.lower() not in ['.prj', '.dbf', '.shx']:
                 description = self.get_fields(each)
                 for layer in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
@@ -115,14 +113,15 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
                                                            name=upfile_basename,
                                                            fields=layer.get('fields', {}),
                                                            index=layer.get('index'),
-                                                           feature_count=layer.get('feature_count',None),
+                                                           feature_count=layer.get('feature_count', None),
                                                            configuration_options=configuration_options))
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
 
         if self.json:
-            return self.render_to_json_response({'state': upload.state, 'id': upload.id, 'count': UploadFile.objects.filter(upload=upload.id).count()})
+            return self.render_to_json_response({'state': upload.state, 'id': upload.id,
+                                                 'count': UploadFile.objects.filter(upload=upload.id).count()})
 
         return super(FileAddView, self).form_valid(form)
 

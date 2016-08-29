@@ -8,9 +8,7 @@ from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, 
 from osgeo_importer.importers import UPLOAD_DIR
 from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
-from geonode.layers.utils import resolve_regions
 from geoserver.support import DimensionInfo
-from django.core.files.storage import FileSystemStorage
 from osgeo_importer.utils import increment_filename
 
 
