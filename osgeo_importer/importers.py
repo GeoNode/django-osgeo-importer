@@ -17,17 +17,18 @@ ogr.UseExceptions()
 
 MEDIA_ROOT = getattr(settings, 'MEDIA_ROOT', FileSystemStorage().location)
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
-VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS', 
-                           ['shp','shx','prj','dbf','kml','geojson','json',
-                           'tif','tiff','gpkg','csv','zip','xml','sld'])
-RASTER_FILES = getattr(settings, 'OSGEO_IMPORTER_RASTER_FILES', os.path.join(MEDIA_ROOT,'osgeo_importer_raster'))
-UPLOAD_DIR = getattr(settings, 'OSGEO_IMPORTER_UPLOAD_DIR', os.path.join(MEDIA_ROOT,'osgeo_importer_uploads'))
+VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS',
+                           ['shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json',
+                            'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml', 'sld'])
+RASTER_FILES = getattr(settings, 'OSGEO_IMPORTER_RASTER_FILES', os.path.join(MEDIA_ROOT, 'osgeo_importer_raster'))
+UPLOAD_DIR = getattr(settings, 'OSGEO_IMPORTER_UPLOAD_DIR', os.path.join(MEDIA_ROOT, 'osgeo_importer_uploads'))
 
 if not os.path.exists(RASTER_FILES):
     os.makedirs(RASTER_FILES)
 
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
+
 
 class Import(object):
     """
