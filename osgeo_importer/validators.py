@@ -13,11 +13,9 @@ VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS',
 NONDATA_EXTENSIONS = ['shx','prj','dbf','xml','sld']
 
 def validate_extension(filename):
-    logger.debug('Checking Filename %s For Valid Extension',filename)
     filedir, file = os.path.split(filename)
     base, extension = os.path.splitext(file)
     extension = extension.lstrip('.').lower()
-    logger.debug('Extension: %s %s', extension, VALID_EXTENSIONS)
     if extension not in VALID_EXTENSIONS:
         return False
     else:

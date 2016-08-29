@@ -17,11 +17,6 @@ OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
 
 logger = logging.getLogger(__name__)
-if logger.handlers:
-    for handler in logger.handlers:
-        logger.removeHandler(handler)
-logging.basicConfig(filename='/vagrant/views.log', level=logging.DEBUG)
-
 
 
 class JSONResponseMixin(object):
@@ -94,15 +89,12 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         outdir = os.path.join(FileSystemStorage().location,outpath)
         if not os.path.exists(outdir):
             os.makedirs(outdir)
-        logger.debug("%s",outdir)
-        logger.debug("cleaned_data: %s",form.cleaned_data)
         
         # Move all files to uploads directory using upload pk
         # Must be done for all files before saving upfile for validation
         finalfiles = []
         for each in form.cleaned_data['file']:
             tofile = os.path.join(outdir,os.path.basename(each.name))
-            logger.debug('moving %s to %s', each.name, tofile)
             shutil.move(each.name, tofile)
             finalfiles.append(tofile)
 
@@ -119,11 +111,12 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
                 for layer in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
                     configuration_options.update({'index': layer.get('index')})
-                    upload.uploadlayer_set.add(UploadLayer(name=upfile_basename,
-                                                        fields=layer.get('fields', {}),
-                                                        index=layer.get('index'),
-                                                        feature_count=layer.get('feature_count',None),
-                                                        configuration_options=configuration_options))
+                    upload.uploadlayer_set.add(UploadLayer(upload_file=upfile,
+                                                           name=upfile_basename,
+                                                           fields=layer.get('fields', {}),
+                                                           index=layer.get('index'),
+                                                           feature_count=layer.get('feature_count',None),
+                                                           configuration_options=configuration_options))
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
