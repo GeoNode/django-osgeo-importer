@@ -4,6 +4,8 @@ from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from osgeo_importer.importers import UPLOAD_DIR
 from geonode.geoserver.helpers import gs_slurp
+from geonode.layers.metadata import set_metadata
+from geonode.layers.utils import resolve_regions
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django import db
@@ -65,7 +67,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
         if self.importer.upload_file and results['layers'][0]['status'] == 'created':
             matched_layer = Layer.objects.get(name=results['layers'][0]['name'])
-            upload_layer = UploadLayer.objects.get(upload=self.importer.upload_file.upload,
+            upload_layer = UploadLayer.objects.get(upload_file=self.importer.upload_file.pk,
                                                    index=layer_config.get('index'))
             upload_layer.layer = matched_layer
             upload_layer.save()
@@ -82,7 +84,6 @@ class GeoNodeMetadataHandler(ImportHandlerMixin):
         Only run this handler if the layer is found in Geoserver and the layer's style is the generic style.
         """
         if not layer_config.get('metadata', None):
-            # logger.debug('Could not find any metadata xml in config %s', layer_config)
             return False
 
         return True
@@ -117,7 +118,6 @@ class GeoNodeMetadataHandler(ImportHandlerMixin):
                 # value = SpatialRepresentationType.objects.get(identifier=value)
                 pass
             else:
-                logger.debug('Adding Metadata %s %s %s', geonode_layer, key, value)
                 setattr(geonode_layer, key, value)
 
         geonode_layer.save()

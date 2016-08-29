@@ -184,8 +184,6 @@ class UploaderTests(DjagnoOsgeoMixin):
         upload_layers = UploadLayer.objects.filter(upload_id=uploadid)
         
         for upload_layer in upload_layers:
-            print upload_layer.id
-            print upload_layer.name
             for config in configuration_options:
                 if config['upload_file_name'] == upload_layer.name:
                     payload = config['config']
@@ -269,8 +267,14 @@ class UploaderTests(DjagnoOsgeoMixin):
                ]
         )
         self.assertEqual(5, upload['count'])
-        print upload
-        layerid = upload['uploaded'][0]['pk'];
+        uploadid = upload['id']
+        uploadobj = UploadedData.objects.get(pk=uploadid)
+        uplayers = UploadLayer.objects.filter(upload=uploadid)
+        layerid = uplayers[0].pk
+
+        upfiles_cnt = UploadFile.objects.filter(upload=uploadid).count()
+        self.assertEqual(5,upfiles_cnt)
+
         layer = Layer.objects.get(pk=layerid)
         self.assertEqual(layer.language, 'eng')
         self.assertEqual(layer.title, 'Old_Americas_LSIB_Polygons_Detailed_2013Mar')

@@ -31,7 +31,6 @@ from django.db import models
 from djcelery.models import TaskState
 from jsonfield import JSONField
 
-
 try:
     from django.contrib.contenttypes.fields import GenericForeignKey
 except ImportError:
@@ -179,11 +178,33 @@ class UploadedData(models.Model):
         return 'Upload [%s] %s, %s' % (self.id, self.name, self.user)
 
 
+class UploadFile(models.Model):
+    upload = models.ForeignKey(UploadedData, null=True, blank=True)
+    file = models.FileField(upload_to="uploads", validators=[validate_file_extension, validate_inspector_can_read])
+    slug = models.SlugField(max_length=250, blank=True)
+
+    def __unicode__(self):
+        return self.slug
+
+    @property
+    def name(self):
+        return os.path.basename(self.file.path)
+
+    def save(self, *args, **kwargs):
+        self.slug = self.file.name
+        super(UploadFile, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.file.delete(False)
+        super(UploadFile, self).delete(*args, **kwargs)
+
+
 class UploadLayer(models.Model):
     """
     Layers stored in an uploaded data set.
     """
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
+    upload_file = models.ForeignKey(UploadFile, null=True, blank=True)
     index = models.IntegerField(default=0)
     name = models.CharField(max_length=64, null=True)
     fields = JSONField(null=True, default={})
@@ -235,27 +256,6 @@ class UploadLayer(models.Model):
 
     class Meta:
         ordering = ('index',)
-
-
-class UploadFile(models.Model):
-    upload = models.ForeignKey(UploadedData, null=True, blank=True)
-    file = models.FileField(upload_to="uploads", validators=[validate_file_extension, validate_inspector_can_read])
-    slug = models.SlugField(max_length=250, blank=True)
-
-    def __unicode__(self):
-        return self.slug
-
-    @property
-    def name(self):
-        return os.path.basename(self.file.path)
-
-    def save(self, *args, **kwargs):
-        self.slug = self.file.name
-        super(UploadFile, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        self.file.delete(False)
-        super(UploadFile, self).delete(*args, **kwargs)
 
 
 class UploadException(models.Model):
