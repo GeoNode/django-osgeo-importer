@@ -150,22 +150,20 @@ class UploadedData(models.Model):
         """
         Humanizes the upload file size.
         """
-        if not self.size:
-            uploaded_file = self.uploadfile_set.first()
-
-            if uploaded_file:
-                self.size = uploaded_file.file.size
-                self.save()
-            else:
-                return
-
+        size = 0
+        if not self.size or self.size == 0:
+            if self.uploadfile_set.count() > 0:
+                for uf in self.uploadfile_set.all():
+                    size += uf.file.size
+        self.size = size
+        self.save()
         return sizeof_fmt(self.size)
 
     def file_url(self):
         """
         Exposes the file url.
         """
-        return self.uploadfile_set.first().file.url
+        return '' # self.uploadfile_set.first().file.url
 
     def any_layers_imported(self):
         return any(self.uploadlayer_set.all().values_list('layer', flat=True))
