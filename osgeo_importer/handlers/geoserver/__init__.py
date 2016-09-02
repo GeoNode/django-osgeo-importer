@@ -102,8 +102,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
             if connection_string['type'] == 'geogig':
                 if request_user is not None:
                     username = request_user.username
-                    if request_user.first_name is not None and request_user.last_name is not None\
-                        and request_user.first_name != '' and request_user.last_name != '':
+                    if request_user.first_name is not None and request_user.last_name is not None \
+                            and request_user.first_name != '' and request_user.last_name != '':
                         username = request_user.first_name + ' ' + request_user.last_name
 
                     useremail = request_user.email

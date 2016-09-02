@@ -17,7 +17,8 @@ def import_object(upload_file_id, configuration_options, request_cookies=None, r
     upload_file = UploadFile.objects.get(id=upload_file_id)
 
     gi = OSGEO_IMPORTER(upload_file.file.path, upload_file=upload_file)
-    return gi.handle(configuration_options=configuration_options, request_cookies=request_cookies, request_user=request_user)
+    return gi.handle(configuration_options=configuration_options, request_cookies=request_cookies,
+                     request_user=request_user)
 
 
 @task

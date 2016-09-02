@@ -1,7 +1,5 @@
-import os
 from .api import *  # noqa
 from geonode.api.api import ProfileResource
-from geonode.geoserver.helpers import ogc_server_settings
 from tastypie.fields import ForeignKey
 
 
