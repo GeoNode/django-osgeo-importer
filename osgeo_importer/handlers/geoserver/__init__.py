@@ -7,6 +7,7 @@ from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
 from geoserver.catalog import FailedRequestError
 from geonode.geoserver.helpers import gs_catalog
+from geonode.upload.utils import make_geogig_rest_payload, init_geogig_repo
 from geoserver.support import DimensionInfo
 
 logger = logging.getLogger(__name__)
@@ -92,12 +93,26 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
               'enabled': 'True',
               'name': db_settings['NAME']}
 
-    def get_or_create_datastore(self, layer_config):
+    def get_or_create_datastore(self, layer_config, request_user):
         connection_string = layer_config.get('geoserver_store', self.get_default_store())
 
         try:
             return self.catalog.get_store(connection_string['name'])
         except FailedRequestError:
+            if connection_string['type'] == 'geogig':
+                if request_user is not None:
+                    username = request_user.username
+                    if request_user.first_name is not None and request_user.last_name is not None\
+                        and request_user.first_name != '' and request_user.last_name != '':
+                        username = request_user.first_name + ' ' + request_user.last_name
+
+                    useremail = request_user.email
+                    payload = make_geogig_rest_payload(username,useremail)
+                else:
+                    payload = make_geogig_rest_payload()
+                init_response = init_geogig_repo(payload, connection_string['name'])
+                headers, body = init_response
+
             store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
             store.connection_parameters.update(connection_string)
             self.catalog.save(store)
@@ -115,8 +130,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         request_params = dict(auth=(self.catalog.username, self.catalog.password),
                               headers={'Accept-Encoding': 'identity'})
 
-        repo = store.connection_parameters['geogig_repository']
-        repo_url = self.catalog.service_url.replace('/rest', '/geogig/{0}/'.format(repo))
+        repo = store.name
+        repo_url = self.catalog.service_url.replace('/rest', '/geogig/repos/{0}/'.format(repo))
         transaction_url = repo_url + 'beginTransaction.json'
         transaction = requests.get(transaction_url, **request_params)
 
@@ -155,12 +170,13 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         "geoserver_store": Connection parameters used to get/create the geoserver store.
         "srs": The native srs authority and code (ie EPSG:4326) for this data source.
         """
-        store = self.get_or_create_datastore(layer_config)
+        request_user = kwargs.get('request_user', None)
+        store = self.get_or_create_datastore(layer_config, request_user)
 
         if getattr(store, 'type', '').lower() == 'geogig':
             self.geogig_handler(store, layer, layer_config)
 
-        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config),
+        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config, request_user),
                                                 layer_config.get('srs', self.srs))
 
 

@@ -22,8 +22,7 @@ class UploadedLayerResource(UploadedLayerResource):  # noqa
                 store.setdefault('branch', 'master')
                 store.setdefault('create', 'true')
                 store.setdefault('name', '{0}-layers'.format(request.user.username))
-                store['geogig_repository'] = os.path.join(ogc_server_settings.GEOGIG_DATASTORE_DIR,
-                                                          store.get('name'))
+                store['geogig_repository'] = ("geoserver://%s" % store.get('name'))
 
         if not configuration_options.get('layer_owner'):
             configuration_options['layer_owner'] = obj.upload.user.username

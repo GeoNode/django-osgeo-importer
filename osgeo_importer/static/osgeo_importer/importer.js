@@ -180,7 +180,7 @@
       $scope.animationsEnabled = true;
 
       // TODO: Refactor args into a config object.
-      $scope.open = function (layer, templateUrl, modalImage, staticUrl, appendTo, shapefile_link, csv_link, always_geogig) {
+      $scope.open = function (layer, templateUrl, modalImage, staticUrl, default_config, appendTo, shapefile_link, csv_link) {
 
         var modalInstance = $uibModal.open({
             animation: $scope.animationsEnabled,
@@ -197,6 +197,9 @@
                 staticUrl: function () {
                     return staticUrl;
                 },
+                default_config: function () {
+                    return default_config;
+                },
                 appendTo: function () {
                     return appendTo;
                 },
@@ -205,9 +208,6 @@
                 },
                 csv_link: function () {
                     return csv_link;
-                },
-                always_geogig: function () {
-                    return always_geogig;
                 }
             }
         });
@@ -225,7 +225,7 @@
 
   })
 
-  .controller('WizardController', function ($scope, $modalInstance, layer, layerService, $interval, modalImage, staticUrl, appendTo, shapefile_link, csv_link, always_geogig) {
+  .controller('WizardController', function ($scope, $modalInstance, layer, layerService, $interval, modalImage, staticUrl, default_config, appendTo, shapefile_link, csv_link) {
       $scope.appendTo = appendTo;
       $scope.layer = layer;
       $scope.errors = false;
@@ -234,7 +234,7 @@
       $scope.staticUrl = staticUrl;
       $scope.shapefile_link = shapefile_link;
       $scope.csv_link = csv_link;
-      $scope.always_geogig = always_geogig;
+      $scope.default_config = angular.fromJson(default_config);
       $scope.layerSet = ($scope.layer != null).toString();
       $scope.defaultPermissions = {'users':{'AnonymousUser':['change_layer_data', 'download_resourcebase', 'view_resourcebase']}};
       var stop;
@@ -243,6 +243,11 @@
         if ($scope.layer == null) {
             return
         }
+
+        if ($scope.default_config !== null) {
+            $scope.layer.configuration_options = $scope.default_config;
+        }
+
         if ($scope.layer.hasOwnProperty('name') && !($scope.layer.configuration_options.hasOwnProperty('name'))) {
             $scope.layer.configuration_options.name = $scope.layer.name;
         }
@@ -251,8 +256,7 @@
             $scope.layer.configuration_options.permissions = $scope.defaultPermissions;
         }
 
-          $scope.layer.configuration_options.always_geogig = $scope.always_geogig;
-          $scope.layer.configuration_options.editable = true;
+
       };
 
       $scope.appending = function(asString) {
