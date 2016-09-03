@@ -10,6 +10,12 @@ if [ -n "$1" ]
  pushd $1
 fi
 
+
+if [-f "/vagrant/src/geonode/geonode/development.db"]
+ then
+ rm /vagrant/src/geonode/geonode/development.db
+fi
+
 echo $DJANGO_SETTINGS_MODULE
 python manage.py syncdb --noinput
 
