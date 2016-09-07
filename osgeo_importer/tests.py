@@ -144,7 +144,12 @@ class UploaderTests(DjagnoOsgeoMixin):
                     self.assertTrue(layer.attributes.count() >= DataSource(filename)[0].num_fields)
 
                 # make sure we have at least one dateTime attribute
-                self.assertTrue('xsd:dateTime' or 'xsd:date' in [n.attribute_type for n in layer.attributes.all()])
+                date_attrs = [u'xsd:dateTime', u'xsd:date']
+                attr_types = [n.attribute_type for n in layer.attributes.all()]
+                self.assertTrue(
+                    any(date_attr in attr_types for date_attr in date_attrs),
+                    msg="no date attribute found in {0!r}".format(attr_types)
+                )
                 layer_results.append(layer)
 
         return layer_results[0]
