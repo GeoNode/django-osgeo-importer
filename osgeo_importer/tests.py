@@ -115,8 +115,10 @@ class UploaderTests(TestCase):
 
     def setUp(self):
 
-        if not os.path.exists(_TEST_FILES_DIR):
-            self.skipTest('Skipping test due to missing test data.')
+        assert os.path.exists(_TEST_FILES_DIR), (
+            "Test could not run due to missing test data at {0!r}"
+            .format(_TEST_FILES_DIR)
+        )
 
         # These tests require geonode to be running on :80!
         self.postgis = db.connections['datastore']
