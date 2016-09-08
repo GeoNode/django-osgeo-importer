@@ -107,7 +107,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
                         username = request_user.first_name + ' ' + request_user.last_name
 
                     useremail = request_user.email
-                    payload = make_geogig_rest_payload(username,useremail)
+                    payload = make_geogig_rest_payload(username, useremail)
                 else:
                     payload = make_geogig_rest_payload()
                 init_response = init_geogig_repo(payload, connection_string['name'])

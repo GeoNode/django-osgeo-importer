@@ -360,7 +360,11 @@
           $scope.errors = response.errors;
         } else {
           UploadedData.query({id: response.id}).$promise.then(function(response){
-              $scope.setLayer(response['layers'][0]);
+              var layer = response['layers'][0];
+              layer.file_type = response.file_type;
+              layer.file_size = response.file_size;
+              layer.state = response.state;
+              $scope.setLayer(layer);
           });
           $scope.uploadSuccessful = true;
           $rootScope.$broadcast('upload:complete', response);
