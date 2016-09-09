@@ -347,18 +347,29 @@
       $scope.reset = function() {
           $scope.errors = [];
           $scope.uploadSuccessful = false;
-          // TODO: Implement this:
           $scope.uploadInProgress = false;
+          $scope.uploadProgessText = '';
       };
 
       $scope.reset();
+
+
+      $scope.uploader.onProgressItem = function(fileItem, progress) {
+            $scope.uploadInProgress = true;
+            $scope.uploadProgressText = 'Uploading... ' + progress + '%';
+      };
 
       $scope.uploader.onCompleteItem = function(fileItem, response, status, headers) {
         $scope.reset();
         if (response.hasOwnProperty('errors')) {
           $scope.uploadSuccessful = false;
           $scope.errors = response.errors;
+        } else if (status != 200) {
+          $scope.uploadSuccessful = false;
+          $scope.errors = {"errors": {"file": "The import service is not available at this time."}}
         } else {
+            $scope.uploadProgressText = 'Analyzing...';
+
           UploadedData.query({id: response.id}).$promise.then(function(response){
               var layer = response['layers'][0];
               layer.file_type = response.file_type;
