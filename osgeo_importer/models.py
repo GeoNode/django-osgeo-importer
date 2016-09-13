@@ -163,7 +163,7 @@ class UploadedData(models.Model):
         """
         Exposes the file url.
         """
-        return '' # self.uploadfile_set.first().file.url
+        return ''  # self.uploadfile_set.first().file.url
 
     def any_layers_imported(self):
         return any(self.uploadlayer_set.all().values_list('layer', flat=True))
