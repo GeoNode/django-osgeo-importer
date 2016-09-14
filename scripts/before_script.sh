@@ -11,7 +11,7 @@ if [ -n "$1" ]
 fi
 
 
-if [-f "/vagrant/src/geonode/geonode/development.db"]
+if [ -f "/vagrant/src/geonode/geonode/development.db" ]
  then
  rm /vagrant/src/geonode/geonode/development.db
 fi
