@@ -6,7 +6,6 @@ from zipfile import is_zipfile, ZipFile
 import tempfile
 import logging
 import shutil
-
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +17,6 @@ class UploadFileForm(forms.Form):
         fields = ['file']
 
     def clean(self):
-        logger.debug('..Cleaning...')
         cleaned_data = super(UploadFileForm, self).clean()
         outputdir = tempfile.mkdtemp()
         files = self.files.getlist('file')
@@ -39,7 +37,6 @@ class UploadFileForm(forms.Form):
                         validfiles.append(zipname)
             else:
                 validfiles.append(file.name)
-
         # Make sure shapefiles have all their parts
         if not validate_shapefiles_have_all_parts(validfiles):
             self.add_error('file', 'Shapefiles must include .shp,.dbf,.shx,.prj')
@@ -63,8 +60,8 @@ class UploadFileForm(forms.Form):
         # After moving files in place make sure they can be opened by inspector
         inspected_files = []
         for cleaned_file in cleaned_files:
-            if not validate_inspector_can_read(os.path.join(outputdir, file.name)):
-                self.add_error('file', 'Inspector could not read file or file is empty')
+            if not validate_inspector_can_read(os.path.join(outputdir, cleaned_file.name)):
+                self.add_error('file', 'Inspector could not read file %s or file is empty'%(os.path.join(outputdir,file.name)))
                 continue
             inspected_files.append(cleaned_file)
 
