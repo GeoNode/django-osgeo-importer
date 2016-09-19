@@ -122,3 +122,11 @@
   padding-left: 4px;
   padding-right: 4px;
 }
+
+// Overrides for Angular-Wizard styles
+.steps-indicator li.editing a:before {
+  background-color: gray;
+}
+.steps-indicator li.done a:before {
+  background-color: #3377C1;
+}
