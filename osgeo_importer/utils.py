@@ -1,6 +1,5 @@
 import gdal
 import logging
-import numpy
 import ogr
 import osr
 import os
@@ -45,6 +44,7 @@ GDAL_GEOMETRY_TYPES = {
 
 
 def timeparse(timestr):
+    import numpy
     DEFAULT = datetime(1, 1, 1)
     bc = False
     if re.search(r'bce?', timestr, flags=re.I):
