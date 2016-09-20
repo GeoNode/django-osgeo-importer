@@ -176,8 +176,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         if getattr(store, 'type', '').lower() == 'geogig':
             self.geogig_handler(store, layer, layer_config)
 
-        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config, request_user),
-                                                layer_config.get('srs', self.srs))
+        return self.catalog.publish_featuretype(layer, store, layer_config.get('srs', self.srs))
 
 
 class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):

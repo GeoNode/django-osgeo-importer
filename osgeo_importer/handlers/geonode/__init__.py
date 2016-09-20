@@ -60,7 +60,8 @@ class GeoNodePublishHandler(ImportHandlerMixin):
                            store=store_name,
                            filter=filter,
                            owner=owner,
-                           permissions=layer_config.get('permissions'))
+                           permissions=layer_config.get('permissions'),
+                           layer_title=layer_config.get('name'))
 
         if self.importer.upload_file and results['layers'][0]['status'] == 'created':
             matched_layer = Layer.objects.get(name=results['layers'][0]['name'])
