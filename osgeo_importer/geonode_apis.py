@@ -1,5 +1,12 @@
 import os
-from .api import *  # noqa
+from .api import (  # noqa: F401
+    UserResource,
+    UploadedLayerResource,
+    UserOwnsObjectAuthorization,
+    UploadedDataResource,
+    MultipartResource,
+    UploadedFileResource
+)
 from geonode.api.api import ProfileResource
 from geonode.geoserver.helpers import ogc_server_settings
 from tastypie.fields import ForeignKey

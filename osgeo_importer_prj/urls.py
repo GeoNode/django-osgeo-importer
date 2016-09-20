@@ -2,7 +2,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import TemplateView
 from osgeo_importer.urls import urlpatterns as importer_urlpatterns
 
-from geonode.urls import *
+from geonode.urls import urlpatterns
 
 urlpatterns = patterns('',
    url(r'^/?$',
