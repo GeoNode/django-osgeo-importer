@@ -80,7 +80,7 @@ class UploadedLayerResource(ModelResource):
         if not configuration_options:
             raise ImmediateHttpResponse(response=http.HttpBadRequest('Configuration options missing.'))
 
-        uploaded_file = obj.upload.uploadfile_set.first()
+        uploaded_file = obj.upload_file
         import_result = import_object.delay(uploaded_file.id, configuration_options=configuration_options)
 
         # query the db again for this object since it may have been updated during the import
