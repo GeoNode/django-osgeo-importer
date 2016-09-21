@@ -21,7 +21,7 @@
     "url": "https://github.com/boundlessgeo/django-osgeo-importer"
   },
   "author": "django-osgeo-importer contributors",
-  "license": "ISC",
+  "license": "GPL-3.0+",
   "directories": {
     "test": "test"
   }
