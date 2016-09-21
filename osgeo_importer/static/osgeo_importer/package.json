@@ -20,7 +20,7 @@
     "type": "git",
     "url": "ssh://git@github-ipsum.com/lorem--ipsum/smashing-article.git"
   },
-  "author": "",
+  "author": "django-osgeo-importer contributors",
   "license": "ISC",
   "directories": {
     "test": "test"
