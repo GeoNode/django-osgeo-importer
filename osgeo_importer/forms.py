@@ -60,8 +60,12 @@ class UploadFileForm(forms.Form):
         # After moving files in place make sure they can be opened by inspector
         inspected_files = []
         for cleaned_file in cleaned_files:
-            if not validate_inspector_can_read(os.path.join(outputdir, cleaned_file.name)):
-                self.add_error('file', 'Inspector could not read file %s or file is empty'%(os.path.join(outputdir,file.name)))
+            cleaned_file_path = os.path.join(outputdir, cleaned_file.name)
+            if not validate_inspector_can_read(cleaned_file_path):
+                self.add_error(
+                    'file',
+                    'Inspector could not read file {} or file is empty'.format(cleaned_file_path)
+                )
                 continue
             inspected_files.append(cleaned_file)
 
