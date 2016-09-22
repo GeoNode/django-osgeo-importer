@@ -123,7 +123,7 @@
   padding-right: 4px;
 }
 
-// Overrides for Angular-Wizard styles
+/* Overrides for Angular-Wizard styles */
 .steps-indicator li.editing a:before {
   background-color: gray;
 }
