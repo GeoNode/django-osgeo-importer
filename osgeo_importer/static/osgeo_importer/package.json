@@ -24,10 +24,10 @@
     "karma-browserify": "latest",
     "karma-coverage": "^0.5.3",
     "karma-jasmine": "^0.3.6",
-    "karma-phantomjs-launcher": "^0.2.1",
+    "karma-phantomjs-launcher": "1.0.2",
     "karma-requirejs": "^0.2.2",
     "karma-sinon-chai": "~0.2.0",
-    "phantomjs": "^1.9.18"
+    "phantomjs-prebuilt": "latest"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
