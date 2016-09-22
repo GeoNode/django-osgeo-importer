@@ -1,7 +1,7 @@
 {
   "name": "geonode-importer",
   "version": "0.0.0",
-  "description": "smashing-article ================",
+  "description": "Frontend for django-osgeo-importer",
   "main": "index.js",
   "devDependencies": {
     "karma-cli": "^0.1.1",
