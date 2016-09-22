@@ -24,6 +24,25 @@ vagrant ssh
 python /vagrant/manage.py test osgeo_importer
 ```
 
+## Frontend
+
+The Django app comes with an Angular-based wizard. If you are just using the
+Django app, you do not need to do anything special for the frontend and you can
+ignore this section.
+
+However, if you are interested in making changes to the frontend, the frontend
+dependencies can be managed using `npm` via a `package.json` file, and the
+most common tasks are automated via `make` (using a `Makefile`).
+
+For example, if you want to regenerate the static files for the frontend, then
+you can change to the directory `osgeo_importer/static/osgeo_importer` and then
+just run `make`.
+
+If you want to upgrade versions of anything, you can edit `package.json` to
+specify the desired updates, then run `make clean; make`. If any files are
+changed, it is up to you to commit them into the git repo if you want them to
+be used "out of the box."
+
 ## Concepts
 The import process starts with an extensible Angular-based wizard that allows the user to upload a file
 and provide configuration options.  Once the user starts the import, the configuration options are passed to an
