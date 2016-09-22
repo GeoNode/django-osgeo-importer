@@ -43,6 +43,10 @@ specify the desired updates, then run `make clean; make`. If any files are
 changed, it is up to you to commit them into the git repo if you want them to
 be used "out of the box."
 
+To watch files for changes and run the tests, you can run
+`./node_modules/karma/bin/karma start`.
+
+
 ## Concepts
 The import process starts with an extensible Angular-based wizard that allows the user to upload a file
 and provide configuration options.  Once the user starts the import, the configuration options are passed to an
