@@ -130,3 +130,16 @@
 .steps-indicator li.done a:before {
   background-color: #3377C1;
 }
+
+.errorlist {
+    color:#FF4136;
+    list-style-type: none;
+    padding: 4px;
+    padding-top: 10;
+    font-weight: 600;
+    font-size: 13px
+}
+
+.fa-warning {
+    color:#FF4136;
+}
