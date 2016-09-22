@@ -3,8 +3,16 @@ import ogr
 import osr
 import gdal
 from .inspectors import GDALInspector, OGRInspector
-from .utils import FileTypeNotAllowed, GdalErrorHandler, load_handler, launder, increment, increment_filename, \
-    raster_import, decode
+from .utils import (  # noqa: F401
+    FileTypeNotAllowed,
+    GdalErrorHandler,
+    load_handler,
+    launder,
+    increment,
+    increment_filename,
+    raster_import,
+    decode
+)
 from .handlers import IMPORT_HANDLERS
 from django.conf import settings
 from django import db
