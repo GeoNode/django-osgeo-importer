@@ -157,7 +157,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         """
         store = self.get_or_create_datastore(layer_config)
 
-        if getattr(store, 'type', '').lower() == 'geogig':
+        store_type = getattr(store, 'type', None) or ''
+        if store_type.lower() == 'geogig':
             self.geogig_handler(store, layer, layer_config)
 
         return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config),
