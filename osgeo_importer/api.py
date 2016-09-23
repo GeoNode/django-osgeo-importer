@@ -115,7 +115,7 @@ class UploadedDataResource(ModelResource):
     """
 
     user = ForeignKey(UserResource, 'user')
-    file_size = CharField(attribute='filesize', readonly=True)
+    file_size = CharField(attribute='filesize', readonly=True, null=True)
     layers = ToManyField(UploadedLayerResource, 'uploadlayer_set', full=True)
     file_url = CharField(attribute='file_url', readonly=True, null=True)
 

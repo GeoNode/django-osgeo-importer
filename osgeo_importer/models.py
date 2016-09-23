@@ -149,15 +149,9 @@ class UploadedData(models.Model):
     def filesize(self):
         """Humanizes the upload file size.
         """
-        size = 0
-        if not self.size:
-            if self.uploadfile_set.count() > 0:
-                for uploadfile in self.uploadfile_set.all():
-                    size += uploadfile.file.size
-                else:
-                    size = self.uploadfile_set.first().file.size
-            self.size = size
-        self.save()
+        # whereof one cannot speak, one must be silent
+        if self.size is None:
+            return None
         return sizeof_fmt(self.size)
 
     def file_url(self):

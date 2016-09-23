@@ -98,8 +98,10 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
             finalfiles.append(tofile)
 
         # Loop through and create uploadfiles and uploadlayers
+        upfiles = []
         for each in finalfiles:
             upfile = UploadFile.objects.create(upload=upload)
+            upfiles.append(upfile)
             upfile.file.name = each
             upfile.save()
             upfile_basename = os.path.basename(each)
@@ -119,6 +121,9 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
                             configuration_options=configuration_options
                         )
                     )
+        upload.size = sum(
+            upfile.file.size for upfile in upfiles
+        )
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
