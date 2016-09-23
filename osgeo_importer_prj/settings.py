@@ -80,6 +80,9 @@ DATABASES = {
 
 OSGEO_DATASTORE = 'datastore'
 OSGEO_IMPORTER_GEONODE_ENABLED = True
-OSGEO_IMPORTER_VALID_EXTENSIONS = ['shp','shx','prj','dbf','kml','geojson','json','tif','tiff','gpkg','csv','zip','xml','sld']
+OSGEO_IMPORTER_VALID_EXTENSIONS = [
+    'shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json', 'tif', 'tiff',
+    'gpkg', 'csv','zip','xml','sld'
+]
 LOGGING['loggers']['osgeo_importer'] = {"handlers": ["console"], "level": "DEBUG"}
 DATABASE_ROUTERS = ['osgeo_importer_prj.dbrouters.DefaultOnlyMigrations']

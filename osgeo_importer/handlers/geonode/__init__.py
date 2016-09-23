@@ -76,8 +76,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
 
 class GeoNodeMetadataHandler(ImportHandlerMixin):
-    """
-    Import uploaded XML
+    """Import uploaded XML
     """
 
     def can_run(self, layer, layer_config, *args, **kwargs):
@@ -91,8 +90,7 @@ class GeoNodeMetadataHandler(ImportHandlerMixin):
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
-        """
-        Update metadata from xml
+        """Update metadata from XML
         """
         geonode_layer = Layer.objects.get(name=layer)
         path = os.path.join(UPLOAD_DIR, str(self.importer.upload_file.upload.id))

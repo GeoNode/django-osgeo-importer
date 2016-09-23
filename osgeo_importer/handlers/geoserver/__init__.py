@@ -337,8 +337,7 @@ class GenericSLDHandler(GeoserverHandlerMixin):
 
 
 class GeoServerStyleHandler(GeoserverHandlerMixin):
-    """
-    Adds styles to GeoServer Layer
+    """Adds styles to GeoServer Layer
     """
     catalog = gs_catalog
     catalog._cache.clear()

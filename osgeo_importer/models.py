@@ -147,21 +147,19 @@ class UploadedData(models.Model):
 
     @property
     def filesize(self):
-        """
-        Humanizes the upload file size.
+        """Humanizes the upload file size.
         """
         size = 0
-        if not self.size or self.size == 0:
+        if not self.size:
             if self.uploadfile_set.count() > 0:
-                for uf in self.uploadfile_set.all():
-                    size += uf.file.size
+                for uploadfile in self.uploadfile_set.all():
+                    size += uploadfile.file.size
         self.size = size
         self.save()
         return sizeof_fmt(self.size)
 
     def file_url(self):
-        """
-        Exposes the file url.
+        """Exposes the file url.
         """
         return ''  # self.uploadfile_set.first().file.url
 
@@ -197,8 +195,7 @@ class UploadFile(models.Model):
 
 
 class UploadLayer(models.Model):
-    """
-    Layers stored in an uploaded data set.
+    """Layers stored in an uploaded data set.
     """
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
     upload_file = models.ForeignKey(UploadFile, null=True, blank=True)

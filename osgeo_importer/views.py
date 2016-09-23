@@ -109,12 +109,16 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
                 for layer in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
                     configuration_options.update({'index': layer.get('index')})
-                    upload.uploadlayer_set.add(UploadLayer(upload_file=upfile,
-                                                           name=upfile_basename,
-                                                           fields=layer.get('fields', {}),
-                                                           index=layer.get('index'),
-                                                           feature_count=layer.get('feature_count', None),
-                                                           configuration_options=configuration_options))
+                    upload.uploadlayer_set.add(
+                        UploadLayer(
+                            upload_file=upfile,
+                            name=upfile_basename,
+                            fields=layer.get('fields', {}),
+                            index=layer.get('index'),
+                            feature_count=layer.get('feature_count', None),
+                            configuration_options=configuration_options
+                        )
+                    )
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
