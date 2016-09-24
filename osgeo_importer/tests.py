@@ -624,10 +624,10 @@ class UploaderTests(DjagnoOsgeoMixin):
         self.assertTrue(len(response.context['object_list']) == 1)
         upload = response.context['object_list'][0]
         self.assertEqual(upload.user.username, 'non_admin')
-        # self.assertEqual(upload.file_type, 'GeoJSON')
+        self.assertEqual(upload.file_type, 'GeoJSON')
         self.assertTrue(upload.uploadlayer_set.all())
         self.assertEqual(upload.state, 'UPLOADED')
-        # self.assertIsNotNone(upload.name)
+        self.assertIsNotNone(upload.name)
 
         uploaded_file = upload.uploadfile_set.first()
         self.assertTrue(os.path.exists(uploaded_file.file.path))
