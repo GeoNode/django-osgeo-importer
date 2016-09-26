@@ -35,7 +35,7 @@
                                                 <span class="col-md-3 layer-upload-field-name">File Type</span>
                                                 <span class="col-md-9">{{layer.file_type || upload.file_type || "UNKNOWN" }}</span>
                                             </div>
-                                            <div>
+                                            <div ng-show="layer.feature_count">
                                                 <span class="col-md-3 layer-upload-field-name">Features</span>
                                                 <span class="col-md-9">{{layer.feature_count | number : 0}}</span>
                                             </div>
