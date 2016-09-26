@@ -25,9 +25,10 @@ ogr.UseExceptions()
 
 MEDIA_ROOT = getattr(settings, 'MEDIA_ROOT', FileSystemStorage().location)
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
-VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS',
-                           ['shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json',
-                            'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml', 'sld'])
+DEFAULT_SUPPORTED_EXTENSIONS = ['shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json',
+                                'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml', 'sld']
+VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS', DEFAULT_SUPPORTED_EXTENSIONS)
+
 RASTER_FILES = getattr(settings, 'OSGEO_IMPORTER_RASTER_FILES', os.path.join(MEDIA_ROOT, 'osgeo_importer_raster'))
 UPLOAD_DIR = getattr(settings, 'OSGEO_IMPORTER_UPLOAD_DIR', os.path.join(MEDIA_ROOT, 'osgeo_importer_uploads'))
 
