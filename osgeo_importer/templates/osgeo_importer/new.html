@@ -32,16 +32,16 @@
             {{form}}
         </div>
         <div class="row">
-            <button type="button" class="btn-info col-md-4 btn" onclick="chooseFile();">choose file</button>
+            <button type="button" class="btn-info col-md-4 btn" onclick="chooseFile();">choose file(s)</button>
         </div>
         <div class="row">
             <div class="errorlist">
             {% for error in form.file.errors %}
                 <i class="fa fa-warning">  {{ error|escape }}</i>
             {% endfor %}
-            </div>
-            <div class="col-md-6" style="padding-top: 5px; padding-left: 2px;">
-                Valid file types are .csv, .geojson, .gpx, .kml, .tif, zipped Shapefile.
+                <div class="col-md-6" style="padding-top: 5px; padding-left: 2px;">
+                    Valid file extensions: {{ VALID_EXTENSIONS }}
+                </div>
             </div>
 
         </div>

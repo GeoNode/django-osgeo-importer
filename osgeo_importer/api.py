@@ -33,6 +33,9 @@ class UploadedLayerResource(ModelResource):
     configuration_options = DictField(attribute='configuration_options', null=True)
     fields = ListField(attribute='fields')
     status = CharField(attribute='status', readonly=True, null=True)
+    file_type = CharField(attribute='file_type', readonly=True)
+    file_name = CharField(attribute='file_name', readonly=True)
+    layer_name = CharField(attribute='layer_name', readonly=True)
 
     class Meta:
         queryset = UploadLayer.objects.all()
@@ -50,17 +53,15 @@ class UploadedLayerResource(ModelResource):
     def clean_configuration_options(self, request, obj, configuration_options):
         return configuration_options
 
-    def import_layer(self, request, **kwargs):
-        """
-        Imports a layer
+    def import_layer(self, request, pk=None, **kwargs):
+        """Imports a layer
         """
         self.method_check(request, allowed=['post'])
 
-        b = Bundle()
-        b.request = request
+        bundle = Bundle(request=request)
 
         try:
-            obj = self.obj_get(b, pk=kwargs.get('pk'))
+            obj = self.obj_get(bundle, pk=pk)
         except UploadLayer.DoesNotExist:
             raise ImmediateHttpResponse(response=http.HttpNotFound())
 
@@ -80,11 +81,11 @@ class UploadedLayerResource(ModelResource):
         if not configuration_options:
             raise ImmediateHttpResponse(response=http.HttpBadRequest('Configuration options missing.'))
 
-        uploaded_file = obj.upload.uploadfile_set.first()
+        uploaded_file = obj.upload_file
         import_result = import_object.delay(uploaded_file.id, configuration_options=configuration_options)
 
         # query the db again for this object since it may have been updated during the import
-        obj = self.obj_get(b, pk=kwargs.get('pk'))
+        obj = self.obj_get(bundle, pk=pk)
         obj.task_id = import_result.id
         obj.save()
 
@@ -117,7 +118,7 @@ class UploadedDataResource(ModelResource):
     """
 
     user = ForeignKey(UserResource, 'user')
-    file_size = CharField(attribute='filesize', readonly=True)
+    file_size = CharField(attribute='filesize', readonly=True, null=True)
     layers = ToManyField(UploadedLayerResource, 'uploadlayer_set', full=True)
     file_url = CharField(attribute='file_url', readonly=True, null=True)
 

@@ -31,7 +31,6 @@ from django.db import models
 from djcelery.models import TaskState
 from jsonfield import JSONField
 
-
 try:
     from django.contrib.contenttypes.fields import GenericForeignKey
 except ImportError:
@@ -148,25 +147,17 @@ class UploadedData(models.Model):
 
     @property
     def filesize(self):
+        """Humanizes the upload file size.
         """
-        Humanizes the upload file size.
-        """
-        if not self.size:
-            uploaded_file = self.uploadfile_set.first()
-
-            if uploaded_file:
-                self.size = uploaded_file.file.size
-                self.save()
-            else:
-                return
-
+        # whereof one cannot speak, one must be silent
+        if self.size is None:
+            return None
         return sizeof_fmt(self.size)
 
     def file_url(self):
+        """Exposes the file url.
         """
-        Exposes the file url.
-        """
-        return self.uploadfile_set.first().file.url
+        return ''  # self.uploadfile_set.first().file.url
 
     def any_layers_imported(self):
         return any(self.uploadlayer_set.all().values_list('layer', flat=True))
@@ -178,11 +169,33 @@ class UploadedData(models.Model):
         return 'Upload [%s] %s, %s' % (self.id, self.name, self.user)
 
 
+class UploadFile(models.Model):
+    upload = models.ForeignKey(UploadedData, null=True, blank=True)
+    file = models.FileField(upload_to="uploads", validators=[validate_file_extension, validate_inspector_can_read])
+    file_type = models.CharField(max_length=50, null=True, blank=True)
+    slug = models.SlugField(max_length=250, blank=True)
+
+    def __unicode__(self):
+        return self.slug
+
+    @property
+    def name(self):
+        return os.path.basename(self.file.path)
+
+    def save(self, *args, **kwargs):
+        self.slug = self.file.name
+        super(UploadFile, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.file.delete(False)
+        super(UploadFile, self).delete(*args, **kwargs)
+
+
 class UploadLayer(models.Model):
-    """
-    Layers stored in an uploaded data set.
+    """Layers stored in an uploaded data set.
     """
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
+    upload_file = models.ForeignKey(UploadFile, null=True, blank=True)
     index = models.IntegerField(default=0)
     name = models.CharField(max_length=64, null=True)
     fields = JSONField(null=True, default={})
@@ -192,6 +205,21 @@ class UploadLayer(models.Model):
     configuration_options = JSONField(null=True)
     task_id = models.CharField(max_length=36, blank=True, null=True)
     feature_count = models.IntegerField(null=True, blank=True)
+    layer_name = models.CharField(max_length=64, null=True)
+
+    @property
+    def file_name(self):
+        if not self.upload_file:
+            return None
+        return self.upload_file.name
+
+    @property
+    def file_type(self):
+        """A layer's 'file type' - really the file type of the file it is in.
+        """
+        if not self.upload_file:
+            return None
+        return self.upload_file.file_type
 
     @property
     def layer_data(self):
@@ -234,27 +262,6 @@ class UploadLayer(models.Model):
 
     class Meta:
         ordering = ('index',)
-
-
-class UploadFile(models.Model):
-    upload = models.ForeignKey(UploadedData, null=True, blank=True)
-    file = models.FileField(upload_to="uploads", validators=[validate_file_extension, validate_inspector_can_read])
-    slug = models.SlugField(max_length=250, blank=True)
-
-    def __unicode__(self):
-        return self.slug
-
-    @property
-    def name(self):
-        return os.path.basename(self.file.path)
-
-    def save(self, *args, **kwargs):
-        self.slug = self.file.name
-        super(UploadFile, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        self.file.delete(False)
-        super(UploadFile, self).delete(*args, **kwargs)
 
 
 class UploadException(models.Model):
