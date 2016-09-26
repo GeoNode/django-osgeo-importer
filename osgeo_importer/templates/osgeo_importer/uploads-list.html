@@ -21,7 +21,17 @@
                 <i class="fa fa-spinner fa-spin fa-3x"></i>
             </div>
             {% verbatim %}
-            <div class="layer-upload-counts">Showing uploads {{ offset }}-{{ offset+uploads.length }} of {{ totalItems }}.</div>
+            <div class="layer-upload-counts">
+                <span ng-show="uploads.length === 0">
+                    There are currently no uploads in the database.
+                </span>
+                <span ng-show="uploads.length === 1">
+                    Showing 1 upload<span ng-show="totalItems > 1"> of {{ totalItems }}</span>.
+                </span>
+                <span ng-show="uploads.length > 1">
+                    Showing uploads {{ offset ? offset : 1 }}-{{ offset+uploads.length }} of {{ totalItems }}.
+                </span>
+            </div>
             {% endverbatim %}
             <div ng-repeat="upload in uploads">
                 <upload upload-object="upload" i="$index" static-url="{{STATIC_URL|default_if_none:"/static"}}" template-url="{{ STATIC_URL|default_if_none:'/static' }}/osgeo_importer/partials/upload.html"></upload>
