@@ -11,7 +11,7 @@ from .forms import UploadFileForm
 from .models import UploadedData, UploadLayer, UploadFile, DEFAULT_LAYER_CONFIGURATION
 from .importers import OSGEO_IMPORTER
 from .inspectors import OSGEO_INSPECTOR
-from .utils import import_string
+from .utils import import_string, NoDataSourceFound
 from django.core.files.storage import FileSystemStorage
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
@@ -183,6 +183,12 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
             upfile = UploadFile.objects.create(upload=upload)
             upfiles.append(upfile)
             upfile.file.name = each
+            # Detect and store file type for later reporting, since it is no
+            # longer true that every upload has only one file type.
+            try:
+                upfile.file_type = self.get_file_type(each)
+            except NoDataSourceFound:
+                upfile.file_type = None
             upfile.save()
             upfile_basename = os.path.basename(each)
             upfile_root, upfile_ext = os.path.splitext(upfile_basename)

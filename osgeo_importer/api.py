@@ -33,6 +33,7 @@ class UploadedLayerResource(ModelResource):
     configuration_options = DictField(attribute='configuration_options', null=True)
     fields = ListField(attribute='fields')
     status = CharField(attribute='status', readonly=True, null=True)
+    file_type = CharField(attribute='file_type', readonly=True)
 
     class Meta:
         queryset = UploadLayer.objects.all()

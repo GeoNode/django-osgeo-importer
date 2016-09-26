@@ -31,7 +31,7 @@
                                         <div class="layer-upload-details col-md-12">
                                             <div>
                                                 <span class="col-md-3 layer-upload-field-name">File Type</span>
-                                                <span class="col-md-9">{{upload.file_type}}</span>
+                                                <span class="col-md-9">{{layer.file_type || upload.file_type || "UNKNOWN" }}</span>
                                             </div>
                                             <div>
                                                 <span class="col-md-3 layer-upload-field-name">Features</span>

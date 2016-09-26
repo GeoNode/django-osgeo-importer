@@ -172,6 +172,7 @@ class UploadedData(models.Model):
 class UploadFile(models.Model):
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
     file = models.FileField(upload_to="uploads", validators=[validate_file_extension, validate_inspector_can_read])
+    file_type = models.CharField(max_length=50, null=True, blank=True)
     slug = models.SlugField(max_length=250, blank=True)
 
     def __unicode__(self):
@@ -204,6 +205,14 @@ class UploadLayer(models.Model):
     configuration_options = JSONField(null=True)
     task_id = models.CharField(max_length=36, blank=True, null=True)
     feature_count = models.IntegerField(null=True, blank=True)
+
+    @property
+    def file_type(self):
+        """A layer's 'file type' - really the file type of the file it is in.
+        """
+        if not self.upload_file:
+            return None
+        return self.upload_file.file_type
 
     @property
     def layer_data(self):
