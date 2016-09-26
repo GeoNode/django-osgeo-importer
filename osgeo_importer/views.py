@@ -191,22 +191,22 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
                 upfile.file_type = None
             upfile.save()
             upfile_basename = os.path.basename(each)
-            upfile_root, upfile_ext = os.path.splitext(upfile_basename)
+            _, upfile_ext = os.path.splitext(upfile_basename)
             if upfile_ext.lower() not in ['.prj', '.dbf', '.shx']:
                 description = self.get_fields(each)
                 for layer in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
                     configuration_options.update({'index': layer.get('index')})
-                    upload.uploadlayer_set.add(
-                        UploadLayer(
-                            upload_file=upfile,
-                            name=upfile_basename,
-                            fields=layer.get('fields', {}),
-                            index=layer.get('index'),
-                            feature_count=layer.get('feature_count', None),
-                            configuration_options=configuration_options
-                        )
                     )
+                    upload_layer = UploadLayer(
+                        upload_file=upfile,
+                        name=upfile_basename,
+                        fields=layer.get('fields', {}),
+                        index=layer.get('index'),
+                        feature_count=layer.get('feature_count', None),
+                        configuration_options=configuration_options
+                    )
+                    upload.uploadlayer_set.add(upload_layer)
         upload.size = sum(
             upfile.file.size for upfile in upfiles
         )
