@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse_lazy
 from django.utils.text import Truncator
 from .forms import UploadFileForm
 from .models import UploadedData, UploadLayer, UploadFile, DEFAULT_LAYER_CONFIGURATION
-from .importers import OSGEO_IMPORTER
+from .importers import OSGEO_IMPORTER, VALID_EXTENSIONS
 from .inspectors import OSGEO_INSPECTOR
 from .utils import import_string, NoDataSourceFound
 from django.core.files.storage import FileSystemStorage
@@ -224,6 +224,9 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         return super(FileAddView, self).form_valid(form)
 
     def render_to_response(self, context, **response_kwargs):
+
+        # grab list of valid importer extensions for use in templates
+        context["VALID_EXTENSIONS"] = ", ".join(VALID_EXTENSIONS)
 
         if self.json:
             context = {'errors': context['form'].errors}
