@@ -207,6 +207,12 @@ class UploadLayer(models.Model):
     feature_count = models.IntegerField(null=True, blank=True)
 
     @property
+    def file_name(self):
+        if not self.upload_file:
+            return None
+        return self.upload_file.name
+
+    @property
     def file_type(self):
         """A layer's 'file type' - really the file type of the file it is in.
         """
