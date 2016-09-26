@@ -249,6 +249,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         upfiles_count = UploadFile.objects.filter(upload=upload_id).count()
         self.assertEqual(6,upfiles_count)
 
+        # Warning: this assumes that Layer pks equal UploadLayer pks
         layer = Layer.objects.get(pk=layerid)
         gslayer = self.cat.get_layer(layer.name)
         default_style = gslayer.default_style

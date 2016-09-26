@@ -35,6 +35,7 @@ class UploadedLayerResource(ModelResource):
     status = CharField(attribute='status', readonly=True, null=True)
     file_type = CharField(attribute='file_type', readonly=True)
     file_name = CharField(attribute='file_name', readonly=True)
+    layer_name = CharField(attribute='layer_name', readonly=True)
 
     class Meta:
         queryset = UploadLayer.objects.all()
