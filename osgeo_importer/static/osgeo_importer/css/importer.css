@@ -143,3 +143,12 @@
 .fa-warning {
     color:#FF4136;
 }
+
+.btn-success {
+    color: #eeeeee;
+}
+
+.btn-success.active {
+    box-shadow: inset 1px 1px 6px 0px rgba(0, 0, 0, 0.5);
+    font-weight: bold;
+}
