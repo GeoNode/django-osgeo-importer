@@ -248,6 +248,10 @@
             $scope.layer.configuration_options = $scope.default_config;
         }
 
+        if (($scope.appending()) === true) {
+            $scope.layer.configuration_options.appendTo = $scope.appendTo;
+        }
+
         if ($scope.layer.hasOwnProperty('name') && !($scope.layer.configuration_options.hasOwnProperty('name'))) {
             $scope.layer.configuration_options.name = $scope.layer.name;
         }
@@ -272,10 +276,6 @@
 
       $scope.setLayer = function(layer) {
         $scope.layer = layer;
-
-        if (($scope.appending()) === true) {
-            $scope.layer.configuration_options.appendTo = $scope.appendTo;
-        }
 
         $scope.setDefaults();
       };
