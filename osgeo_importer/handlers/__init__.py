@@ -1,3 +1,4 @@
+import logging
 from django import db
 from django.conf import settings
 from osgeo_importer.inspectors import OGRFieldConverter, BigDateOGRFieldConverter
@@ -106,8 +107,9 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
                     if layer_config.get(date_option) == field_to_convert:
                         layer_config[date_option] = new_col.lower()
 
-        except Exception as e:
-            print "Error: %s" % e
+        except Exception:
+            logging.exception(
+                "Error while converting value {!r}".format(field_to_convert))
 
 
 class BigDateFieldConverterHandler(FieldConverterHandler):
