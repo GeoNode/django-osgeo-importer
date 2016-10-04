@@ -46,26 +46,7 @@ class AdminClient(Client):
         return self.login(**{'username': username, 'password': password})
 
 
-class DjagnoOsgeoMixin(TestCase):
-
-    def assertLoginRequired(self, response):
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue('login' in response.url)
-
-    def create_user(self, username, password, **kwargs):
-        """
-        Convenience method for creating users.
-        """
-        user, created = User.objects.get_or_create(username=username, **kwargs)
-
-        if created:
-            user.set_password(password)
-            user.save()
-
-        return username, password
-
-
-class UploaderTests(DjagnoOsgeoMixin):
+class UploaderTests(TestCase):
     """
     Basic checks to make sure pages load, etc.
     """
@@ -92,6 +73,18 @@ class UploaderTests(DjagnoOsgeoMixin):
             pass
 
         return catalog.get_store(settings['NAME'])
+
+    def create_user(self, username, password, **kwargs):
+        """
+        Convenience method for creating users.
+        """
+        user, created = User.objects.get_or_create(username=username, **kwargs)
+
+        if created:
+            user.set_password(password)
+            user.save()
+
+        return username, password
 
     def setUp(self):
 
@@ -593,18 +586,6 @@ class UploaderTests(DjagnoOsgeoMixin):
         layers = gi.handle(configuration_options=configuration_options)
 
         return layers
-
-    @staticmethod
-    def createFeatureType(catalog, datastore, name):
-        """
-        Exposes a PostGIS feature type in geoserver.
-        """
-        headers = {"Content-type": "application/xml"}
-        data = "<featureType><name>{name}</name></featureType>".format(name=name)
-        url = datastore.href.replace(".xml", '/featuretypes.xml'.format(name=name))
-        headers, response = catalog.http.request(url, "POST ", data, headers)
-        return response
-
 
     def test_file_add_view(self):
         """
