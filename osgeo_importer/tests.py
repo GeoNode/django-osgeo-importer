@@ -253,6 +253,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         layer = Layer.objects.get(pk=layerid)
         gslayer = self.cat.get_layer(layer.name)
         default_style = gslayer.default_style
+        # TODO: can we use public API or omit this?
         self.cat._cache.clear()
         self.assertEqual('boxes.sld',default_style.filename)
 
@@ -269,6 +270,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         self.assertEqual(5, upload['count'])
         upload_id = upload['id']
         upload_obj = UploadedData.objects.get(pk=upload_id)
+        # TODO: why did we get upload_obj?
         uplayers = UploadLayer.objects.filter(upload=upload_id)
         layerid = uplayers[0].pk
 
@@ -507,6 +509,7 @@ class UploaderTests(DjagnoOsgeoMixin):
         """
         Convenience method to run generic tests on time layers.
         """
+        # TODO: can we use public API or omit this?
         self.cat._cache.clear()
         resource = self.cat.get_resource(layer.name, store=layer.store, workspace=self.workspace)
 
