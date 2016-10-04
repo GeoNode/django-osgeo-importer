@@ -144,7 +144,9 @@ class UploaderTests(TestCase):
         """
         self.cat.delete(self.datastore, recurse=True)
 
-    def generic_import(self, filename, configuration_options=[{'index': 0}]):
+    def generic_import(self, filename, configuration_options=None):
+        if configuration_options is None:
+            configuration_options = [{'index': 0}]
 
         filename = test_file(filename)
 
@@ -225,7 +227,10 @@ class UploaderTests(TestCase):
 
         return content
 
-    def generic_raster_import(self, filename, configuration_options=[{'index': 0}]):
+    def generic_raster_import(self, filename, configuration_options=None):
+        if configuration_options is None:
+            configuration_options = [{'index': 0}]
+
         filename = test_file(filename)
         res = self.import_file(
             filename,
