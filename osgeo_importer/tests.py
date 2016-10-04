@@ -347,6 +347,7 @@ class UploaderTests(TestCase):
                 }
             ]
         )
+        self.assertTrue(layer.name.startswith('test_grid'))
 
     def test_box_with_year_field(self):
         """Tests the import of test_box_with_year_field.
@@ -646,6 +647,7 @@ class UploaderTests(TestCase):
                 }
             ]
         )
+        self.assertEqual(layer.name.lower(), "us_states")
 
     def test_mojstrovka_gpx(self):
         """Tests the import of mojstrovka.gpx.
@@ -721,6 +723,7 @@ class UploaderTests(TestCase):
                 }
             ]
         )
+        self.assertEqual(layer.name.lower(), 'us_civil_rights_sitins0')
 
     def get_layer_names(self, in_file):
         """Gets layer names from a data source.
@@ -1122,6 +1125,7 @@ class UploaderTests(TestCase):
             data=json.dumps(payload),
             content_type='application/json'
         )
+        self.assertEqual(response.status_code, 200)
 
         layer = Layer.objects.all()[0]
         self.assertEqual(layer.title, name.replace('-', '_'))
