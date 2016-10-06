@@ -1,0 +1,2 @@
+include README.md LICENSE
+recursive-include osgeo_importer/static/osgeo_importer *.js *.css *.png *.html *.json

@@ -129,7 +129,7 @@ class UploadedData(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
     state = models.CharField(max_length=16)
     date = models.DateTimeField('date', auto_now_add=True)
-    upload_dir = models.CharField(max_length=100, null=True)
+    upload_dir = models.CharField(max_length=1000, null=True)
     name = models.CharField(max_length=64, null=True)
     complete = models.BooleanField(default=False)
     size = models.IntegerField(null=True, blank=True)
