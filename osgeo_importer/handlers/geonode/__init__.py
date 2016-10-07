@@ -54,14 +54,24 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             filter = None
         else:
             store_name = self.store_name
+            #TODO: Mapstory specific change that feels very dirty to make. Create logic probably should be a handler
+            geoserver_publishers = self.importer.filter_handler_results('GeoserverPublishHandler')
+            if len(geoserver_publishers) == 0:
+                if hasattr(layer_config,str('store')):
+                    config_store_name = layer_config['store']['name']
+                else:
+                    config_store_name = layer_config['featureType']['store']['name']
+                if store_name != config_store_name:
+                    store_name = config_store_name
             filter = layer
 
+        layer_title = layer_config.get('name') or layer_config['featureType']['title']
         results = gs_slurp(workspace=self.workspace,
                            store=store_name,
                            filter=filter,
                            owner=owner,
                            permissions=layer_config.get('permissions'),
-                           layer_title=layer_config.get('name'))
+                           layer_title=layer_title)
 
         if self.importer.upload_file and results['layers'][0]['status'] == 'created':
             matched_layer = Layer.objects.get(name=results['layers'][0]['name'])
