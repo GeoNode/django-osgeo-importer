@@ -64,7 +64,7 @@ class GeoServerTimeHandler(GetModifiedFieldsMixin, GeoserverHandlerMixin):
         lyr = self.catalog.get_layer(layer)
         self.update_date_attributes(layer_config)
         configure_time(lyr.resource, attribute=layer_config.get('start_date'),
-                       end_attribute=layer_config.get('start_date'))
+                       end_attribute=layer_config.get('end_date'))
 
 
 class GeoserverPublishHandler(GeoserverHandlerMixin):
