@@ -359,8 +359,8 @@ class UploaderTests(TestCase):
         self.assertEqual(layer.language, 'eng')
         self.assertEqual(layer.title, 'Old_Americas_LSIB_Polygons_Detailed_2013Mar')
 
-    def test_raster(self):
-        """Exercise raster import.
+    def test_geotiff_raster(self):
+        """Exercise GeoTIFF raster import.
         """
         layer = self.generic_raster_import(
             'test_grid.tif',
