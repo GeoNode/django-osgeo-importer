@@ -372,6 +372,12 @@ class UploaderTests(TestCase):
         )
         self.assertTrue(layer.name.startswith('test_grid'))
 
+    def test_nitf_raster(self):
+        """Tests NITF raster import
+        """
+        layer = self.generic_raster_import('test_nitf.nitf')
+        self.assertTrue(layer.name.startswith('test_nitf'))
+
     def test_box_with_year_field(self):
         """Tests the import of test_box_with_year_field.
         """
