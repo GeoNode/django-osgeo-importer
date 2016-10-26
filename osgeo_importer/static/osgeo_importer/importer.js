@@ -55,7 +55,10 @@
             layer.configuration_options.geoserver_store = {'type': 'geogig'};
 
             if (layer.configuration_options.editable === false) {
-                layer.configuration_options.permissions = {'users': {'AnonymousUser': ['download_resourcebase', 'view_resourcebase']}};
+                layer.configuration_options.permissions = {
+                    'users': {'AnonymousUser': ['download_resourcebase', 'view_resourcebase']},
+                    'groups': {'registered': ['download_resourcebase', 'view_resourcebase']}
+                };
             }
         } else {
             if (layer.configuration_options.editable === true) {
@@ -236,7 +239,11 @@
       $scope.csv_link = csv_link;
       $scope.default_config = angular.fromJson(default_config);
       $scope.layerSet = ($scope.layer != null).toString();
-      $scope.defaultPermissions = {'users':{'AnonymousUser':['change_layer_data', 'download_resourcebase', 'view_resourcebase']}};
+      $scope.defaultPermissions = {
+          'users': {'AnonymousUser': ['change_layer_data', 'download_resourcebase', 'view_resourcebase']},
+          'groups': {'registered': ['change_layer_data', 'download_resourcebase', 'view_resourcebase']}
+      };
+
       var stop;
 
       $scope.setDefaults = function() {
