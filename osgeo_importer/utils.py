@@ -122,9 +122,9 @@ def increment(s):
     """ look for the last sequence of number(s) in a string and increment """
     m = lastNum.search(s)
     if m:
-        next = str(int(m.group(1))+1)
+        next = str(int(m.group(1)) + 1)
         start, end = m.span(1)
-        s = s[:max(end-len(next), start)] + next + s[end:]
+        s = s[:max(end - len(next), start)] + next + s[end:]
     else:
         return s + '0'
     return s
@@ -212,7 +212,7 @@ def increment_filename(filename):
         if not os.path.exists(testfile):
             return testfile
         else:
-            raise FileExists
+            raise FileExists(testfile)
     else:
         return filename
 
