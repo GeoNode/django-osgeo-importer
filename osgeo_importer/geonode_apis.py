@@ -1,6 +1,7 @@
 from .api import *  # noqa
 from geonode.api.api import ProfileResource
 from tastypie.fields import ForeignKey
+from osgeo_importer.utils import launder
 
 
 class UploadedDataResource(UploadedDataResource):  # noqa
@@ -19,7 +20,7 @@ class UploadedLayerResource(UploadedLayerResource):  # noqa
             if store.get('type', str).lower() == 'geogig':
                 store.setdefault('branch', 'master')
                 store.setdefault('create', 'true')
-                store.setdefault('name', '{0}-layers'.format(request.user.username))
+                store.setdefault('name', '{0}-layers'.format(launder(request.user.username)))
                 store['geogig_repository'] = ("geoserver://%s" % store.get('name'))
 
         if not configuration_options.get('layer_owner'):

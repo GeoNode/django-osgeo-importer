@@ -39,12 +39,15 @@ class GeoServerTimeHandler(GetModifiedFieldsMixin, GeoserverHandlerMixin):
         """
         Returns true if the configuration has enough information to run the handler.
         """
-
         if not layer_config.get('configureTime', None):
-            return False
+            feature_type = layer_config.get('featureType', None)
+            if not feature_type or feature_type.get('configureTime', None) is None:
+                return False
 
         if not any([layer_config.get('start_date', None), layer_config.get('end_date', None)]):
-            return False
+            feature_type = layer_config.get('featureType', None)
+            if not feature_type or not any([feature_type.get('start_date', None), feature_type.get('end_date', None)]):
+                return False
 
         return True
 
@@ -58,8 +61,11 @@ class GeoServerTimeHandler(GetModifiedFieldsMixin, GeoserverHandlerMixin):
         "start_date": Passed as the start time to Geoserver.
         "end_date" (optional): Passed as the end attribute to Geoserver.
         """
-
         lyr = self.catalog.get_layer(layer)
+
+        if not any([layer_config.get('start_date', None), layer_config.get('end_date', None)]):
+            layer_config = layer_config.get('featureType')
+
         self.update_date_attributes(layer_config)
         configure_time(lyr.resource, attribute=layer_config.get('start_date'),
                        end_attribute=layer_config.get('end_date'))
