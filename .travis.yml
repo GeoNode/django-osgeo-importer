@@ -32,6 +32,7 @@ virtualenv:
 before_install:
   - chmod +x ./scripts/install.sh
   - chmod +x ./scripts/before_script.sh
+  - chmod +x ./scripts/run_tests.sh
 
 install:
   - ./scripts/install.sh
@@ -41,7 +42,7 @@ before_script:
 
 script:
   - flake8 osgeo_importer
-  - python manage.py test osgeo_importer
+  - ./scripts/run_tests.sh
 
 notifications:
   slack:
