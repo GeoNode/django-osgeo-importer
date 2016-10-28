@@ -36,6 +36,7 @@ before_install:
 
 install:
   - ./scripts/install.sh
+  - pip install coveralls
 
 before_script:
   - sudo scripts/before_script.sh
@@ -43,6 +44,9 @@ before_script:
 script:
   - flake8 osgeo_importer
   - ./scripts/run_tests.sh
+
+after_success:
+  - coveralls
 
 notifications:
   slack:
