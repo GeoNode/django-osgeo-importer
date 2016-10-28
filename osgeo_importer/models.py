@@ -203,6 +203,7 @@ class UploadLayer(models.Model):
     object_id = models.PositiveIntegerField(blank=True, null=True)
     layer = GenericForeignKey('content_type', 'object_id')
     configuration_options = JSONField(null=True)
+    import_status = models.CharField(max_length=15, blank=True, null=True)
     task_id = models.CharField(max_length=36, blank=True, null=True)
     feature_count = models.IntegerField(null=True, blank=True)
     layer_name = models.CharField(max_length=64, null=True)
@@ -248,17 +249,21 @@ class UploadLayer(models.Model):
     @property
     def status(self):
         """
-        Returns the status of a single map page.
+        Returns the status of the import of this UploadedLayer.
         """
-        if self.task_id:
-            try:
-                state = TaskState.objects.get(task_id=self.task_id).state
-                return state
-            except ObjectDoesNotExist:
-                asyncres = AsyncResult(self.task_id)
-                logger.debug("Import task status: {}".format(asyncres.status))
-                return AsyncResult(self.task_id).status
-        return 'UNKNOWN'
+        if self.import_status is not None:
+            s = self.import_status
+        else:
+            if self.task_id is not None:
+                try:
+                    s = TaskState.objects.get(task_id=self.task_id).state
+                except ObjectDoesNotExist:
+                    asyncres = AsyncResult(self.task_id)
+                    logger.debug("Import task status: {}".format(asyncres.status))
+                    s = AsyncResult(self.task_id).status
+            else:
+                s = 'UNKNOWN'
+        return s
 
     class Meta:
         ordering = ('index',)

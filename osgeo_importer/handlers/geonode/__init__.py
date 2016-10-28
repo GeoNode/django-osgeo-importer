@@ -74,7 +74,6 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
         return results
 
-
 class GeoNodeMetadataHandler(ImportHandlerMixin):
     """Import uploaded XML
     """

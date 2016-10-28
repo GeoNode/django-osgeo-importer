@@ -1,18 +1,22 @@
 import json
 import logging
-from tastypie.fields import DictField, ListField, CharField, ToManyField, ForeignKey
+
+import celery
+from django.conf.urls import url
 from django.contrib.auth import get_user_model
-from tastypie.constants import ALL, ALL_WITH_RELATIONS
-from tastypie.resources import ModelResource
-from .models import UploadedData, UploadLayer, UploadFile
+from tastypie import http
 from tastypie.authentication import SessionAuthentication
 from tastypie.authorization import Authorization
-from tastypie.utils import trailing_slash
-from tastypie import http
-from django.conf.urls import url
 from tastypie.bundle import Bundle
-from .tasks import import_object
+from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.fields import DictField, ListField, CharField, ToManyField, ForeignKey
+from tastypie.resources import ModelResource
+from tastypie.utils import trailing_slash
+
+from .models import UploadedData, UploadLayer, UploadFile
+from .tasks import import_object
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +86,17 @@ class UploadedLayerResource(ModelResource):
             raise ImmediateHttpResponse(response=http.HttpBadRequest('Configuration options missing.'))
 
         uploaded_file = obj.upload_file
+        # If this layer has been imported before, clear the status of the previous import task.
+        obj.import_status = None
+        obj.task_id = None
+        obj.save()
+
         import_result = import_object.delay(uploaded_file.id, configuration_options=configuration_options)
 
         # query the db again for this object since it may have been updated during the import
         obj = self.obj_get(bundle, pk=pk)
+        if import_result.state in celery.states.READY_STATES:
+            obj.import_status = import_result.status
         obj.task_id = import_result.id
         obj.save()
 

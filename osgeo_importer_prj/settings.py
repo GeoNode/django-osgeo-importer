@@ -24,7 +24,6 @@ from geonode.settings import *
 #
 # General Django development settings
 #
-
 SITENAME = 'osgeo_importer_prj'
 
 IMPORT_HANDLERS = [
