@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/GeoNode/django-osgeo-importer.svg?branch=master)](https://travis-ci.org/GeoNode/django-osgeo-importer)
+[![Build Status](https://travis-ci.org/boundlessgeo/django-osgeo-importer.svg?branch=master)](https://travis-ci.org/boundlessgeo/django-osgeo-importer)
+[![Coverage Status](https://coveralls.io/repos/github/boundlessgeo/django-osgeo-importer/badge.svg?branch=master)](https://coveralls.io/github/boundlessgeo/django-osgeo-importer?branch=master)
 
 # django-osgeo-importer
 osgeo-importer is a Django application that helps you create custom pipelines for uploading geospatial data.  It's goal is to provide a highly extensible, easily testable and reusable framework for importing data into geospatial applications.

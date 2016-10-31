@@ -24,8 +24,22 @@ from geonode.settings import *
 #
 # General Django development settings
 #
-
 SITENAME = 'osgeo_importer_prj'
+
+IMPORT_HANDLERS = [
+    # If GeoServer handlers are enabled, you must have an instance of geoserver running.
+    # Warning: the order of the handlers here matters.
+    'osgeo_importer.handlers.FieldConverterHandler',
+    'osgeo_importer.handlers.geoserver.GeoserverPublishHandler',
+    'osgeo_importer.handlers.geoserver.GeoserverPublishCoverageHandler',
+    'osgeo_importer.handlers.geoserver.GeoServerTimeHandler',
+    'osgeo_importer.handlers.geoserver.GeoWebCacheHandler',
+    'osgeo_importer.handlers.geoserver.GeoServerBoundsHandler',
+    'osgeo_importer.handlers.geoserver.GenericSLDHandler',
+    'osgeo_importer.handlers.geonode.GeoNodePublishHandler',
+    'osgeo_importer.handlers.geoserver.GeoServerStyleHandler',
+    'osgeo_importer.handlers.geonode.GeoNodeMetadataHandler'
+]
 
 # Defines the directory that contains the settings file as the LOCAL_ROOT
 # It is used for relative settings elsewhere.
@@ -82,7 +96,7 @@ OSGEO_DATASTORE = 'datastore'
 OSGEO_IMPORTER_GEONODE_ENABLED = True
 OSGEO_IMPORTER_VALID_EXTENSIONS = [
     'shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json', 'tif', 'tiff',
-    'gpkg', 'csv','zip','xml','sld'
+    'gpkg', 'csv', 'zip', 'xml', 'sld'
 ]
 LOGGING['loggers']['osgeo_importer'] = {"handlers": ["console"], "level": "DEBUG"}
 DATABASE_ROUTERS = ['osgeo_importer_prj.dbrouters.DefaultOnlyMigrations']

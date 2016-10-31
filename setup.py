@@ -12,7 +12,7 @@ setup(
     long_description=readme,
     author='Tyler Garner',
     author_email='garnertb@prominentedge.com',
-    url='https://github.com/prominentedge/django-osgeo-importer',
+    url='https://github.com/boundlessgeo/django-osgeo-importer',
     packages=find_packages(exclude=('tests*',)),
     package_data={
         'osgeo_importer': [

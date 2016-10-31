@@ -11,7 +11,7 @@ cache:
     - importer-test-files
 
 addons:
-  postgresql: "9.4"
+  postgresql: "9.3"
 
 services:
  - postgresql
@@ -32,16 +32,21 @@ virtualenv:
 before_install:
   - chmod +x ./scripts/install.sh
   - chmod +x ./scripts/before_script.sh
+  - chmod +x ./scripts/run_tests.sh
 
 install:
   - ./scripts/install.sh
+  - pip install coveralls
 
 before_script:
   - sudo scripts/before_script.sh
 
 script:
   - flake8 osgeo_importer
-  - python manage.py test osgeo_importer
+  - ./scripts/run_tests.sh
+
+after_success:
+  - coveralls
 
 notifications:
   slack:
