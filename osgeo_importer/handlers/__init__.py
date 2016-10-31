@@ -4,16 +4,7 @@ from django.conf import settings
 from osgeo_importer.inspectors import OGRFieldConverter, BigDateOGRFieldConverter
 
 
-DEFAULT_IMPORT_HANDLERS = ['osgeo_importer.handlers.FieldConverterHandler',
-                           'osgeo_importer.handlers.geoserver.GeoserverPublishHandler',
-                           'osgeo_importer.handlers.geoserver.GeoserverPublishCoverageHandler',
-                           'osgeo_importer.handlers.geoserver.GeoServerTimeHandler',
-                           'osgeo_importer.handlers.geoserver.GeoWebCacheHandler',
-                           'osgeo_importer.handlers.geoserver.GeoServerBoundsHandler',
-                           'osgeo_importer.handlers.geoserver.GenericSLDHandler',
-                           'osgeo_importer.handlers.geonode.GeoNodePublishHandler',
-                           'osgeo_importer.handlers.geoserver.GeoServerStyleHandler',
-                           'osgeo_importer.handlers.geonode.GeoNodeMetadataHandler']
+DEFAULT_IMPORT_HANDLERS = []
 
 IMPORT_HANDLERS = getattr(settings, 'IMPORT_HANDLERS', DEFAULT_IMPORT_HANDLERS)
 
