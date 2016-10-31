@@ -174,7 +174,8 @@ class GDALInspector(InspectorMixin):
             opened_file = self.open()
         driver = opened_file.GetDriver().ShortName
 
-        # Get Vector Layers
+        # Get Vector Layers: if dataset contains vector layers, GetLayerCount()
+        # will return > 0
         for n in range(0, opened_file.GetLayerCount()):
             layer = opened_file.GetLayer(n)
             layer_name = layer.GetName()
@@ -200,9 +201,9 @@ class GDALInspector(InspectorMixin):
 
             description.append(layer_description)
 
-        # Get Raster Layers
-        # Get main layer
-        if opened_file.GetMetadataItem('AREA_OR_POINT'):
+        # Get Raster Layers: if they exist, RasterCount returns total band count
+        # Get main layer first
+        if opened_file.RasterCount > 0:
             layer_description = {'index': len(description),
                                  'layer_name': self.file,
                                  'path': self.file,
@@ -210,7 +211,7 @@ class GDALInspector(InspectorMixin):
                                  'driver': driver}
             description.append(layer_description)
 
-        # Get sub layers
+        # Get sub layers, if present
         raster_list = opened_file.GetSubDatasets()
         for m in range(0, raster_list.__len__()):
             layer = gdal.OpenEx(raster_list[m][0])

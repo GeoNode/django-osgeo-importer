@@ -26,7 +26,8 @@ ogr.UseExceptions()
 MEDIA_ROOT = getattr(settings, 'MEDIA_ROOT', FileSystemStorage().location)
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 DEFAULT_SUPPORTED_EXTENSIONS = ['shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json',
-                                'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml', 'sld']
+                                'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml',
+                                'sld', 'ntf', 'nitf']
 VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS', DEFAULT_SUPPORTED_EXTENSIONS)
 
 RASTER_FILES = getattr(settings, 'OSGEO_IMPORTER_RASTER_FILES', os.path.join(MEDIA_ROOT, 'osgeo_importer_raster'))
@@ -41,8 +42,8 @@ if not os.path.exists(UPLOAD_DIR):
 
 class Import(object):
     """
-    Importers are responsible for opening incoming geospatial datasets (using one or many inspectors) and
-    copying features to a target location.
+    Importers are responsible for opening incoming geospatial datasets (using
+    one or many inspectors) and copying features to a target location.
 
     """
     _import_handlers = []
@@ -94,7 +95,7 @@ class Import(object):
         """
         raise FileTypeNotAllowed
 
-    def handle(self, configuration_options=[{'index': 0}], *args, **kwargs):
+    def handle(self, configuration_options=None, *args, **kwargs):
         """
         Executes the entire import process.
         1) Imports the dataset from the source dataset to the target.
@@ -105,6 +106,9 @@ class Import(object):
         import method and subsequently to the handlers.
         :return: The response from the import_file method.
         """
+        if configuration_options is None:
+            configuration_options = [{'index': 0}]
+
         layers = self.import_file(configuration_options=configuration_options)
 
         for layer, config in layers:
@@ -226,8 +230,8 @@ class OGRImport(Import):
         gdal.UseExceptions()
         configuration_options = kwargs.get('configuration_options', [{'index': 0}])
 
-        # Configuration options should be a list at this point since the importer can process multiple layers in a
-        # single import
+        # Configuration options should be a list at this point since the
+        # importer can process multiple layers in a single import
         if isinstance(configuration_options, dict):
             configuration_options = [configuration_options]
 
