@@ -171,7 +171,14 @@ class UploadedData(models.Model):
 
 class UploadFile(models.Model):
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
-    file = models.FileField(upload_to="uploads", max_length=1000, validators=[validate_file_extension, validate_inspector_can_read])
+    file = models.FileField(
+        upload_to="uploads",
+        max_length=1000,
+        validators=[
+            validate_file_extension,
+            validate_inspector_can_read
+        ]
+    )
     file_type = models.CharField(max_length=50, null=True, blank=True)
     slug = models.SlugField(max_length=250, blank=True)
 
