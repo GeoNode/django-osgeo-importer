@@ -34,7 +34,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/boundlessgeo/django-osgeo-importer"
+    "url": "https://github.com/GeoNode/django-osgeo-importer"
   },
   "author": "django-osgeo-importer contributors",
   "license": "GPL-3.0+",
