@@ -48,9 +48,10 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         Handler specific params:
         "layer_owner": Sets the owner of the layer.
         """
-        owner = layer_config.get('layer_owner')
-        if isinstance(owner, str) or isinstance(owner, unicode):
-            owner = User.objects.filter(username=owner).first()
+        try:
+            owner = User.objects.get(username=layer_config['layer_owner'])
+        except KeyError:
+            owner = User.objects.get(username='AnonymousUser')
 
         if layer_config.get('raster'):
             store_name = os.path.splitext(os.path.basename(layer))[0]
