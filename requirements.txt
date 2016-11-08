@@ -2,3 +2,6 @@
 python-dateutil
 psycopg2
 numpy
+
+# djcelery isn't compatible with celery 4 as of 2016-11-07
+celery==3.1.25
