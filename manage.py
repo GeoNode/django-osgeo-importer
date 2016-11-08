@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# --- delete this line ---
 
 import os
 import sys
