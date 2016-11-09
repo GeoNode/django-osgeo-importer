@@ -27,7 +27,7 @@ from osgeo_importer.models import (
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
 
-from .utils import load_handler, launder
+from osgeo_importer.utils import load_handler, launder
 
 # In normal unittest runs, this will be set in setUpModule; set here for the
 # benefit of static analysis and users importing this instead of running tests.
@@ -886,7 +886,7 @@ class UploaderTests(TestCase):
             'boxes_with_year_field.shp': 'ESRI Shapefile',
             'boxes_with_date_iso_date.zip': 'ESRI Shapefile'
         }
-        from .models import NoDataSourceFound
+        from osgeo_importer.models import NoDataSourceFound
         try:
             for filename, file_type in sorted(filenames.items()):
                 path = test_file(filename)
