@@ -310,7 +310,6 @@ class UploaderTests(TestCase):
         )
         self.assertEqual(6, upload['count'])
         upload_id = upload['id']
-        upload_obj = UploadedData.objects.get(pk=upload_id)
         uplayers = UploadLayer.objects.filter(upload=upload_id)
         layer_id = uplayers[0].pk
 
@@ -347,8 +346,6 @@ class UploaderTests(TestCase):
         )
         self.assertEqual(5, upload['count'])
         upload_id = upload['id']
-        upload_obj = UploadedData.objects.get(pk=upload_id)
-        # TODO: why did we get upload_obj?
         uplayers = UploadLayer.objects.filter(upload=upload_id)
         layer_id = uplayers[0].pk
 
@@ -792,9 +789,10 @@ class UploaderTests(TestCase):
     def test_arcgisjson(self):
         """Tests the import from a WFS Endpoint
         """
-        endpoint = 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&outfields=*&f=json'
+        endpoint = 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography'\
+                   '/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&outfields=*&f=json'
         ogr = OGRImport(endpoint)
-        configs = [{'index':0}]
+        configs = [{'index': 0}]
         layers = ogr.handle(configuration_options=configs)
         for result in layers:
             layer = Layer.objects.get(name=result[0])
@@ -1244,7 +1242,7 @@ class UploaderTests(TestCase):
             'Walmart.zip',
             configs=[
                 {
-                    'configureTime':False,
+                    'configureTime': False,
                     'convert_to_date': ['W1_OPENDAT'],
                     'editable': True,
                     'index':0,
@@ -1383,7 +1381,7 @@ class UploaderTests(TestCase):
                     'index': 0,
                     'name': filename.lower(),
                     'permissions': {
-                        'users':{
+                        'users': {
                             'AnonymousUser': [
                                 'change_layer_data',
                                 'download_resourcebase',
@@ -1391,7 +1389,7 @@ class UploaderTests(TestCase):
                             ]
                         }
                     },
-                    'start_date':'date_time',
+                    'start_date': 'date_time',
                 }
             )
 
