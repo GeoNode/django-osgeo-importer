@@ -28,14 +28,11 @@ from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
 
 from osgeo_importer.utils import load_handler, launder
+from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
 
 # In normal unittest runs, this will be set in setUpModule; set here for the
 # benefit of static analysis and users importing this instead of running tests.
 User = None
-
-# Set the location of test files in one place instead of repeating
-_TEST_FILES_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'importer-test-files'))
 
 
 def test_file(filename):
