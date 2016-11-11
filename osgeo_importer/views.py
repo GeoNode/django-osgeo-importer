@@ -74,13 +74,6 @@ class ImportHelper(object):
         with self.inspector(path) as opened_file:
             return opened_file.file_type()
 
-
-class FileAddView(FormView, ImportHelper, JSONResponseMixin):
-    form_class = UploadFileForm
-    success_url = reverse_lazy('uploads-list')
-    template_name = 'osgeo_importer/new.html'
-    json = False
-
     def upload(self, data, owner):
         """Use cleaned form data to populate an unsaved upload record.
 
@@ -223,6 +216,13 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
+
+
+class FileAddView(FormView, ImportHelper, JSONResponseMixin):
+    form_class = UploadFileForm
+    success_url = reverse_lazy('uploads-list')
+    template_name = 'osgeo_importer/new.html'
+    json = False
 
     def form_valid(self, form):
         upload = self.upload(form.cleaned_data['file'], self.request.user)
