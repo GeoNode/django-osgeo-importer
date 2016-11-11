@@ -51,7 +51,7 @@ class UploadListView(ListView):
     queryset = UploadedData.objects.all()
 
 
-class FileAddView(FormView, ImportHelper, JSONResponseMixin):
+class FileAddView(ImportHelper, FormView, JSONResponseMixin):
     form_class = UploadFileForm
     success_url = reverse_lazy('uploads-list')
     template_name = 'osgeo_importer/new.html'
