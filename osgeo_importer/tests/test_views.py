@@ -34,7 +34,7 @@ class TestFileAddView_upload(TestCase):
         """
         data = []
         view = self.view()
-        upload = view.upload(data)
+        upload = view.upload(data, view.request.user)
         self.assertEqual(upload.name, None)
         self.assertEqual(upload.file_type, None)
 
@@ -43,7 +43,7 @@ class TestFileAddView_upload(TestCase):
             self.FakeFile("/tmp/xyz/abc/foo.shp")
         ]
         view = self.view()
-        upload = view.upload(data)
+        upload = view.upload(data, view.request.user)
         self.assertEqual(upload.name, "foo.shp")
         self.assertEqual(upload.file_type, "BogusType")
 
@@ -53,7 +53,7 @@ class TestFileAddView_upload(TestCase):
             self.FakeFile("/tmp/xyz/abc/bar.shp")
         ]
         view = self.view()
-        upload = view.upload(data)
+        upload = view.upload(data, view.request.user)
         self.assertEqual(upload.name, "bar.shp, foo.shp")
         self.assertEqual(upload.file_type, None)
 
@@ -65,7 +65,7 @@ class TestFileAddView_upload(TestCase):
             self.FakeFile("/tmp/{0}".format(too_long))
         ]
         view = self.view()
-        upload = view.upload(data)
+        upload = view.upload(data, view.request.user)
         self.assertEqual(upload.name.startswith("Obviously"), True)
         self.assertEqual(upload.file_type, "BogusType")
 
@@ -76,6 +76,6 @@ class TestFileAddView_upload(TestCase):
             self.FakeFile("/tmp/really_too_much.shp"),
         ]
         view = self.view()
-        upload = view.upload(data)
+        upload = view.upload(data, view.request.user)
         self.assertEqual(upload.name, None)
         self.assertEqual(upload.file_type, None)
