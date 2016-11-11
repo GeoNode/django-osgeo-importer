@@ -81,7 +81,7 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
     template_name = 'osgeo_importer/new.html'
     json = False
 
-    def upload(self, data):
+    def upload(self, data, owner):
         """Use cleaned form data to populate an unsaved upload record.
 
         Once, each upload was just one file, so all we had to do was attach its
@@ -93,7 +93,7 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         option.
         """
         # Do not save here, we want to leave control of that to the caller.
-        upload = UploadedData.objects.create(user=self.request.user)
+        upload = UploadedData.objects.create(user=owner)
         # Get a list of paths for files in this upload.
         paths = [item.name for item in data]
         # If there are multiple paths, see if we can boil them down to a
@@ -159,8 +159,14 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         upload.file_type = file_type
         return upload
 
-    def form_valid(self, form):
-        upload = self.upload(form.cleaned_data['file'])
+    def configure_upload(self, upload, files):
+        """
+            *upload*: new, unsaved UploadedData instance ( from upload() )
+            *desc*:
+                1. sets up the directory for the upload, and populates
+                2. moves the files to the uploads directory
+                3. creates UploadFile & UploadeLayer instances related to *upload*
+        """
         upload.save()
 
         # Create Upload Directory based on Upload PK
@@ -172,7 +178,7 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
         # Move all files to uploads directory using upload pk
         # Must be done for all files before saving upfile for validation
         finalfiles = []
-        for each in form.cleaned_data['file']:
+        for each in files:
             tofile = os.path.join(outdir, os.path.basename(each.name))
             shutil.move(each.name, tofile)
             finalfiles.append(tofile)
@@ -186,7 +192,7 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
             # Detect and store file type for later reporting, since it is no
             # longer true that every upload has only one file type.
             try:
-                upfile.file_type = self.get_file_type(each)
+                upfile.file_type = FileAddView.get_file_type(each)
             except NoDataSourceFound:
                 upfile.file_type = None
             upfile.save()
@@ -210,12 +216,18 @@ class FileAddView(FormView, ImportHelper, JSONResponseMixin):
                         configuration_options=configuration_options
                     )
                     upload.uploadlayer_set.add(upload_layer)
+
         upload.size = sum(
             upfile.file.size for upfile in upfiles
         )
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
+
+    def form_valid(self, form):
+        upload = self.upload(form.cleaned_data['file'], self.request.user)
+        files = [ f for f in form.cleaned_data['file'] ]
+        self.configure_upload(upload, files)
 
         if self.json:
             return self.render_to_json_response({'state': upload.state, 'id': upload.id,
