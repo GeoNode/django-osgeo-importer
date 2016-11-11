@@ -874,19 +874,19 @@ class UploaderTests(TestCase):
         """Tests the describe fields functionality.
         """
         filenames = {
-            'US_Shootings.csv': 'CSV',
-            'point_with_date.geojson': 'GeoJSON',
-            'mojstrovka.gpx': 'GPX',
-            'us_states.kml': 'KML',
-            'boxes_with_year_field.shp': 'ESRI Shapefile',
-            'boxes_with_date_iso_date.zip': 'ESRI Shapefile'
+            'US_Shootings.csv': {'CSV'},
+            'point_with_date.geojson': {'GeoJSON'},
+            'mojstrovka.gpx': {'GPX'},
+            'us_states.kml': {'LIBKML', 'KML'},
+            'boxes_with_year_field.shp': {'ESRI Shapefile'},
+            'boxes_with_date_iso_date.zip': {'ESRI Shapefile'}
         }
         from osgeo_importer.models import NoDataSourceFound
         try:
             for filename, file_type in sorted(filenames.items()):
                 path = test_file(filename)
                 with GDALInspector(path) as inspector:
-                    self.assertEqual(inspector.file_type(), file_type)
+                    self.assertIn(inspector.file_type(), file_type)
         except NoDataSourceFound:
             logging.exception('No data source found in: {0}'.format(path))
             raise
