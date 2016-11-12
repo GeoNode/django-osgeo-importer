@@ -1,20 +1,23 @@
-import gdal
+from cStringIO import StringIO
+import collections
+from datetime import datetime
 import logging
-import ogr
-import osr
 import os
 import re
+import shutil
 import sys
 
-from cStringIO import StringIO
-from datetime import datetime
+import celery
 from dateutil.parser import parse
-from django.conf import settings
 from django import db
-import shutil
-import collections
+from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.utils.text import Truncator
+import gdal
+import ogr
+import osr
+from django.contrib.auth import get_user_model
+
 
 logger = logging.getLogger(__name__)
 
@@ -277,8 +280,8 @@ class ImportHelper(object):
     """
     Import Helpers
     *note*: A number of imports are done in methods here rather than globally in this file
-        because these import require django settings & models to be fully set up and other util
-        functions are used before that is the case.
+        because these imports require django settings & models to be fully set up and other
+        functions in this file are used before that is the case.
     """
     def __init__(self, *args, **kwargs):
         super(ImportHelper, self).__init__(*args, **kwargs)
@@ -443,3 +446,34 @@ class ImportHelper(object):
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
+
+
+def import_all_layers(uploaded_data, owner=None):
+    """ Imports all layers of *uploaded_data*.
+        *uploaded_data* is a saved UploadedData instance.
+    """
+    from osgeo_importer.tasks import import_object
+    if owner is None:
+        User = get_user_model()
+        owner = User.objects.get(username='AnonymousUser')
+
+    import_results = []
+    for uploaded_file in uploaded_data.uploadfile_set.all():
+        for uploaded_layer in uploaded_file.uploadlayer_set.all():
+            configs = [{'config': [{'index': 0}], 'upload_file_name': uploaded_file.name}]
+
+            for config in configs:
+                if config['upload_file_name'] == uploaded_layer.name:
+                    configuration_options = {'layer_owner': owner.username, u'index': 0}
+                    import_result = import_object.delay(
+                        uploaded_layer.upload_file.id, configuration_options=configuration_options
+                    )
+                    import_results.append(import_result)
+                    if import_result.state in celery.states.READY_STATES:
+                        uploaded_layer.import_status = import_result.status
+                    uploaded_layer.task_id = import_result.id
+                    uploaded_layer.save()
+
+    # Wait for all of the results to complete before returning
+    [ ir.wait() for ir in import_results ]
+    return len(import_results)

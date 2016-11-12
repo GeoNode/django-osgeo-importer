@@ -1,9 +1,9 @@
 import os
 import shutil
-from .models import UploadFile
+from osgeo_importer.models import UploadFile
 from celery.task import task
 
-from .views import OSGEO_IMPORTER
+from osgeo_importer.views import OSGEO_IMPORTER
 
 
 @task

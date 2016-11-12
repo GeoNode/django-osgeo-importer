@@ -50,7 +50,12 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         try:
             owner = User.objects.get(username=layer_config['layer_owner'])
         except KeyError:
+            logger.warn('No owner specified for layer, using AnonymousUser')
             owner = User.objects.get(username='AnonymousUser')
+        except User.DoesNotExist:
+            logger.warn('User "{}" not found using AnonymousUser.'.format(layer_config['layer_owner']))
+            owner = User.objects.get(username='AnonymousUser')
+
 
         # Populate arguments to create a new Layer
         if layer_config.get('raster'):
