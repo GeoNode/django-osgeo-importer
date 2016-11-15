@@ -14,6 +14,7 @@ class UploadedDataAdmin(admin.ModelAdmin):
     list_display = ('name', 'user', 'state', 'size', 'complete')
     list_filter = ('user', 'state', 'complete')
 
+
 admin.site.register(UploadLayer, UploadedLayerAdmin)
 admin.site.register(UploadedData, UploadedDataAdmin)
 admin.site.register(UploadFile, UploadAdmin)

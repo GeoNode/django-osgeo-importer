@@ -17,7 +17,7 @@ class TestGeoNodePublishHandler(TestCase):
     @patch('osgeo_importer.importers.OGRImport')
     @patch.object(publish_handler, 'User')
     def test_preexisting_layer_reflected_in_results(self, MockUser, MockOGRImport, MockLayer):
-        """ Check that the result stats are correct in the case a layer is updated rather than created.
+        """ Check that the result stats are correct when a layer is updated rather than created.
         """
         # Set up mock version of geonode.layers.models.Layer to act as if the created layer already exists.
         mock_layer_instance = MockLayer()

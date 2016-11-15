@@ -115,6 +115,7 @@ class GdalErrorHandler(object):
         self.err_no = err_no
         self.err_msg = err_msg
 
+
 lastNum = re.compile(r'(?:[^\d]*(\d+)[^\d]*)+')
 
 

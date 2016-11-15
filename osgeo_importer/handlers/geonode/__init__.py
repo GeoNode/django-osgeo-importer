@@ -6,6 +6,7 @@ from geonode.layers.utils import resolve_regions
 from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from osgeo_importer.importers import UPLOAD_DIR
+from publish_handler import GeoNodePublishHandler  # NOQA - Moved this code but want it still available here.
 
 
 class GeoNodeMetadataHandler(ImportHandlerMixin):

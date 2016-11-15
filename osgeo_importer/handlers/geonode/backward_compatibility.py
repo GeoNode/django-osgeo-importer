@@ -100,5 +100,6 @@ def set_attributes_bw_compat(layer, attribute_map, overwrite=False, attribute_st
     else:
         logger.debug("No attributes found")
 
+
 if set_attributes is None:
     set_attributes = set_attributes_bw_compat
