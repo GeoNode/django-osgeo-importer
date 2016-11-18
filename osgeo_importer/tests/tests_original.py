@@ -238,10 +238,10 @@ class UploaderTests(TestCase):
                         url, data=json.dumps(payload),
                         content_type='application/json'
                     )
-                    self.assertTrue(response.status_code, 200)
+                    self.assertEqual(response.status_code, 200)
                     url = '/importer-api/data-layers/{0}/'.format(upload_layer.id)
                     response = client.get(url, content_type='application/json')
-                    self.assertTrue(response.status_code, 200)
+                    self.assertEqual(response.status_code, 200)
 
         return content
 
@@ -263,6 +263,8 @@ class UploaderTests(TestCase):
     def test_multi_upload(self):
         """Tests Uploading Multiple Files
         """
+        # Number of layers in each file
+        upload_layer_counts = [1, 1, 1]
         upload = self.generic_api_upload(
             filenames=[
                 'boxes_with_year_field.zip',
@@ -284,6 +286,8 @@ class UploaderTests(TestCase):
                 }
             ]
         )
+
+        self.assertEqual(Layer.objects.count(), sum(upload_layer_counts))
         self.assertEqual(9, upload['count'])
 
     def test_upload_with_slds(self):
