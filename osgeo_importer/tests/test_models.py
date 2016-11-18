@@ -1,8 +1,3 @@
-'''
-Created on Nov 14, 2016
-
-@author: jivan
-'''
 from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
