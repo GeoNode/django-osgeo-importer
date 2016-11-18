@@ -3,5 +3,5 @@ python-dateutil
 psycopg2
 numpy
 
-# Needed for testing
+# Needed for testing.
 mock
