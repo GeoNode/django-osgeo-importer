@@ -1,8 +1,3 @@
-'''
-Created on Nov 14, 2016
-
-@author: jivan
-'''
 import os
 import uuid
 import logging
@@ -71,13 +66,14 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
         workspace_name = self.workspace
         layer_uuid = str(uuid.uuid4())
+        typename = '{}:{}'.format(workspace_name.encode('utf-8'), layer_name.encode('utf-8'))
 
         new_layer_kwargs = {
             'name': layer_name,
             'workspace': self.workspace,
             'store': store_name,
             'storeType': store_type,
-            'typename': '{}:{}'.format(workspace_name.encode('utf-8'), layer_name.encode('utf-8')),
+            'typename': typename,
             'title': layer_name,
             "abstract": 'No abstract provided',
             'owner': owner,

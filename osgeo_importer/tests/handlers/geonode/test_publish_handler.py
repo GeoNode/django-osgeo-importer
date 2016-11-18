@@ -1,8 +1,3 @@
-'''
-Created on Nov 14, 2016
-
-@author: jivan
-'''
 from _collections import defaultdict
 
 from django.test import TestCase

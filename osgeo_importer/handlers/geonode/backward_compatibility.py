@@ -1,8 +1,3 @@
-'''
-Created on Nov 9, 2016
-
-@author: jivan
-'''
 import datetime
 import logging
 
