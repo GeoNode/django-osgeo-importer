@@ -27,7 +27,7 @@ from osgeo_importer.models import (
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
 
-from .utils import load_handler, launder
+from osgeo_importer.utils import load_handler, launder
 
 # In normal unittest runs, this will be set in setUpModule; set here for the
 # benefit of static analysis and users importing this instead of running tests.
@@ -35,7 +35,7 @@ User = None
 
 # Set the location of test files in one place instead of repeating
 _TEST_FILES_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'importer-test-files'))
+    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'importer-test-files'))
 
 
 def test_file(filename):
@@ -310,7 +310,6 @@ class UploaderTests(TestCase):
         )
         self.assertEqual(6, upload['count'])
         upload_id = upload['id']
-        upload_obj = UploadedData.objects.get(pk=upload_id)
         uplayers = UploadLayer.objects.filter(upload=upload_id)
         layer_id = uplayers[0].pk
 
@@ -347,8 +346,6 @@ class UploaderTests(TestCase):
         )
         self.assertEqual(5, upload['count'])
         upload_id = upload['id']
-        upload_obj = UploadedData.objects.get(pk=upload_id)
-        # TODO: why did we get upload_obj?
         uplayers = UploadLayer.objects.filter(upload=upload_id)
         layer_id = uplayers[0].pk
 
@@ -792,9 +789,10 @@ class UploaderTests(TestCase):
     def test_arcgisjson(self):
         """Tests the import from a WFS Endpoint
         """
-        endpoint = 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&outfields=*&f=json'
+        endpoint = 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography'\
+                   '/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&outfields=*&f=json'
         ogr = OGRImport(endpoint)
-        configs = [{'index':0}]
+        configs = [{'index': 0}]
         layers = ogr.handle(configuration_options=configs)
         for result in layers:
             layer = Layer.objects.get(name=result[0])
@@ -886,7 +884,7 @@ class UploaderTests(TestCase):
             'boxes_with_year_field.shp': 'ESRI Shapefile',
             'boxes_with_date_iso_date.zip': 'ESRI Shapefile'
         }
-        from .models import NoDataSourceFound
+        from osgeo_importer.models import NoDataSourceFound
         try:
             for filename, file_type in sorted(filenames.items()):
                 path = test_file(filename)
@@ -1244,7 +1242,7 @@ class UploaderTests(TestCase):
             'Walmart.zip',
             configs=[
                 {
-                    'configureTime':False,
+                    'configureTime': False,
                     'convert_to_date': ['W1_OPENDAT'],
                     'editable': True,
                     'index':0,
@@ -1383,7 +1381,7 @@ class UploaderTests(TestCase):
                     'index': 0,
                     'name': filename.lower(),
                     'permissions': {
-                        'users':{
+                        'users': {
                             'AnonymousUser': [
                                 'change_layer_data',
                                 'download_resourcebase',
@@ -1391,9 +1389,10 @@ class UploaderTests(TestCase):
                             ]
                         }
                     },
-                    'start_date':'date_time',
+                    'start_date': 'date_time',
                 }
             )
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -2,3 +2,6 @@
 python-dateutil
 psycopg2
 numpy
+
+# Needed for testing.
+mock
