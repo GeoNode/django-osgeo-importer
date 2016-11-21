@@ -9,6 +9,23 @@ osgeo-importer is a Django application that helps you create custom pipelines fo
 `pip install git+https://github.com/GeoNode/django-osgeo-importer.git`
 
 
+## Supported geodata formats
+
+* Shapefile
+* KML
+* GeoJSON
+* GeoTIFF
+* GeoPackage
+* CSV
+* NITF
+
+These formats are officially supported, meaning that we make a public
+commitment to maintain support for them, including testing and maintenance to
+ensure they keep working. In particular, we will not make any changes to
+dependencies (like supported GDAL versions) which endangers support for these
+officially supported formats.
+
+
 ## Settings
 * `OSGEO_IMPORTER`: The default Importer to use for uploads.
 * `OSGEO_INSPECTOR`: The default Inspector to use for uploads.
