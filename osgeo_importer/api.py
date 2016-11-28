@@ -14,6 +14,8 @@ from tastypie.fields import DictField, ListField, CharField, ToManyField, Foreig
 from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
 
+from osgeo_importer.utils import import_all_layers
+
 from .models import UploadedData, UploadLayer, UploadFile
 from .tasks import import_object
 
@@ -152,6 +154,22 @@ class UploadedDataResource(ModelResource):
 
         return queryset
 
+    def import_all_layers(self, request, api_name=None, resource_name=None, pk=None):
+        ud = UploadedData.objects.get(id=pk)
+        n_layers_imported = import_all_layers(ud, owner=request.user)
+        resp = self.create_response(request, {'layer_count': n_layers_imported})
+        return resp
+
+    def prepend_urls(self):
+        pu = super(UploadedDataResource, self).prepend_urls()
+        pu.extend([
+            url(r'^(?P<resource_name>{0})/(?P<pk>\w[\w/-]*)/import_all_layers{1}$'\
+                    .format(self._meta.resource_name, trailing_slash()),
+                self.wrap_view('import_all_layers'),
+                name='import_all_data'
+            ),
+        ])
+        return pu
 
 class MultipartResource(object):
 

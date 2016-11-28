@@ -28,14 +28,11 @@ from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
 
 from osgeo_importer.utils import load_handler, launder
+from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
 
 # In normal unittest runs, this will be set in setUpModule; set here for the
 # benefit of static analysis and users importing this instead of running tests.
 User = None
-
-# Set the location of test files in one place instead of repeating
-_TEST_FILES_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'importer-test-files'))
 
 
 def test_file(filename):
@@ -877,19 +874,19 @@ class UploaderTests(TestCase):
         """Tests the describe fields functionality.
         """
         filenames = {
-            'US_Shootings.csv': 'CSV',
-            'point_with_date.geojson': 'GeoJSON',
-            'mojstrovka.gpx': 'GPX',
-            'us_states.kml': 'KML',
-            'boxes_with_year_field.shp': 'ESRI Shapefile',
-            'boxes_with_date_iso_date.zip': 'ESRI Shapefile'
+            'US_Shootings.csv': {'CSV'},
+            'point_with_date.geojson': {'GeoJSON'},
+            'mojstrovka.gpx': {'GPX'},
+            'us_states.kml': {'LIBKML', 'KML'},
+            'boxes_with_year_field.shp': {'ESRI Shapefile'},
+            'boxes_with_date_iso_date.zip': {'ESRI Shapefile'}
         }
         from osgeo_importer.models import NoDataSourceFound
         try:
             for filename, file_type in sorted(filenames.items()):
                 path = test_file(filename)
                 with GDALInspector(path) as inspector:
-                    self.assertEqual(inspector.file_type(), file_type)
+                    self.assertIn(inspector.file_type(), file_type)
         except NoDataSourceFound:
             logging.exception('No data source found in: {0}'.format(path))
             raise
