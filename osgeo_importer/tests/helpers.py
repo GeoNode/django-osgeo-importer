@@ -1,5 +1,5 @@
 from django.conf import settings
-from django import db
+
 
 def works_with_geoserver(wrapped_func):
     """ A decorator for test methods with functionality that should work with or without geoserver
@@ -25,14 +25,7 @@ def works_with_geoserver(wrapped_func):
                 if self.catalog.get_workspace(workspace_name) is None:
                     self.catalog.create_workspace(workspace_name, 'http://www.geonode.org/')
 
-                workspace = self.catalog.get_workspace(workspace_name)
-
-#                 self.postgis = db.connections['datastore']
-#                 self.postgis_settings = self.postgis.settings_dict
-#                 self.datastore = self.catalog.create_datastore(self.postgis, workspace)
-
                 ret = wrapped_func(self, *args, **kwargs)
-#                 self.catalog.delete(self.datastore, recurse=True)
 
                 return ret
         else:

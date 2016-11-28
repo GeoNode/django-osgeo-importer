@@ -3,7 +3,6 @@ import shutil
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-import mock
 
 from geonode.layers.models import Layer
 from osgeo_importer.models import UploadedData
@@ -15,7 +14,7 @@ from osgeo_importer.utils import ImportHelper, import_all_layers
 User = get_user_model()
 
 
-class UploadedDataResourceTests(ImportHelper, TestCase,):
+class ImportUtilityTests(ImportHelper, TestCase,):
     multi_db = True
 
     def setUp(self):
@@ -45,13 +44,15 @@ class UploadedDataResourceTests(ImportHelper, TestCase,):
 
         ud = UploadedData.objects.get(name=test_filename)
         n_uploaded_layers = ud.uploadlayer_set.count()
-        self.assertEqual(n_uploaded_layers, expected_layer_count,
+        self.assertEqual(
+            n_uploaded_layers, expected_layer_count,
             'Expected {} uploaded layers from this file, found {}'.format(expected_layer_count, n_uploaded_layers)
         )
 
         import_all_layers(ud, owner=test_user)
 
         n_imported_layers = Layer.objects.count()
-        self.assertEqual(n_imported_layers, expected_layer_count,
+        self.assertEqual(
+            n_imported_layers, expected_layer_count,
             'Expected {} imported layers from this file, found {}'.format(expected_layer_count, n_imported_layers)
         )

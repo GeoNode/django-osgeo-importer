@@ -59,7 +59,7 @@ class FileAddView(ImportHelper, FormView, JSONResponseMixin):
 
     def form_valid(self, form):
         upload = self.upload(form.cleaned_data['file'], self.request.user)
-        files = [ f for f in form.cleaned_data['file'] ]
+        files = [f for f in form.cleaned_data['file']]
         self.configure_upload(upload, files)
 
         if self.json:

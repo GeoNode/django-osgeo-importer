@@ -276,6 +276,7 @@ def decode(s, encodings=('ascii', 'utf8', 'latin1')):
             pass
     return s.decode('ascii', 'ignore')
 
+
 class ImportHelper(object):
     """
     Import Helpers
@@ -475,5 +476,5 @@ def import_all_layers(uploaded_data, owner=None):
                     uploaded_layer.save()
 
     # Wait for all of the results to complete before returning
-    [ ir.wait() for ir in import_results ]
+    [ir.wait() for ir in import_results]
     return len(import_results)
