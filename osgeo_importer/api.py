@@ -163,13 +163,15 @@ class UploadedDataResource(ModelResource):
     def prepend_urls(self):
         pu = super(UploadedDataResource, self).prepend_urls()
         pu.extend([
-            url(r'^(?P<resource_name>{0})/(?P<pk>\w[\w/-]*)/import_all_layers{1}$'\
-                    .format(self._meta.resource_name, trailing_slash()),
+            url(
+                r'^(?P<resource_name>{0})/(?P<pk>\w[\w/-]*)/import_all_layers{1}$'
+                .format(self._meta.resource_name, trailing_slash()),
                 self.wrap_view('import_all_layers'),
                 name='import_all_data'
-            ),
+            )
         ])
         return pu
+
 
 class MultipartResource(object):
 

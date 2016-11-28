@@ -56,7 +56,6 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             logger.warn('User "{}" not found using AnonymousUser.'.format(layer_config['layer_owner']))
             owner = User.objects.get(username='AnonymousUser')
 
-
         # Populate arguments to create a new Layer
         if layer_config.get('raster'):
             layer_name = os.path.splitext(os.path.basename(layer))[0]
