@@ -15,6 +15,15 @@ from osgeo_importer.utils import increment_filename
 logger = logging.getLogger(__name__)
 
 
+def ensure_workspace_exists(catalog, workspace_name, workspace_namespace_uri):
+    ws = catalog.get_workspace(workspace_name)
+    if ws is None:
+        logger.info('Creating workspace "{}"'.format(workspace_name))
+        catalog.create_workspace(workspace_name, workspace_namespace_uri)
+    else:
+        logger.info('Found workspace "{}"'.format(workspace_name))
+
+
 def configure_time(resource, name='time', enabled=True, presentation='LIST', resolution=None, units=None,
                    unitSymbol=None, **kwargs):
     """
@@ -69,7 +78,8 @@ class GeoServerTimeHandler(GetModifiedFieldsMixin, GeoserverHandlerMixin):
 
 class GeoserverPublishHandler(GeoserverHandlerMixin):
     workspace = 'geonode'
-    srs = 'EPSG:4326'
+    workspace_namespace_uri = 'http://www.geonode.org/'
+    srs = 'EPSG:4326'  # This should probably come from the imported data instead of assumed
 
     def can_run(self, layer, layer_config, *args, **kwargs):
         """
@@ -86,7 +96,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         return {
               'database': db_settings['NAME'],
               'passwd': db_settings['PASSWORD'],
-              'namespace': 'http://www.geonode.org/',
+              'namespace': self.workspace_namespace_uri,
               'type': 'PostGIS',
               'dbtype': 'postgis',
               'host': db_settings['HOST'],
@@ -96,16 +106,39 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
               'name': db_settings['NAME']}
 
     def get_or_create_datastore(self, layer_config):
-        connection_string = layer_config.get('geoserver_store', self.get_default_store())
+        connection_string = layer_config.get('geoserver_store')
+        default_connection_string = self.get_default_store()
 
-        try:
-            return self.catalog.get_store(connection_string['name'])
-        except FailedRequestError:
-            store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
-            store.connection_parameters.update(connection_string)
-            self.catalog.save(store)
+        # If a connection is specified, get or create it.
+        if connection_string is not None:
+            try:
+                s = self.catalog.get_store(connection_string['name'])
+            except FailedRequestError:
+                ensure_workspace_exists(self.catalog, self.workspace, self.workspace_namespace_uri)
+                store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
+                store.connection_parameters.update(connection_string)
+                self.catalog.save(store)
+                s = self.catalog.get_store(connection_string['name'])
 
-        return self.catalog.get_store(connection_string['name'])
+        # If no connection is specified or geogig is requested but not configured on geoserver, use default
+        if connection_string is None or (s.type is None and connection_string.get('type') == 'geogig'):
+            if connection_string is not None:
+                self.catalog.delete(s)
+                msg = 'GeoGig is requested but not configured on geoserver instance, '\
+                      'overriding connection "{}" with default "{}"'\
+                          .format(connection_string, default_connection_string)
+                logger.warn(msg)
+            layer_config['geoserver_store'] = default_connection_string
+
+            try:
+                s = self.catalog.get_store(connection_string['name'])
+            except FailedRequestError:
+                store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
+                store.connection_parameters.update(connection_string)
+                self.catalog.save(store)
+                s = self.catalog.get_store(connection_string['name'])
+
+        return s
 
     def geogig_handler(self, store, layer, layer_config):
         """
@@ -169,7 +202,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
 
 class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
-    workspace = 'geonode'
+    workspace_name = 'geonode'
+    workspace_namespace_uri = 'http://www.geonode.org'
 
     def can_run(self, layer, layer_config, *args, **kwargs):
         """
@@ -186,7 +220,8 @@ class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
         Publishes a Coverage layer to GeoServer.
         """
         name = os.path.splitext(os.path.basename(layer))[0]
-        workspace = self.catalog.get_workspace(self.workspace)
+        ensure_workspace_exists(self.catalog, self.workspace_name, self.workspace_namespace_uri)
+        workspace = self.catalog.get_workspace(self.workspace_name)
 
         return self.catalog.create_coveragestore(name, layer, workspace, False)
 
