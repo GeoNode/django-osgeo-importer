@@ -773,11 +773,11 @@ class UploaderTests(TestCase):
     def test_wfs(self):
         """Tests the import from a WFS Endpoint
         """
-        wfs = 'WFS:http://demo.boundlessgeo.com/geoserver/wfs'
+        wfs = 'WFS:http://demo.geo-solutions.it/geoserver/tiger/wfs'
         ogr = OGRImport(wfs)
         configs = [
-            {'layer_name': 'og:bugsites'},
-            {'layer_name': 'topp:states'}
+            {'layer_name': 'tiger:giant_polygon'},
+            {'layer_name': 'tiger:poi'},
         ]
         layers = ogr.handle(configuration_options=configs)
         for result in layers:
@@ -789,8 +789,8 @@ class UploaderTests(TestCase):
     def test_arcgisjson(self):
         """Tests the import from a WFS Endpoint
         """
-        endpoint = 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography'\
-                   '/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&outfields=*&f=json'
+        endpoint = 'http://sampleserver6.arcgisonline.com/arcgis/rest/services/Water_Network/FeatureServer/16/query'\
+            '?where=objectid=326&outfields=*&f=json'
         ogr = OGRImport(endpoint)
         configs = [{'index': 0}]
         layers = ogr.handle(configuration_options=configs)
