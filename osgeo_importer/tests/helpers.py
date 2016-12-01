@@ -1,11 +1,43 @@
 from django.conf import settings
+from django import db
+
+
+def create_datastore(workspace_name, connection, catalog):
+    """Convenience method for creating a datastore.
+    """
+    from geoserver.catalog import FailedRequestError
+    settings = connection.settings_dict
+    ds_name = settings['NAME']
+    params = {
+        'database': ds_name,
+        'passwd': settings['PASSWORD'],
+        'namespace': 'http://www.geonode.org/',
+        'type': 'PostGIS',
+        'dbtype': 'postgis',
+        'host': settings['HOST'],
+        'user': settings['USER'],
+        'port': settings['PORT'],
+        'enabled': 'True'
+    }
+
+    store = catalog.create_datastore(ds_name, workspace=workspace_name)
+    store.connection_parameters.update(params)
+
+    try:
+        catalog.save(store)
+    except FailedRequestError:
+        # assuming this is because it already exists
+        pass
+
+    return catalog.get_store(ds_name)
 
 
 def works_with_geoserver(wrapped_func):
     """ A decorator for test methods with functionality that should work with or without geoserver
             configured in settings.
-        Some signal handlers in geonode.geoserver presume a geoserver workspace is configured.
-        This decorator makes sure that is true if geonode.geoserver is in INSTALLED_APPS.
+        Some signal handlers in geonode.geoserver presume a geoserver workspace and datastore are configured.
+        This decorator makes sure that is true during the test if geonode.geoserver is in INSTALLED_APPS and they get
+        torn down appropriately afterwards.
     """
     if 'geonode.geoserver' in settings.INSTALLED_APPS:
         try:
@@ -18,14 +50,29 @@ def works_with_geoserver(wrapped_func):
         if can_set_up_geoserver_workspace:
             def wrapper(self, *args, **kwargs):
                 workspace_name = 'geonode'
-                self.catalog = Catalog(
+                django_datastore = db.connections['datastore']
+
+                catalog = Catalog(
                     ogc_server_settings.internal_rest,
                     *ogc_server_settings.credentials
                 )
-                if self.catalog.get_workspace(workspace_name) is None:
-                    self.catalog.create_workspace(workspace_name, 'http://www.geonode.org/')
+                # Set up workspace/datastore as appropriate
+                ws = catalog.get_workspace(workspace_name)
+                delete_ws = False
+                if ws is None:
+                    ws = catalog.create_workspace(workspace_name, 'http://www.geonode.org/')
+                    delete_ws = True
 
+                datastore = create_datastore(workspace_name, django_datastore, catalog)
+
+                # test method called here
                 ret = wrapped_func(self, *args, **kwargs)
+
+                # Tear down workspace/datastore as appropriate
+                if delete_ws:
+                    catalog.delete(ws, recurse=True)
+                else:
+                    catalog.delete(datastore, recurse=True)
 
                 return ret
         else:
