@@ -126,9 +126,10 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
                 self.catalog.delete(s)
                 msg = 'GeoGig is requested but not configured on geoserver instance, '\
                       'overriding connection "{}" with default "{}"'\
-                          .format(connection_string, default_connection_string)
+                      .format(connection_string, default_connection_string)
                 logger.warn(msg)
             layer_config['geoserver_store'] = default_connection_string
+            connection_string = default_connection_string
 
             try:
                 s = self.catalog.get_store(connection_string['name'])
