@@ -27,12 +27,12 @@ sudo su -c "echo 'export GDAL_DATA=/usr/local/lib/gdal/share/gdal/' >> /etc/prof
 
 if ["$TRAVIS" = true];
 then
-   sudo apt-get -y --no-install-recommends --force-yes install postgresql-9.3-postgis-2.2
+   sudo apt-get -y --no-install-recommends --force-yes install postgresql-9.3-postgis-2.3
 else
    sudo add-apt-repository "deb https://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
    sudo apt-get update
-   sudo apt-get -y install postgresql-9.3-postgis-2.2
+   sudo apt-get -y install postgresql-9.3-postgis-2.3
 fi
 
 sudo apt-get install -y python-dev python-lxml libxslt1-dev  libpq-dev
