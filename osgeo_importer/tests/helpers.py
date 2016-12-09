@@ -66,13 +66,14 @@ def works_with_geoserver(wrapped_func):
                 datastore = create_datastore(workspace_name, django_datastore, catalog)
 
                 # test method called here
-                ret = wrapped_func(self, *args, **kwargs)
-
-                # Tear down workspace/datastore as appropriate
-                if delete_ws:
-                    catalog.delete(ws, recurse=True)
-                else:
-                    catalog.delete(datastore, recurse=True)
+                try:
+                    ret = wrapped_func(self, *args, **kwargs)
+                finally:
+                    # Tear down workspace/datastore as appropriate
+                    if delete_ws:
+                        catalog.delete(ws, recurse=True)
+                    else:
+                        catalog.delete(datastore, recurse=True)
 
                 return ret
         else:
