@@ -62,14 +62,7 @@ STATICFILES_DIRS.append(
 
 # Note that Django automatically includes the "templates" dir in all the
 # INSTALLED_APPS, se there is no need to add maps/templates or admin/templates
-try:
-    TEMPLATE_DIRS
-except NameError:
-    TEMPLATE_DIRS = tuple()
-
-TEMPLATE_DIRS = (
-    os.path.join(LOCAL_ROOT, "templates"),
-) + TEMPLATE_DIRS
+TEMPLATES[0]['DIRS'].insert(0, os.path.join(LOCAL_ROOT, "templates"))
 
 # Location of url mappings
 ROOT_URLCONF = 'osgeo_importer_prj.urls'
