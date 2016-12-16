@@ -1,13 +1,27 @@
 import os
+
 from django.test import SimpleTestCase
 import mock
-import osgeo_importer.handlers.mapproxy.publish_handler
+
 from osgeo_importer.handlers.mapproxy.publish_handler import MapProxyGPKGTilePublishHandler
+import osgeo_importer.handlers.mapproxy.publish_handler
 from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
+from unittest.case import skipUnless
 
 
 class TestMapProxyGPKGTilePublishHandler(SimpleTestCase):
+    adequate_mapproxy_version = False
+    try:
+        from mapproxy.version import version
+        maj_v, min_v = version.split('.')[:2]
+        if int(maj_v) == 1 and int(min_v) >= 10:
+            adequate_mapproxy_version = True
+        else:
+            adequate_mapproxy_version = False
+    except ImportError:
+        adequate_mapproxy_version = False
 
+    @skipUnless(adequate_mapproxy_version, 'Need mapproxy 1.10 or later to test this')
     def test_handle_non_gpkg(self):
         # Should do nothing but log an info-level message.
         with mock.patch.object(osgeo_importer.handlers.mapproxy.publish_handler, 'logger') as logger:
@@ -18,6 +32,7 @@ class TestMapProxyGPKGTilePublishHandler(SimpleTestCase):
             mpph.handle(layer_name, layer_config)
             self.assertEqual(logger.info.call_count, 1)
 
+    @skipUnless(adequate_mapproxy_version, 'Need mapproxy 1.10 or later to test this')
     def test_handle_gpkg(self):
         filenames = ['sde-NE2_HR_LC_SR_W_DR.gpkg']
         testing_storage_dir = '/tmp'
