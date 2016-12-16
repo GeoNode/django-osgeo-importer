@@ -54,6 +54,8 @@ if [ -n "$1" ]
 fi
 
 pip install -r requirements.txt
+# MapProxy 1.10 isn't released yet, use master branch until it is.  This commit is HEAD of master at this time.
+pip install -e git+https://github.com/mapproxy/mapproxy.git@eeb162ee0604#egg=MapProxy==1.10.0a
 pip install -e git+https://github.com/GeoNode/geonode.git#egg=GeoNode
 
 pip install -e .
