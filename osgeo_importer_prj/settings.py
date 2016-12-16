@@ -29,6 +29,7 @@ SITENAME = 'osgeo_importer_prj'
 IMPORT_HANDLERS = [
     # If GeoServer handlers are enabled, you must have an instance of geoserver running.
     # Warning: the order of the handlers here matters.
+#     'osgeo_importer.handlers.mapproxy.publish_handler.MapProxyGPKGTilePublishHandler',
     'osgeo_importer.handlers.FieldConverterHandler',
     'osgeo_importer.handlers.geoserver.GeoserverPublishHandler',
     'osgeo_importer.handlers.geoserver.GeoserverPublishCoverageHandler',
@@ -79,7 +80,10 @@ LOCALE_PATHS = (
     os.path.join(LOCAL_ROOT, 'locale'),
     ) + LOCALE_PATHS
 
+
 INSTALLED_APPS = INSTALLED_APPS + ("osgeo_importer",)
+# # Remove 'geonode.geoserver', useful for experimenting with a geoserver-less configuration.
+# INSTALLED_APPS = [ a for a in INSTALLED_APPS if a != 'geonode.geoserver' ]
 
 DATABASES = {
     'default': {
@@ -105,3 +109,11 @@ OSGEO_IMPORTER_VALID_EXTENSIONS = [
 ]
 LOGGING['loggers']['osgeo_importer'] = {"handlers": ["console"], "level": "DEBUG"}
 DATABASE_ROUTERS = ['osgeo_importer_prj.dbrouters.DefaultOnlyMigrations']
+
+# # === MapProxy settings
+# # This is the location to place additional configuration files for mapproxy to work from.
+# # Currently it is only to allow tiles from gpkg files to be served.
+# # MAPPROXY_CONFIG_DIR = '/var/lib/eventkit/mapproxy/apps'
+# MAPPROXY_CONFIG_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'mapproxy_confdir'))
+# # This is the location for GeoNode to store GPKG files containing tiles for mapproxy consumption.
+# GPKG_TILE_STORAGE_DIR = os.path.join(LOCAL_ROOT, 'gpkgs_tile')
