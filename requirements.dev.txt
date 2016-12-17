@@ -1,0 +1,36 @@
+Django==1.8.15
+
+GeoNode==2.5.3
+
+# For gdal/ogr python bindings, install system-level package & link to virtual env
+# On Ubuntu, install system-level package python-gdal & link the following to virtual env:
+#  /usr/lib/python2.7/dist-packages/GDAL-2.1.0.egg-info
+#  /usr/lib/python2.7/dist-packages/gdal.py
+#  /usr/lib/python2.7/dist-packages/gdalconst.py
+#  /usr/lib/python2.7/dist-packages/osr.py
+#  /usr/lib/python2.7/dist-packages/ogr.py
+#  /usr/lib/python2.7/dist-packages/gdalnumeric.py
+#  /usr/lib/python2.7/dist-packages/osgeo
+
+python-dateutil
+psycopg2
+numpy
+
+# You'll also need to get PostGIS running on the project's database.
+# Make sure PostGIS is installed and after migrating the database run the following
+#   on Ubuntu, or adapt as appropriate for your system:
+#sudo -u postgres createuser osgeo ... # Superuser for some tests.
+#sudo -u postgres psql 'CREATE DATABASE osgeo_importer_test WITH OWNER osgeo;'
+#psql -U osgeo osgeo_importer_test 'CREATE EXTENSION postgis;'
+
+#sudo -u postgres createlang plpgsql osgeo_importer_test
+#sudo -u postgres psql -d osgeo_importer_test -f /usr/share/postgresql/9.X/contrib/postgis-2.Y/postgis.sql
+#sudo -u postgres psql -d osgeo_importer_test -f /usr/share/postgresql/9.X/contrib/postgis-2.Y/postgis_comments.sql
+#sudo -u postgres psql -d osgeo_importer_test -f /usr/share/postgresql/9.X/contrib/postgis-2.Y/spatial_ref_sys.sql
+#sudo -u postgres psql -d osgeo_importer_test -f /usr/share/postgresql/9.X/contrib/postgis-2.Y/topology.sql
+#sudo -u postgres psql -d osgeo_importer_test -f /usr/share/postgresql/9.X/contrib/postgis-2.Y/topology_comments.sql
+
+#Needed on my virtualenv but not in vagrant machine or travis, why?
+#I'm using ubuntu 16.04 while the other two are on 14.04.
+django-oauth-toolkit-fork
+django-cors-headers
