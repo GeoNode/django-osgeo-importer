@@ -7,6 +7,7 @@ GeoNode OSGEO Importer
 
    web_api
    developer_notes
+   mapproxy_config
 
 
 Indices and tables
