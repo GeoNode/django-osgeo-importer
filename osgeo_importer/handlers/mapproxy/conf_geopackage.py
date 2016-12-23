@@ -9,7 +9,35 @@ import os
 logger = getLogger(__name__)
 
 
+def combine_mapproxy_yaml(yaml_list):
+    """ Returns a single yaml config document with the contents of each of these dictionaries
+        from each yaml document in *yaml_list* merged:
+            caches, grids, layers, services
+    """
+    single_yaml = {'grids': {}, 'caches': {}, 'services': {}, 'layers': []}
+    merge_dict_keys = ['grids', 'caches', 'services']
+    for yaml in yaml_list:
+        for merge_key in merge_dict_keys:
+            try:
+                for key, item in yaml[merge_key].items():
+                    single_yaml[merge_key][key] = item
+            except KeyError:
+                logger.warn('Did not find key "{}" in yaml config'.format(merge_key))
+
+        try:
+            for layer in yaml['layers']:
+                if layer not in single_yaml['layers']:
+                    single_yaml['layers'].append(layer)
+        except KeyError:
+            logger.warn('Did not find key "layers" in yaml config')
+
+    return single_yaml
+
+
 def conf_from_geopackage(geopackage_path, output_filepath=None):
+    """ Returns a yaml configuration for mapproxy to serve 'geopackage_path' as a cache containing tiles.
+        If output_filepath is not None, also writes the configuration to it.
+    """
     # Import these here so this code doesn't interfere on installations that don't configure MapProxy
     from mapproxy.config.spec import validate_options
     from mapproxy.config.loader import load_configuration_file
@@ -20,9 +48,11 @@ def conf_from_geopackage(geopackage_path, output_filepath=None):
         lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:null', '')
     )
 
+    yaml_conf = yaml.safe_dump(conf, default_flow_style=False)
+
     if output_filepath:
         with open(output_filepath, 'w') as outfile:
-            outfile.write(yaml.safe_dump(conf, default_flow_style=False))
+            outfile.write(yaml_conf)
         fdir, fname = os.path.split(output_filepath)
         # configuration dict
         cd = load_configuration_file([fname], fdir)
@@ -31,9 +61,8 @@ def conf_from_geopackage(geopackage_path, output_filepath=None):
             raise Exception('Invalid configuration: {}'.format(errors))
         elif len(errors) > 0 and informal_only is True:
             logger.warn('Non-critical errors in yaml produced by conf_from_geopackage(): {}'.format(output_filepath))
-    else:
-        print(yaml.safe_dump(get_geopackage_configuration_dict(geopackage_path), default_flow_style=False))
 
+    return yaml_conf
 
 def get_gpkg_contents(geopackage_file, data_type='tiles'):
     """
