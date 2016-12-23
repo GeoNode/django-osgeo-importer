@@ -12,9 +12,10 @@ class TestHandlerFunctions(SimpleTestCase):
         ws_name = 'nonexistent-workspace'
         ws_namespace_uri = 'http://nonamespace.com'
 
-        # Check that the workspace doesn't exist
+        # Ensure that the workspace doesn't exist
         ws1 = gs_catalog.get_workspace(ws_name)
-        self.assertEqual(ws1, None)
+        if ws1 is not None:
+            gs_catalog.delete(ws1)
 
         ensure_workspace_exists(gs_catalog, ws_name, ws_namespace_uri)
         # Check that the workspace now exists
@@ -23,6 +24,8 @@ class TestHandlerFunctions(SimpleTestCase):
 
         # Run again to ensure a preexisting workspace doesn't throw any exceptions
         ensure_workspace_exists(gs_catalog, ws_name, ws_namespace_uri)
+
+        gs_catalog.delete(ws2)
 
 
 class TestGeoserverPublishHandler(SimpleTestCase):

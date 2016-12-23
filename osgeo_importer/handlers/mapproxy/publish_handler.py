@@ -13,6 +13,7 @@ from osgeo_importer.models import MapProxyCacheConfig
 
 logger = logging.getLogger(__name__)
 
+
 class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
 
     def handle(self, layer, layer_config, *args, **kwargs):
@@ -32,7 +33,7 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
 
             # --- Update the config file on disk.
             config_path = os.path.join(settings.MAPPROXY_CONFIG_DIR, settings.MAPPROXY_CONFIG_FILENAME)
-            individual_yaml_configs = [ yaml.load(mpcc.config) for mpcc in MapProxyCacheConfig.objects.all() ]
+            individual_yaml_configs = [yaml.load(mpcc.config) for mpcc in MapProxyCacheConfig.objects.all()]
             combined_yaml = combine_mapproxy_yaml(individual_yaml_configs)
             combined_config = yaml.dump(combined_yaml)
             with open(config_path, 'w') as config_file:

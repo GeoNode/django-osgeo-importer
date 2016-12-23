@@ -9,23 +9,23 @@ import os
 logger = getLogger(__name__)
 
 
-def combine_mapproxy_yaml(yaml_list):
+def combine_mapproxy_yaml(yaml_dict_list):
     """ Returns a single yaml config document with the contents of each of these dictionaries
         from each yaml document in *yaml_list* merged:
             caches, grids, layers, services
     """
     single_yaml = {'grids': {}, 'caches': {}, 'services': {}, 'layers': []}
     merge_dict_keys = ['grids', 'caches', 'services']
-    for yaml in yaml_list:
+    for yaml_dict in yaml_dict_list:
         for merge_key in merge_dict_keys:
             try:
-                for key, item in yaml[merge_key].items():
+                for key, item in yaml_dict[merge_key].items():
                     single_yaml[merge_key][key] = item
             except KeyError:
                 logger.warn('Did not find key "{}" in yaml config'.format(merge_key))
 
         try:
-            for layer in yaml['layers']:
+            for layer in yaml_dict['layers']:
                 if layer not in single_yaml['layers']:
                     single_yaml['layers'].append(layer)
         except KeyError:
@@ -63,6 +63,7 @@ def conf_from_geopackage(geopackage_path, output_filepath=None):
             logger.warn('Non-critical errors in yaml produced by conf_from_geopackage(): {}'.format(output_filepath))
 
     return yaml_conf
+
 
 def get_gpkg_contents(geopackage_file, data_type='tiles'):
     """

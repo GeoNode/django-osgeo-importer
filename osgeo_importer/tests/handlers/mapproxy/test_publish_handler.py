@@ -53,10 +53,12 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
             mpph = MapProxyGPKGTilePublishHandler(importer)
 
             # Call handle() with directories tweaked for testing.
-            with self.settings(
-                    GPKG_TILE_STORAGE_DIR=testing_storage_dir, MAPPROXY_CONFIG_DIR=testing_config_dir,
-                    MAPPROXY_CONFIG_FILENAME=testing_config_filename
-                ):
+            test_settings = {
+                'GPKG_TILE_STORAGE_DIR': testing_storage_dir,
+                'MAPPROXY_CONFIG_DIR': testing_config_dir,
+                'MAPPROXY_CONFIG_FILENAME': testing_config_filename,
+            }
+            with self.settings(**test_settings):
                 mpph.handle(layer_name, layer_config)
 
             # --- A copy of the gpkg file should be made to settings.GPKG_TILE_STORAGE_DIR
@@ -70,7 +72,8 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
             self.assertEqual(mpcc.gpkg_filepath, copy_path)
             mpcc.delete()
 
-            # --- A mapproxy yaml config named 'geopackage_cache.yaml' should be produced in settings.MAPPROXY_CONFIG_DIR
-            conf_path = os.path.join(testing_config_dir, 'geopackage_cache.yaml')
+            # --- A mapproxy yaml config with name matching testing_config_filename should be
+            #    produced in settings.MAPPROXY_CONFIG_DIR
+            conf_path = os.path.join(testing_config_dir, testing_config_filename)
             self.assertTrue(os.path.exists(conf_path))
             os.unlink(conf_path)
