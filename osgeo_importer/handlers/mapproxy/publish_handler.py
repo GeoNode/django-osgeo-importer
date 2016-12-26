@@ -5,6 +5,8 @@ from django.conf import settings
 import yaml
 
 from conf_geopackage import conf_from_geopackage
+from geonode.base.models import Link
+from geonode.layers.models import Layer
 from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers.mapproxy.conf_geopackage import combine_mapproxy_yaml
 from osgeo_importer.models import MapProxyCacheConfig
@@ -17,7 +19,7 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
 
     def handle(self, layer, layer_config, *args, **kwargs):
         """ If the layer is a geopackage file, make a copy, generate a config to serve the layer,
-            and update the mapproxy config file.
+            update the mapproxy config file, and configure a wms link to access the tiles.
         """
         # We only want to process GeoPackage tile layers here.
         if layer_config.get('layer_type', '').lower() == 'tile' and layer_config.get('driver', '').lower() == 'gpkg':
@@ -45,6 +47,19 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
                 combined_config = yaml.dump(combined_yaml)
                 with open(config_path, 'w') as config_file:
                     config_file.write(combined_config)
+
+                # --- Configure a tms link for this layer
+                geonode_layer_id = layer_config['geonode_layer_id']
+                geonode_layer = Layer.objects.get(id=geonode_layer_id)
+                layer_name = geonode_layer.name
+                # Grab the grid name given to the grid for this layer by conf_from_geopackage()
+                config_dict = yaml.load(config)
+                grid_name = config_dict['grids'].keys()[0]
+                link_url = settings.MAPPROXY_SERVER_LOCATION.format(layer_name=layer_name, grid_name=grid_name)
+                Link.objects.create(
+                    extension='html', link_type='TMS', name='Tiles-MapProxy', mime='text/html',
+                    url=link_url, resource=geonode_layer.resourcebase_ptr
+                )
             else:
                 logger.debug(
                     'Additional layer of a geopackage file containing tiles, index "{}"; doing nothing.'

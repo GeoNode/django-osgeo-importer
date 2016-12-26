@@ -42,7 +42,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         """
-        Adds a layer in GeoNode, after it has been added to Geoserver.
+        Adds a layer in GeoNode & adds layer_config['geonode_layer_id'] with id of new layer.
 
         Handler specific params:
         "layer_owner": Sets the owner of the layer.
@@ -97,6 +97,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         }
 
         new_layer, created = Layer.objects.get_or_create(**new_layer_kwargs)
+        layer_config['geonode_layer_id'] = new_layer.id
 
         # *** It is unclear where the date/time attributes are being created as part of the
         # ***    above get_or_create().  It's probably a geoserver-specific save signal handler,
