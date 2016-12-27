@@ -1,9 +1,7 @@
 Django==1.8.15
 
-GeoNode==2.5.3
-
-# For gdal/ogr python bindings, install system-level package & link to virtual env
-# On Ubuntu, install system-level package python-gdal & link the following to virtual env:
+# For gdal/ogr python bindings, the easiest method is to install system-level package & link to virtual env.
+# On Ubuntu, install system-level package python-gdal & link the following to virtual env site-packages/:
 #  /usr/lib/python2.7/dist-packages/GDAL-2.1.0.egg-info
 #  /usr/lib/python2.7/dist-packages/gdal.py
 #  /usr/lib/python2.7/dist-packages/gdalconst.py
@@ -12,9 +10,19 @@ GeoNode==2.5.3
 #  /usr/lib/python2.7/dist-packages/gdalnumeric.py
 #  /usr/lib/python2.7/dist-packages/osgeo
 
-python-dateutil
-psycopg2
+
+git+https://github.com/mapproxy/mapproxy.git@eeb162ee0604#egg=MapProxy==1.10.0a
+
+# Install GeoNode latest master
+git+https://github.com/GeoNode/geonode.git#egg=GeoNode
+awscli
 numpy
+python-dateutil
+flake8
+coverage
+
+
+psycopg2
 
 # You'll also need to get PostGIS running on the project's database.
 # Make sure PostGIS is installed and after migrating the database run the following
@@ -32,5 +40,5 @@ numpy
 
 #Needed on my virtualenv but not in vagrant machine or travis, why?
 #I'm using ubuntu 16.04 while the other two are on 14.04.
-django-oauth-toolkit-fork
-django-cors-headers
+###django-oauth-toolkit-fork
+###django-cors-headers
