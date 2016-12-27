@@ -1,0 +1,16 @@
+version: '2'
+services:
+  postgres:
+    build: "postgres-postgis/"
+    image: "postgresql-postgis:9.3-2.3"
+    ports:
+     - "5432:5432"
+    expose:
+     - "5432"
+  geoserver:
+    build: "geoserver/"
+    image: "geoserver-host-postgres:2.9.2"
+    ports:
+     - "8080:8080"
+    links:
+     - postgres
