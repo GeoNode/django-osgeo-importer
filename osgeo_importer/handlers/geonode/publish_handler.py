@@ -57,16 +57,22 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             owner = User.objects.get(username='AnonymousUser')
 
         # Populate arguments to create a new Layer
-        if layer_config.get('raster'):
+        layer_type = layer_config.get('layer_type')
+        if layer_type == 'raster':
             layer_name = os.path.splitext(os.path.basename(layer))[0]
             store_name = layer_name
             store_type = 'coverageStore'
             fields = None
-        else:
+        elif layer_type == 'vector':
             layer_name = layer
             store_name = self.store_name
             store_type = 'dataStore'
             fields = layer_config['fields']
+        elif layer_type == 'tile':
+            layer_name = layer_config['layer_name']
+            store_name = layer_config['path']
+            store_type = 'tileStore'
+            fields = None
 
         workspace_name = self.workspace
         layer_uuid = str(uuid.uuid4())

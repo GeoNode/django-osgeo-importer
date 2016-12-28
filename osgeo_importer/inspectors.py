@@ -1,11 +1,13 @@
 import os
-
-import gdal
-import ogr
-from django.conf import settings
-from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
+import sqlite3
 
 from django import db
+from django.conf import settings
+import gdal
+import ogr
+
+from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
+
 
 OSGEO_INSPECTOR = getattr(settings, 'OSGEO_INSPECTOR', 'osgeo_importer.inspectors.GDALInspector')
 
@@ -186,6 +188,7 @@ class GDALInspector(InspectorMixin):
                                  'index': n,
                                  'geom_type': geometry_type,
                                  'raster': False,
+                                 'layer_type': 'vector',
                                  'driver': driver,
                                  'layer_definition': None}
             if driver != 'WFS':
@@ -201,13 +204,29 @@ class GDALInspector(InspectorMixin):
 
             description.append(layer_description)
 
+        # GeoPackage files with tiles in them are mistakenly identified as rasters.
+        # 4 rasters are counted, the red/green/blue/alpha values for an image derived from tiles.
+        if driver.lower() == 'gpkg' and opened_file.RasterCount == 4:
+            conn = sqlite3.connect(self.file)
+            cur = conn.cursor()
+            cur.execute('SELECT table_name FROM gpkg_tile_matrix_set ORDER BY table_name;')
+            for i, row in enumerate(cur.fetchall()):
+                layer_description = {'index': i,
+                                     'layer_name': row[0],
+                                     'path': self.file,
+                                     'raster': False,
+                                     'layer_type': 'tile',
+                                     'driver': driver,
+                }
+                description.append(layer_description)
         # Get Raster Layers: if they exist, RasterCount returns total band count
-        # Get main layer first
-        if opened_file.RasterCount > 0:
+        # Get main layer first.
+        elif opened_file.RasterCount > 0:
             layer_description = {'index': len(description),
                                  'layer_name': self.file,
                                  'path': self.file,
                                  'raster': True,
+                                 'layer_type': 'raster',
                                  'driver': driver}
             description.append(layer_description)
 

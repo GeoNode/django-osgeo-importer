@@ -110,5 +110,3 @@ DATABASE_ROUTERS = ['osgeo_importer_prj.dbrouters.DefaultOnlyMigrations']
 # MAPPROXY_CONFIG_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'mapproxy_confdir'))
 # # Name of the mapproxy config file to create for tile gpkg files.
 # MAPPROXY_CONFIG_FILENAME = 'geonode.yaml'
-# # This is the location for GeoNode to store GPKG files containing tiles for mapproxy consumption.
-# GPKG_TILE_STORAGE_DIR = os.path.join(LOCAL_ROOT, 'gpkgs_tile')
