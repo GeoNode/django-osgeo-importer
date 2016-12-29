@@ -36,7 +36,6 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
     @skipUnless(adequate_mapproxy_version, 'Need mapproxy 1.10 or later to test this')
     def test_handle_gpkg(self):
         filenames = ['sde-NE2_HR_LC_SR_W_DR.gpkg']
-        testing_storage_dir = '/tmp'
         testing_config_dir = '/tmp'
         testing_config_filename = 'geonode.yaml'
 

@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 
 from django import db
 from django.conf import settings
@@ -11,7 +10,7 @@ import osr
 
 from .handlers import IMPORT_HANDLERS
 from .inspectors import GDALInspector, OGRInspector
-from .utils import (# noqa: F401
+from .utils import (
     FileTypeNotAllowed,
     GdalErrorHandler,
     load_handler,
@@ -20,7 +19,7 @@ from .utils import (# noqa: F401
     increment_filename,
     raster_import,
     decode
-)
+)  # noqa: F401
 
 
 logger = logging.getLogger(__name__)

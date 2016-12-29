@@ -216,8 +216,7 @@ class GDALInspector(InspectorMixin):
                                      'path': self.file,
                                      'raster': False,
                                      'layer_type': 'tile',
-                                     'driver': driver,
-                }
+                                     'driver': driver, }
                 description.append(layer_description)
         # Get Raster Layers: if they exist, RasterCount returns total band count
         # Get main layer first.

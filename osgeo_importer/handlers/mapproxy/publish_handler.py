@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 
 from django.conf import settings
 import yaml
@@ -25,8 +24,8 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
             # Since the config process is for all layers in a file, we only need to do it for the first layer
             uploaded_path = layer_config.get('path')
             # Accomodate layer_config without an index.
-            if ('index' not in layer_config
-                and not MapProxyGPKGTilePublishHandler.objects.exists(gpkg_filepath=uploaded_path)):
+            if ('index' not in layer_config and
+                    not MapProxyGPKGTilePublishHandler.objects.exists(gpkg_filepath=uploaded_path)):
                 configure = True
             elif layer_config['index'] == 0:
                 configure = True
@@ -47,8 +46,10 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
                 with open(config_path, 'w') as config_file:
                     config_file.write(combined_config)
             else:
-                logger.debug('Additional layer of a geopackage file containing tiles, index "{}"; doing nothing.'
-                                .format(layer_config['index']))
+                logger.debug(
+                    'Additional layer of a geopackage file containing tiles, index "{}"; doing nothing.'
+                    .format(layer_config['index'])
+                )
         else:
             msg = 'Not a geopackage file, ignoring in this handler'
             logger.info(msg)
