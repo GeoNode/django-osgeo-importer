@@ -58,6 +58,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
         # Populate arguments to create a new Layer
         layer_type = layer_config.get('layer_type')
+        layer_uuid = str(uuid.uuid4())
         if layer_type == 'raster':
             layer_name = os.path.splitext(os.path.basename(layer))[0]
             store_name = layer_name
@@ -69,13 +70,18 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             store_type = 'dataStore'
             fields = layer_config['fields']
         elif layer_type == 'tile':
-            layer_name = layer_config['layer_name']
+            if 'layer_name' not in layer_config:
+                logger.warn('No layer name set, using uuid "{}" as layer name.'.format(layer_uuid))
+            layer_name = layer_config.get('layer_name', layer_uuid)
             store_name = layer_config['path']
             store_type = 'tileStore'
             fields = None
+        else:
+            msg = 'Unexpected layer_type: "{}"'.format(layer_type)
+            logger.critical(msg)
+            raise Exception(msg)
 
         workspace_name = self.workspace
-        layer_uuid = str(uuid.uuid4())
         typename = '{}:{}'.format(workspace_name.encode('utf-8'), layer_name.encode('utf-8'))
 
         new_layer_kwargs = {

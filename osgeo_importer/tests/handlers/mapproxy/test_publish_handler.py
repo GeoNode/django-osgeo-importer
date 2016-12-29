@@ -40,36 +40,31 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
         testing_config_dir = '/tmp'
         testing_config_filename = 'geonode.yaml'
 
-        # Check that each of these files results in the three expected changes:
-        #  - A copy of the gpkg is made
+        # Check that each of these files results in the two expected changes:
         #  - A MapProxyCacheConfig model instance pointing to the copy is created
         #  - The mapproxy geopackage cache config file is updated.
         for filename in filenames:
             filepath = os.path.join(_TEST_FILES_DIR, filename)
-
             layer_name = 'notareallayer'
-            layer_config = {'layer_name': filepath, 'driver': 'gpkg'}
+            layer_type = 'tile'  # This handler ignores layers except tile layers from gpkg files.
+            layer_config = {
+                'layer_name': layer_name, 'path': filepath, 'driver': 'gpkg', 'layer_type': layer_type, 'index': 0
+            }
             importer = None
             mpph = MapProxyGPKGTilePublishHandler(importer)
 
             # Call handle() with directories tweaked for testing.
             test_settings = {
-                'GPKG_TILE_STORAGE_DIR': testing_storage_dir,
                 'MAPPROXY_CONFIG_DIR': testing_config_dir,
                 'MAPPROXY_CONFIG_FILENAME': testing_config_filename,
             }
             with self.settings(**test_settings):
                 mpph.handle(layer_name, layer_config)
 
-            # --- A copy of the gpkg file should be made to settings.GPKG_TILE_STORAGE_DIR
-            copy_path = os.path.join(testing_storage_dir, filename)
-            self.assertTrue(os.path.exists(copy_path))
-            os.unlink(copy_path)
-
             # --- An instance of MapProxyCacheConfig should have been created
             self.assertEqual(MapProxyCacheConfig.objects.count(), 1)
             mpcc = MapProxyCacheConfig.objects.first()
-            self.assertEqual(mpcc.gpkg_filepath, copy_path)
+            self.assertEqual(mpcc.gpkg_filepath, filepath)
             mpcc.delete()
 
             # --- A mapproxy yaml config with name matching testing_config_filename should be

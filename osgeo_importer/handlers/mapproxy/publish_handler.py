@@ -23,10 +23,19 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
         # We only want to process GeoPackage tile layers here.
         if layer_config.get('layer_type', '').lower() == 'tile' and layer_config.get('driver', '').lower() == 'gpkg':
             # Since the config process is for all layers in a file, we only need to do it for the first layer
-            if layer_config['index'] == 0:
+            uploaded_path = layer_config.get('path')
+            # Accomodate layer_config without an index.
+            if ('index' not in layer_config
+                and not MapProxyGPKGTilePublishHandler.objects.exists(gpkg_filepath=uploaded_path)):
+                configure = True
+            elif layer_config['index'] == 0:
+                configure = True
+            else:
+                configure = False
+
+            if configure:
                 logger.info('First layer of a geopackage file containing tiles; generating config.')
                 # --- Generate the config for mapproxy to serve the layers from this layer's file.
-                uploaded_path = layer_config.get('path')
                 config = conf_from_geopackage(uploaded_path)
                 MapProxyCacheConfig.objects.create(gpkg_filepath=uploaded_path, config=config)
 
