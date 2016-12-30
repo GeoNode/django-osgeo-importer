@@ -1,11 +1,13 @@
 import os
-
-import gdal
-import ogr
-from django.conf import settings
-from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
+import sqlite3
 
 from django import db
+from django.conf import settings
+import gdal
+import ogr
+
+from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
+
 
 OSGEO_INSPECTOR = getattr(settings, 'OSGEO_INSPECTOR', 'osgeo_importer.inspectors.GDALInspector')
 
@@ -416,3 +418,36 @@ class OGRFieldConverter(OGRInspector):
             feat = None
 
         return fieldname
+
+
+class GPKGTileInspector(InspectorMixin):
+    sqlite3_conn = None
+
+    def __init__(self, filepath, *args, **kwargs):
+        self.filepath = filepath
+        super(GPKGTileInspector, self).__init__(*args, **kwargs)
+
+    def open(self):
+        self.sqlite3_conn = sqlite3.connect(self.filepath)
+
+    def close(self):
+        self.sqlite3_conn.close()
+
+    def describe_fields(self):
+        contents_query = '''
+            SELECT table_name, min_x, min_y, max_x, max_y, srs_id
+            FROM gpkg_contents
+            WHERE data_type = 'tiles';
+        '''
+
+        c = self.sqlite3_conn.cursor()
+        contents_result = c.execute(contents_query)
+        layer_configs = []
+        for i, row in enumerate(contents_result):
+            layer_configs.append({
+                'layer_name': row[0],
+                'index': i,
+                'latlong_bbox': [row[1], row[2], row[3], row[4]],
+                'srs_id': row[5],
+            })
+        return layer_configs
