@@ -1,9 +1,16 @@
+import logging
 import os
+
+from django import db
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+import gdal
 import ogr
 import osr
-import gdal
+
+from .handlers import IMPORT_HANDLERS
 from .inspectors import GDALInspector, OGRInspector
-from .utils import (  # noqa: F401
+from .utils import (
     FileTypeNotAllowed,
     GdalErrorHandler,
     load_handler,
@@ -12,12 +19,7 @@ from .utils import (  # noqa: F401
     increment_filename,
     raster_import,
     decode
-)
-from .handlers import IMPORT_HANDLERS
-from django.conf import settings
-from django import db
-import logging
-from django.core.files.storage import FileSystemStorage
+)  # noqa: F401
 
 
 logger = logging.getLogger(__name__)
@@ -261,7 +263,12 @@ class OGRImport(Import):
                     layers_info.append(layer_configuration)
 
         for layer_options in layers_info:
-            if layer_options['raster']:
+            if layer_options['layer_type'] == 'tile' and layer_options.get('driver', '').lower() == 'gpkg':
+                # No special processing is needed on import, the only thing needed is a copy of the
+                #    file which was made on upload.  Config for publishing is done
+                #    in handlers.mapproxy.publish_handler.MapProxyGPKGTilePublishHandler
+                self.completed_layers.append([layer_options['layer_name'], layer_options])
+            elif layer_options['layer_type'] == 'raster':
                 """
                 File is a raster, we need to convert into optimized GeoTiff
                 and skip any further testing or loading into target_store
@@ -272,7 +279,7 @@ class OGRImport(Import):
                 fileout = increment_filename(os.path.join(RASTER_FILES, outfile))
                 raster_import(layer_options['path'], fileout)
                 self.completed_layers.append([fileout, layer_options])
-            else:
+            elif layer_options['layer_type'] == 'vector':
                 target_file, _ = self.open_target_datastore(self.target_store)
                 target_create_options = []
 
@@ -397,5 +404,9 @@ class OGRImport(Import):
                                 raise e
 
                 self.completed_layers.append([target_layer.GetName(), layer_options])
+            else:
+                msg = 'Unexpected layer type: "{}"'.format(layer_options['layer_type'])
+                logger.error(msg)
+                raise Exception(msg)
 
         return self.completed_layers

@@ -192,6 +192,10 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         "geoserver_store": Connection parameters used to get/create the geoserver store.
         "srs": The native srs authority and code (ie EPSG:4326) for this data source.
         """
+        # GeoServer doesn't handle tiles from gpkg files correctly, don't attempt
+        if layer_config['layer_type'] == 'tile' and layer_config.get('driver', '').lower() == 'gpkg':
+            return
+
         store = self.get_or_create_datastore(layer_config)
 
         store_type = getattr(store, 'type', None) or ''

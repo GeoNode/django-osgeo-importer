@@ -28,6 +28,7 @@ class TestGeoNodePublishHandler(TestCase):
         # mocked layer & layer config for call to handle()
         mock_layer = 'testlayer'
         mock_layer_config = defaultdict(lambda: None)
+        mock_layer_config['layer_type'] = 'tile'  # Any valid layer_type (vector, raster, tile) is fine.
 
         result = gnph.handle(mock_layer, mock_layer_config)
 

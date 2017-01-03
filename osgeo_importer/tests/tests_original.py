@@ -449,7 +449,11 @@ class UploaderTests(TestCase):
         self.generic_time_check(layer, attribute=date_attr.attribute)
 
     def test_boxes_plus_raster_gpkg_by_index(self):
-        """Tests the import of multilayer vector + raster geopackage using index
+        """ Tests the import of multilayer vector + tile geopackage using index, treating tile layers
+            as rasters.
+            Tile layers are now treated by default as a distinct layer type.
+            This test forces them to still be treated as rasters and should be
+            removed once tests for vector/tile geopackage files are in place.
         """
 
         layer = self.generic_import(
@@ -466,8 +470,8 @@ class UploaderTests(TestCase):
                 {'index': 3},
                 {'index': 4},
                 {'index': 5},
-                {'index': 6},
-                {'index': 7},
+                {'index': 6, 'layer_type': 'raster'},
+                {'index': 7, 'layer_type': 'raster'},
             ]
         )
 

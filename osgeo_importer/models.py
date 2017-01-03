@@ -309,3 +309,11 @@ class UploadException(models.Model):
 
     class Meta:
         verbose_name = 'Upload Exception'
+
+
+class MapProxyCacheConfig(models.Model):
+    """ Each instance stores configuration details for mapproxy to serve a single GeoPackage containing tiles.
+    """
+    # Location of the file this config is for
+    gpkg_filepath = models.CharField(max_length=1000)
+    config = models.TextField()
