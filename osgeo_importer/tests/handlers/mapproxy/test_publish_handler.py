@@ -1,13 +1,14 @@
 import os
+from unittest.case import skipUnless
 
 from django.test import TestCase
 import mock
+from mock.mock import patch, Mock
 
 from osgeo_importer.handlers.mapproxy.publish_handler import MapProxyGPKGTilePublishHandler
 import osgeo_importer.handlers.mapproxy.publish_handler
-from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
-from unittest.case import skipUnless
 from osgeo_importer.models import MapProxyCacheConfig
+from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
 
 
 class TestMapProxyGPKGTilePublishHandler(TestCase):
@@ -34,7 +35,9 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
             self.assertEqual(logger.info.call_count, 1)
 
     @skipUnless(adequate_mapproxy_version, 'Need mapproxy 1.10 or later to test this')
-    def test_handle_gpkg(self):
+    @patch.object(osgeo_importer.handlers.mapproxy.publish_handler, 'Link')
+    @patch.object(osgeo_importer.handlers.mapproxy.publish_handler, 'Layer')
+    def test_handle_gpkg(self, MockLayer, MockLink):
         filenames = ['sde-NE2_HR_LC_SR_W_DR.gpkg']
         testing_config_dir = '/tmp'
         testing_config_filename = 'geonode.yaml'
@@ -46,9 +49,23 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
             filepath = os.path.join(_TEST_FILES_DIR, filename)
             layer_name = 'notareallayer'
             layer_type = 'tile'  # This handler ignores layers except tile layers from gpkg files.
+
+            # 'geonode_layer_id' only needs to be present to prevent a KeyError, it's value is insignificant.
             layer_config = {
-                'layer_name': layer_name, 'path': filepath, 'driver': 'gpkg', 'layer_type': layer_type, 'index': 0
+                'layer_name': layer_name, 'path': filepath, 'driver': 'gpkg', 'layer_type': layer_type, 'index': 0,
+                'geonode_layer_id': 1,
             }
+
+            # Set up mock version of geonode.layers.models.Layer to act as if the created layer already exists.
+            mock_layer_instance = MockLayer()
+            mock_layer_instance.attributes = []
+            mock_layer_instance.configure_mock(name='layer_name', resourcebase_ptr=None)
+            MockLayer.objects.get = Mock(return_value=mock_layer_instance)
+
+            # Set up mock version of geonode.base.models.Link to check that the code attempts to create a new Link
+            #    rather than creating a real Layer with resourcebase_ptr.
+            MockLink.objects.create = Mock()
+
             importer = None
             mpph = MapProxyGPKGTilePublishHandler(importer)
 
@@ -71,3 +88,6 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
             conf_path = os.path.join(testing_config_dir, testing_config_filename)
             self.assertTrue(os.path.exists(conf_path))
             os.unlink(conf_path)
+
+            # --- The handler should have tried to create a Link
+            MockLink.objects.create.assert_called_once()
