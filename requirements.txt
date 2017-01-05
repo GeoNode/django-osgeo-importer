@@ -5,3 +5,7 @@ numpy
 
 # Needed for testing.
 mock
+
+# Just for documentation generation
+sphinx
+sphinx-autobuild
