@@ -45,7 +45,7 @@ Django
 ------
 
 In your project settings you'll need to:
-  * add four global variables:
+  * add these global variables:
     * MAPPROXY_CONFIG_DIR - This is the full path to the directory where your mapproxy configuration files are located.
     * MAPPROXY_CONFIG_FILENAME - This is the name of the mapproxy configuration file that the importer will manage.
     * MAPPROXY_SERVER_LOCATION - This is the root URL for access to your MapProxy 'geonode' instance.
