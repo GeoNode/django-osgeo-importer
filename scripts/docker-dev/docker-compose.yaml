@@ -1,8 +1,11 @@
 version: '2'
 services:
   postgres:
-    build: "postgres-postgis/"
-    image: "postgresql-postgis:9.3-2.3"
+    image: mdillon/postgis:9.3
+    environment:
+     - POSTGRES_USER=osgeo
+     - POSTGRES_PASSWORD=osgeo
+     - POSTGRES_DB=osgeo
     ports:
      - "5432:5432"
     expose:
