@@ -45,25 +45,14 @@ sudo apt-get install -y gpsbabel libfreexl-dev unixodbc-dev libwebp-dev libjpeg-
 sudo apt-get install -y libcrypto++-dev netcdf-bin libnetcdf-dev libexpat-dev
 
 
-# python
-pip install psycopg2
-
 if [ -n "$1" ]
  then
  cd $1
 fi
 
+# Python packages, requirements & additional development requirements
 pip install -r requirements.txt
-# MapProxy 1.10 isn't released yet, use master branch until it is.  This commit is HEAD of master at this time.
-pip install -e git+https://github.com/mapproxy/mapproxy.git@eeb162ee0604#egg=MapProxy==1.10.0a
-pip install -e git+https://github.com/GeoNode/geonode.git#egg=GeoNode
-
-pip install -e .
-pip install awscli
-pip install --upgrade  numpy
-pip install --upgrade python-dateutil
-pip install flake8
-pip install coverage
+pip install -r requirements.dev.txt
 
 sudo mkdir -p -m 777 importer-test-files
 aws --no-sign-request s3 sync s3://mapstory-data/importer-test-files/ importer-test-files
