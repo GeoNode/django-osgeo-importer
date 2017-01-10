@@ -130,7 +130,7 @@ class UploadedData(models.Model):
     state = models.CharField(max_length=16)
     date = models.DateTimeField('date', auto_now_add=True)
     upload_dir = models.CharField(max_length=1000, null=True)
-    name = models.CharField(max_length=64, null=True)
+    name = models.CharField(max_length=250, null=True)
     complete = models.BooleanField(default=False)
     size = models.IntegerField(null=True, blank=True)
     metadata = models.TextField(null=True)
