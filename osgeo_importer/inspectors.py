@@ -237,6 +237,7 @@ class GDALInspector(InspectorMixin):
                                  'subdataset_index': m,
                                  'path': raster_list[m][0],
                                  'layer_name': raster_list[m][0].split(':')[-1],
+                                 'layer_type': 'raster',
                                  'raster': True, 'driver': driver}
             description.append(layer_description)
 

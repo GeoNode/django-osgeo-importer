@@ -6,17 +6,19 @@ import os
 import re
 import shutil
 import sys
+import uuid
 
 import celery
 from dateutil.parser import parse
 from django import db
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.storage import FileSystemStorage
+from django.db import transaction
 from django.utils.text import Truncator
 import gdal
 import ogr
 import osr
-from django.contrib.auth import get_user_model
 
 
 logger = logging.getLogger(__name__)
@@ -315,7 +317,6 @@ class ImportHelper(object):
         from osgeo_importer.models import UploadedData
 
         # Do not save here, we want to leave control of that to the caller.
-
         upload = UploadedData.objects.create(user=owner)
         # Get a list of paths for files in this upload.
         paths = [item.name for item in data]
@@ -382,6 +383,18 @@ class ImportHelper(object):
         upload.file_type = file_type
         return upload
 
+    @staticmethod
+    def uniquish_layer_name(layer_base_name):
+        """ Returns a probably unique string of the form "<layer_base_name>_<random_string>".
+            The random string will be 8 hex characters.
+            If layer_base_name is None or '', a random 16 character string will be created for it as well.
+        """
+        if layer_base_name in {None, ''}:
+            layer_base_name = uuid.uuid4().hex[:16]
+        random_string = uuid.uuid4().hex[:8]
+        uniquish_name = '{}_{}'.format(layer_base_name, random_string)
+        return uniquish_name
+
     def configure_upload(self, upload, files):
         """
             *upload*: new, unsaved UploadedData instance ( from upload() )
@@ -422,23 +435,40 @@ class ImportHelper(object):
             upfile.save()
             upfile_basename = os.path.basename(each)
             _, upfile_ext = os.path.splitext(upfile_basename)
+
+            # If this file isn't part of a shapefile
             if upfile_ext.lower() not in ['.prj', '.dbf', '.shx']:
                 description = self.get_fields(each)
-                for layer in description:
+                for layer_desc in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
-                    configuration_options.update({'index': layer.get('index')})
+                    configuration_options.update({'index': layer_desc.get('index')})
                     layer_basename = os.path.basename(
-                        layer.get('layer_name') or ''
+                        layer_desc.get('layer_name') or ''
                     )
-                    upload_layer = UploadLayer(
-                        upload_file=upfile,
-                        name=upfile_basename,
-                        layer_name=layer_basename,
-                        fields=layer.get('fields', {}),
-                        index=layer.get('index'),
-                        feature_count=layer.get('feature_count', None),
-                        configuration_options=configuration_options
-                    )
+                    # This is the string to start the layer name with
+                    layer_basename = layer_desc.get('layer_name')
+                    if not layer_basename:
+                        layer_basename = os.path.basename(upfile.file.name)
+                        layer_basename = layer_basename.replace('.', '_')
+
+                    layer_name = self.uniquish_layer_name(layer_basename)
+                    with transaction.atomic():
+                        while UploadLayer.objects.filter(name=layer_name).select_for_update().exists():
+                            layer_name = self.uniquish_layer_name(layer_basename)
+
+                        upload_layer = UploadLayer(
+                            upload_file=upfile,
+                            name=upfile.file.name,
+                            layer_name=layer_name,
+                            layer_type=layer_desc['layer_type'],
+                            fields=layer_desc.get('fields', {}),
+                            index=layer_desc.get('index'),
+                            feature_count=layer_desc.get('feature_count', None),
+                            configuration_options=configuration_options
+                        )
+                        # If we wait for upload.save(), we may introduce layer_name collisions.
+                        upload_layer.save()
+
                     upload.uploadlayer_set.add(upload_layer)
 
         upload.size = sum(
@@ -452,28 +482,29 @@ class ImportHelper(object):
 def import_all_layers(uploaded_data, owner=None):
     """ Imports all layers of *uploaded_data*.
         *uploaded_data* is a saved UploadedData instance.
+        *return* Number of layers imported.
     """
     from osgeo_importer.tasks import import_object
+    from osgeo_importer.inspectors import GDALInspector
     if owner is None:
         User = get_user_model()
         owner = User.objects.get(username='AnonymousUser')
 
     import_results = []
     for uploaded_file in uploaded_data.uploadfile_set.all():
-        for uploaded_layer in uploaded_file.uploadlayer_set.all():
-            configs = [{'config': [{'index': 0}], 'upload_file_name': uploaded_file.name}]
-
-            for config in configs:
-                if config['upload_file_name'] == uploaded_layer.name:
-                    configuration_options = {'layer_owner': owner.username, u'index': 0}
-                    import_result = import_object.delay(
-                        uploaded_layer.upload_file.id, configuration_options=configuration_options
-                    )
-                    import_results.append(import_result)
-                    if import_result.state in celery.states.READY_STATES:
-                        uploaded_layer.import_status = import_result.status
-                    uploaded_layer.task_id = import_result.id
-                    uploaded_layer.save()
+        gi = GDALInspector(uploaded_file.file.path)
+        all_layer_details = gi.describe_fields()
+        for (layer_details, uploaded_layer) in zip(all_layer_details, uploaded_file.uploadlayer_set.all()):
+            configuration_options = layer_details.copy()
+            configuration_options.update({'layer_owner': owner.username, 'layer_type': uploaded_layer.layer_type})
+            import_result = import_object.delay(
+                uploaded_layer.upload_file.id, configuration_options=configuration_options
+            )
+            import_results.append(import_result)
+            if import_result.state in celery.states.READY_STATES:
+                uploaded_layer.import_status = import_result.status
+            uploaded_layer.task_id = import_result.id
+            uploaded_layer.save()
 
     # Wait for all of the results to complete before returning
     [ir.wait() for ir in import_results]
