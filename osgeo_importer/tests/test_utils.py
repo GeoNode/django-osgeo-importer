@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from geonode.layers.models import Layer
-from osgeo_importer.models import UploadedData
 from osgeo_importer.tests.helpers import works_with_geoserver
 from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
 from osgeo_importer.utils import ImportHelper, import_all_layers
@@ -53,18 +52,19 @@ class ImportUtilityTests(ImportHelper, TestCase,):
             of = open(tmppath, 'rb')
             of.close()
             files = [of]
+
             upload = self.upload(files, self.admin_user)
             self.configure_upload(upload, files)
+            upload.refresh_from_db()
 
-            ud = UploadedData.objects.get(name=test_filename)
-            n_uploaded_layers = ud.uploadlayer_set.count()
+            n_uploaded_layers = upload.uploadlayer_set.count()
             self.assertEqual(
                 n_uploaded_layers, expected_layer_count,
                 'Expected {} uploaded layers from file "{}", found {}'
                 .format(expected_layer_count, test_filename, n_uploaded_layers)
             )
 
-            import_all_layers(ud, owner=test_user)
+            import_all_layers(upload, owner=test_user)
 
             n_imported_layers = Layer.objects.count()
             self.assertEqual(

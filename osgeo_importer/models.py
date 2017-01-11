@@ -214,6 +214,7 @@ class UploadLayer(models.Model):
     task_id = models.CharField(max_length=36, blank=True, null=True)
     feature_count = models.IntegerField(null=True, blank=True)
     layer_name = models.CharField(max_length=64, null=True)
+    layer_type = models.CharField(max_length=10, null=True)
 
     @property
     def file_name(self):
