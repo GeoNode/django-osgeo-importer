@@ -1,0 +1,66 @@
+{% extends "site_base.html" %}
+{% load i18n %}
+
+{% block extra_script %}
+    {% include 'osgeo_importer/_importer_scripts.html' %}
+    {% include 'osgeo_importer/_importer_styles.html' %}
+    {{ block.super }}
+
+    <script>
+       function chooseFile() {
+          $("#id_file").click();
+       }
+    
+       $("#id_file").on("change", function() {
+           console.log('The user selected a file, where is it?');
+           $("#file-form").submit();
+        });
+    </script>
+    
+    <script>
+/*        var file = files[ 0 ],
+        var file = 'somegpkgfile.gpkg',
+        reader = new FileReader(),
+        url = '/api/conversions';
+        
+        reader.onload = function( e ) {
+        
+            fetch( url, {
+                    method: 'post',
+                    headers: {
+                        "Content-Type": "you will perhaps need to define a content-type"
+                    },
+                    body: e.currentTarget.result
+                } )
+                .then( json )
+                .then( function( data ) {
+                    console.log( 'Request succeeded with JSON response', data );
+                } )
+                .catch( function( error ) {
+                    console.log( 'Request failed', error );
+                } );
+        
+        }.bind( this );
+        
+        reader.readAsArrayBuffer( file );
+*/    </script>
+
+{% endblock %}
+
+{% block body_outer %}
+
+<div class="page-header">
+  <h2 class="page-title">{% trans "Select .zip file to import." %}</h2>
+</div>
+
+<div class="container" ng-app="osgeoImporter.uploader" ng-controller="uploadList">
+    <p>Static url: {{STATIC_URL}}</p>
+    <button class="btn-info col-md-4 btn" type="button" onclick="chooseFile();">choose file</button>
+    <form id='file-form' style="display: none;" method="post" enctype="multipart/form-data" action="/one-shot-demo_file-upload/">
+        {% csrf_token %}
+        <input id="id_file" name="file" multiple="" type="file">
+    </form>
+    
+    <div id='react-file-input'></div>
+</div>
+{% endblock %}

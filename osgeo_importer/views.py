@@ -1,13 +1,26 @@
 import json
 import logging
+import os
+import shutil
+from tempfile import mkdtemp
+import zipfile
+
+from django.contrib.auth.models import AnonymousUser
+from django.core.files.temp import NamedTemporaryFile
+from django.core.urlresolvers import reverse_lazy
+from django.forms.forms import Form
 from django.http import HttpResponse
 from django.views.generic import FormView, ListView, TemplateView
-from django.core.urlresolvers import reverse_lazy
+from django.views.generic.base import View
+
+from osgeo_importer.utils import import_all_layers
+
 from .forms import UploadFileForm
-from .models import UploadedData, UploadFile
 from .importers import OSGEO_IMPORTER, VALID_EXTENSIONS
 from .inspectors import OSGEO_INSPECTOR
+from .models import UploadedData, UploadFile
 from .utils import import_string, ImportHelper
+
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
@@ -69,7 +82,6 @@ class FileAddView(ImportHelper, FormView, JSONResponseMixin):
         return super(FileAddView, self).form_valid(form)
 
     def render_to_response(self, context, **response_kwargs):
-
         # grab list of valid importer extensions for use in templates
         context["VALID_EXTENSIONS"] = ", ".join(VALID_EXTENSIONS)
 
@@ -78,3 +90,44 @@ class FileAddView(ImportHelper, FormView, JSONResponseMixin):
             return self.render_to_json_response(context, **response_kwargs)
 
         return super(FileAddView, self).render_to_response(context, **response_kwargs)
+
+
+class OneShotImportDemoView(TemplateView):
+    template_name = 'osgeo_importer/one_shot_demo/one_shot.html'
+
+
+def save_zip_contents(zip_file, to_dir):
+    """ Saves the uncompressed contents of *zip_file* in *to_dir*, maintaining the directory structure
+        saved in the zip file.
+    """
+
+
+class OneShotFileUploadView(ImportHelper, View):
+    def post(self, request):
+        if len(request.FILES) != 1:
+            resp = 'Sorry, must be one and only one file'
+        else:
+            file_key = request.FILES.keys()[0]
+            file = request.FILES[file_key]
+            if file.name.split('.')[-1] != 'zip':
+                resp = 'Sorry, only a a zip file is allowed'
+            else:
+                file.seek(0, 2)
+                filesize = file.tell()
+                file.seek(0)
+                z = zipfile.ZipFile(file)
+                owner = request.user
+                ud = UploadedData(user=owner, name=file.name)
+                try:
+                    tempdir = mkdtemp()
+                    z.extractall(tempdir)
+                    filelist = [open(os.path.join(tempdir, member_name), 'rb') for member_name in z.namelist()]
+                    self.configure_upload(ud, filelist)
+                    import_all_layers(ud)
+                finally:
+                    shutil.rmtree(tempdir)
+
+                resp = 'Got file "{}" of length: {} containing: {}'.format(file.name, filesize, z.namelist())
+
+        print(resp)
+        return HttpResponse(resp)

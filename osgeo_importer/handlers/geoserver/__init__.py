@@ -109,12 +109,14 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         connection_string = layer_config.get('geoserver_store')
         default_connection_string = self.get_default_store()
 
+        # Create a geoserver workspace named self.workspace if one doesn't already exist
+        ensure_workspace_exists(self.catalog, self.workspace, self.workspace_namespace_uri)
+
         # If a connection is specified, get or create it.
         if connection_string is not None:
             try:
                 s = self.catalog.get_store(connection_string['name'])
             except FailedRequestError:
-                ensure_workspace_exists(self.catalog, self.workspace, self.workspace_namespace_uri)
                 store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
                 store.connection_parameters.update(connection_string)
                 self.catalog.save(store)
