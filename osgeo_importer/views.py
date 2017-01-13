@@ -13,6 +13,7 @@ from django.http import HttpResponse
 from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.base import View
 
+from osgeo_importer.models import UploadedData
 from osgeo_importer.utils import import_all_layers
 
 from .forms import UploadFileForm
@@ -96,10 +97,19 @@ class OneShotImportDemoView(TemplateView):
     template_name = 'osgeo_importer/one_shot_demo/one_shot.html'
 
 
-def save_zip_contents(zip_file, to_dir):
-    """ Saves the uncompressed contents of *zip_file* in *to_dir*, maintaining the directory structure
-        saved in the zip file.
-    """
+class UploadDataImportStatusView(View):
+    def get(self, request, upload_id):
+        ud = UploadedData.objects.prefetch_related('uploadfile_set__uploadlayer_set').get(id=upload_id)
+        files = { uf.name: uf for uf in ud.uploadfile_set.all()}
+
+        import_status = {
+            uf.name: {
+                ul.layer_name: 'working' for ul in uf.uploadlayer_set.all()
+            } for uf in ud.uploadfile_set.all()
+        }
+
+        json_ret = json.dumps(import_status)
+        return HttpResponse(json_ret)
 
 
 class OneShotFileUploadView(ImportHelper, View):

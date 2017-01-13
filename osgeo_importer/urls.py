@@ -3,7 +3,7 @@ from django.conf.urls import patterns, url, include
 from django.contrib.auth.decorators import login_required
 from tastypie.api import Api
 
-from osgeo_importer.views import OneShotImportDemoView, OneShotFileUploadView
+from osgeo_importer.views import OneShotImportDemoView, OneShotFileUploadView, UploadDataImportStatusView
 
 from .api import UploadedDataResource, UploadedLayerResource, UploadedFileResource  # noqa
 from .views import FileAddView, UploadListView
@@ -23,5 +23,6 @@ urlpatterns = patterns("",
                            name='uploads-new-json'),
                        url(r'^uploads/?$', login_required(UploadListView.as_view()), name='uploads-list'),
                        url(r'^one-shot-demo/?$', login_required(OneShotImportDemoView.as_view())),
+                       url(r'^upload-data-import-status/(\d+)/?$', login_required(UploadDataImportStatusView.as_view())),
                        url(r'^one-shot-demo_file-upload/?$', OneShotFileUploadView.as_view()),
                        url(r'', include(importer_api.urls)),)
