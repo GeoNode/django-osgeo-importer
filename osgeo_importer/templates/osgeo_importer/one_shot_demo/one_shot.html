@@ -1,6 +1,14 @@
 {% extends "site_base.html" %}
 {% load i18n %}
 
+{% block head %}
+    {{ block.super }}
+    <script src="https://fb.me/react-15.0.0.js"></script>
+    <script src="https://fb.me/react-dom-15.0.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+    <script type="text/babel" src="/static/osgeo_importer/js/one_shot_demo/uploaded_data_import_status.jsx"></script>
+{% endblock %}
+
 {% block extra_script %}
     {% include 'osgeo_importer/_importer_scripts.html' %}
     {% include 'osgeo_importer/_importer_styles.html' %}
@@ -17,34 +25,6 @@
         });
     </script>
     
-    <script>
-/*        var file = files[ 0 ],
-        var file = 'somegpkgfile.gpkg',
-        reader = new FileReader(),
-        url = '/api/conversions';
-        
-        reader.onload = function( e ) {
-        
-            fetch( url, {
-                    method: 'post',
-                    headers: {
-                        "Content-Type": "you will perhaps need to define a content-type"
-                    },
-                    body: e.currentTarget.result
-                } )
-                .then( json )
-                .then( function( data ) {
-                    console.log( 'Request succeeded with JSON response', data );
-                } )
-                .catch( function( error ) {
-                    console.log( 'Request failed', error );
-                } );
-        
-        }.bind( this );
-        
-        reader.readAsArrayBuffer( file );
-*/    </script>
-
 {% endblock %}
 
 {% block body_outer %}
@@ -61,6 +41,7 @@
         <input id="id_file" name="file" multiple="" type="file">
     </form>
     
-    <div id='react-file-input'></div>
+    <div style='clear: both;' id='import-status'>- react should populate this -</div>
+
 </div>
 {% endblock %}
