@@ -10,6 +10,7 @@ from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse_lazy
 from django.forms.forms import Form
 from django.http import HttpResponse
+from django.http.response import JsonResponse, HttpResponseRedirect
 from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.base import View
 
@@ -102,25 +103,34 @@ class UploadDataImportStatusView(View):
         ud = UploadedData.objects.prefetch_related('uploadfile_set__uploadlayer_set').get(id=upload_id)
         files = { uf.name: uf for uf in ud.uploadfile_set.all()}
 
+        for uf in ud.uploadfile_set.all():
+            for ul in uf.uploadlayer_set.all():
+                print('{}: {}'.format(ul.layer_name, ul.status))
+
+        celery_to_api_status_map = {
+            'UNKNOWN': 'working',
+            'SUCCESS': 'success',
+            'ERROR': 'error',
+        }
+
         import_status = {
             uf.name: {
-                ul.layer_name: 'working' for ul in uf.uploadlayer_set.all()
+                ul.layer_name: celery_to_api_status_map[ul.status] for ul in uf.uploadlayer_set.all()
             } for uf in ud.uploadfile_set.all()
         }
 
-        json_ret = json.dumps(import_status)
-        return HttpResponse(json_ret)
+        return JsonResponse(import_status)
 
 
 class OneShotFileUploadView(ImportHelper, View):
     def post(self, request):
         if len(request.FILES) != 1:
-            resp = 'Sorry, must be one and only one file'
+            resp = HttpResponse('Sorry, must be one and only one file')
         else:
             file_key = request.FILES.keys()[0]
             file = request.FILES[file_key]
             if file.name.split('.')[-1] != 'zip':
-                resp = 'Sorry, only a a zip file is allowed'
+                resp = HttpResponse('Sorry, only a a zip file is allowed')
             else:
                 file.seek(0, 2)
                 filesize = file.tell()
@@ -128,6 +138,8 @@ class OneShotFileUploadView(ImportHelper, View):
                 z = zipfile.ZipFile(file)
                 owner = request.user
                 ud = UploadedData(user=owner, name=file.name)
+                ud.save()
+
                 try:
                     tempdir = mkdtemp()
                     z.extractall(tempdir)
@@ -137,7 +149,6 @@ class OneShotFileUploadView(ImportHelper, View):
                 finally:
                     shutil.rmtree(tempdir)
 
-                resp = 'Got file "{}" of length: {} containing: {}'.format(file.name, filesize, z.namelist())
+                resp = HttpResponseRedirect('/one-shot-demo?uploadDataId={}'.format(ud.id))
 
-        print(resp)
-        return HttpResponse(resp)
+        return resp

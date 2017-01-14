@@ -23,6 +23,6 @@ urlpatterns = patterns("",
                            name='uploads-new-json'),
                        url(r'^uploads/?$', login_required(UploadListView.as_view()), name='uploads-list'),
                        url(r'^one-shot-demo/?$', login_required(OneShotImportDemoView.as_view())),
-                       url(r'^upload-data-import-status/(\d+)/?$', login_required(UploadDataImportStatusView.as_view())),
+                       url(r'^upload-data-import-status/(\d+)/?$', UploadDataImportStatusView.as_view()),
                        url(r'^one-shot-demo_file-upload/?$', OneShotFileUploadView.as_view()),
                        url(r'', include(importer_api.urls)),)
