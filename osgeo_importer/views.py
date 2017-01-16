@@ -3,18 +3,15 @@ import logging
 import os
 import shutil
 from tempfile import mkdtemp
+import threading
 import zipfile
 
-from django.contrib.auth.models import AnonymousUser
-from django.core.files.temp import NamedTemporaryFile
 from django.core.urlresolvers import reverse_lazy
-from django.forms.forms import Form
 from django.http import HttpResponse
 from django.http.response import JsonResponse, HttpResponseRedirect
 from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.base import View
 
-from osgeo_importer.models import UploadedData
 from osgeo_importer.utils import import_all_layers
 
 from .forms import UploadFileForm
@@ -101,11 +98,6 @@ class OneShotImportDemoView(TemplateView):
 class UploadDataImportStatusView(View):
     def get(self, request, upload_id):
         ud = UploadedData.objects.prefetch_related('uploadfile_set__uploadlayer_set').get(id=upload_id)
-        files = { uf.name: uf for uf in ud.uploadfile_set.all()}
-
-        for uf in ud.uploadfile_set.all():
-            for ul in uf.uploadlayer_set.all():
-                print('{}: {}'.format(ul.layer_name, ul.status))
 
         celery_to_api_status_map = {
             'UNKNOWN': 'working',
@@ -132,9 +124,7 @@ class OneShotFileUploadView(ImportHelper, View):
             if file.name.split('.')[-1] != 'zip':
                 resp = HttpResponse('Sorry, only a a zip file is allowed')
             else:
-                file.seek(0, 2)
-                filesize = file.tell()
-                file.seek(0)
+                # --- Handling the zip extraction & configure_upload() can be integrated into current upload
                 z = zipfile.ZipFile(file)
                 owner = request.user
                 ud = UploadedData(user=owner, name=file.name)
@@ -145,7 +135,12 @@ class OneShotFileUploadView(ImportHelper, View):
                     z.extractall(tempdir)
                     filelist = [open(os.path.join(tempdir, member_name), 'rb') for member_name in z.namelist()]
                     self.configure_upload(ud, filelist)
-                    import_all_layers(ud)
+
+                    # --- Put this in another endpoint
+                    t = threading.Thread(target=import_all_layers, args=[ud])
+                    # We want the program to wait on this thread before shutting down.
+                    t.setDaemon(False)
+                    t.start()
                 finally:
                     shutil.rmtree(tempdir)
 

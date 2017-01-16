@@ -34,7 +34,6 @@
 </div>
 
 <div class="container" ng-app="osgeoImporter.uploader" ng-controller="uploadList">
-    <p>Static url: {{STATIC_URL}}</p>
     <button class="btn-info col-md-4 btn" type="button" onclick="chooseFile();">choose file</button>
     <form id='file-form' style="display: none;" method="post" enctype="multipart/form-data" action="/one-shot-demo_file-upload/">
         {% csrf_token %}
