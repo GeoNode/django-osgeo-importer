@@ -2,7 +2,7 @@ Django==1.8.15
 psycopg2
 
 # Install GeoNode latest master
-git+https://github.com/GeoNode/geonode.git#egg=GeoNode
+-e git+https://github.com/GeoNode/geonode.git#egg=GeoNode
 
 awscli
 numpy
