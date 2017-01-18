@@ -8,13 +8,11 @@ import shutil
 import sys
 import uuid
 
-import celery
 from dateutil.parser import parse
 from django import db
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import FileSystemStorage
-from django.db import transaction
 from django.utils.text import Truncator
 import gdal
 import ogr
@@ -452,11 +450,10 @@ class ImportHelper(object):
                         layer_basename = layer_basename.replace('.', '_')
 
                     layer_name = self.uniquish_layer_name(layer_basename)
-                    with transaction.atomic():
-                        while UploadLayer.objects.filter(name=layer_name).select_for_update().exists():
-                            layer_name = self.uniquish_layer_name(layer_basename)
+                    while UploadLayer.objects.filter(name=layer_name).exists():
+                        layer_name = self.uniquish_layer_name(layer_basename)
 
-                        upload_layer = UploadLayer(
+                    upload_layer = UploadLayer(
                             upload_file=upfile,
                             name=upfile.file.name,
                             layer_name=layer_name,
@@ -465,9 +462,9 @@ class ImportHelper(object):
                             index=layer_desc.get('index'),
                             feature_count=layer_desc.get('feature_count', None),
                             configuration_options=configuration_options
-                        )
-                        # If we wait for upload.save(), we may introduce layer_name collisions.
-                        upload_layer.save()
+                    )
+                    # If we wait for upload.save(), we may introduce layer_name collisions.
+                    upload_layer.save()
 
                     upload.uploadlayer_set.add(upload_layer)
 
@@ -486,28 +483,33 @@ def import_all_layers(uploaded_data, owner=None):
     """
     from osgeo_importer.tasks import import_object
     from osgeo_importer.inspectors import GDALInspector
+    logger.info('Importing all layers for UploadedData({})'.format(uploaded_data.id))
+
     if owner is None:
         User = get_user_model()
         owner = User.objects.get(username='AnonymousUser')
 
     import_results = []
     for uploaded_file in uploaded_data.uploadfile_set.all():
+        msg = 'Importing file "{}" from UploadedData({})'.format(uploaded_file.name, uploaded_data.id)
+        logger.info(msg)
         gi = GDALInspector(uploaded_file.file.path)
         all_layer_details = gi.describe_fields()
-        for (layer_details, uploaded_layer) in zip(all_layer_details, uploaded_file.uploadlayer_set.all()):
+
+        for (layer_details, upload_layer) in zip(all_layer_details, uploaded_file.uploadlayer_set.all()):
             configuration_options = layer_details.copy()
-            configuration_options.update({'layer_owner': owner.username, 'layer_type': uploaded_layer.layer_type})
+            configuration_options.update({
+                'layer_owner': owner.username, 'layer_type': upload_layer.layer_type,
+                'upload_layer_id': upload_layer.id
+            })
+            msg = 'Kicking off a celery task to import layer: {}'.format(upload_layer.layer_name)
+            logger.info(msg)
             import_result = import_object.delay(
-                uploaded_layer.upload_file.id, configuration_options=configuration_options
+                upload_layer.upload_file.id, configuration_options=configuration_options
             )
             import_results.append(import_result)
-            if import_result.state in celery.states.READY_STATES:
-                uploaded_layer.import_status = import_result.status
-            uploaded_layer.task_id = import_result.id
-            uploaded_layer.save()
 
-    # Wait for all of the results to complete before returning
-    [ir.wait() for ir in import_results]
+    logger.info('All layer import tasks started')
     return len(import_results)
 
 

@@ -1,7 +1,6 @@
 import json
 import logging
 
-import celery
 from django.conf.urls import url
 from django.contrib.auth import get_user_model
 from tastypie import http
@@ -88,21 +87,13 @@ class UploadedLayerResource(ModelResource):
             raise ImmediateHttpResponse(response=http.HttpBadRequest('Configuration options missing.'))
 
         uploaded_file = obj.upload_file
-        # If this layer has been imported before, clear the status of the previous import task.
-        obj.import_status = None
-        obj.task_id = None
-        obj.save()
 
+        configuration_options.update({'upload_layer_id': pk})
         import_result = import_object.delay(uploaded_file.id, configuration_options=configuration_options)
 
-        # query the db again for this object since it may have been updated during the import
-        obj = self.obj_get(bundle, pk=pk)
-        if import_result.state in celery.states.READY_STATES:
-            obj.import_status = import_result.status
-        obj.task_id = import_result.id
-        obj.save()
-
-        return self.create_response(request, {'task': obj.task_id})
+        task_id = getattr(import_result, 'id', None)
+        # The task id will be useless if no backend is configured or a non-persistent backend is used.
+        return self.create_response(request, {'task': task_id})
 
     def prepend_urls(self):
         return [url(r"^(?P<resource_name>{0})/(?P<pk>\w[\w/-]*)/configure{1}$".format(self._meta.resource_name,

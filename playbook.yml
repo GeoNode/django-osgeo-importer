@@ -1,0 +1,28 @@
+- hosts: production
+  remote_user: ubuntu
+  gather_facts: no
+  pre_tasks:
+    - name: 'install python2'
+      raw: apt -y update && apt install -y python-minimal
+      sudo: yes
+    - setup:
+  vars:
+    app_name: osgeo_importer_prj
+    github_user: terranodo
+    server_name: importer.terranodo.io
+    repo_name: django-osgeo-importer
+    branch_name: deploy_test
+    deploy_user: ubuntu
+  roles:
+     - { role: GeoNode.geonode }
+
+# virtualenv created w/ python 2.7 and requirements from geonode & importer
+
+# uwsgi set up to use virtualenv & DJANGO_SETTINGS_MODULE=osgeo_importer_prj.settings_aws
+
+# tomcat8 running geoserver at /geoserver
+
+# rabbitmq installed & running
+
+# auto-start celery worker processes (like in start_workers.sh)
+

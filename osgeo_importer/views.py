@@ -101,7 +101,9 @@ class UploadDataImportStatusView(View):
 
         celery_to_api_status_map = {
             'UNKNOWN': 'working',
+            'PENDING': 'working',
             'SUCCESS': 'success',
+            'FAILURE': 'error',
             'ERROR': 'error',
         }
 

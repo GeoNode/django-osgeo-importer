@@ -18,6 +18,7 @@ Getting Started
 * Run tests in a virtualenv on your machine (This does roughly the same thing as the VM setup):
     #. pip install -r requirements.txt
     #. pip install -r requirements.dev.txt
+    #. sudo cp scripts/epsg_extra <your_virtualenv>/lib/python2.7/site-packages/pyproj/
     #. install gdal/ogr:
         For gdal/ogr python bindings, the easiest method is to install the system-level package
         and link to virtual env's site-packages.
