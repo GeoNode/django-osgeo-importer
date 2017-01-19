@@ -2,11 +2,19 @@ import os
 import shutil
 from osgeo_importer.models import UploadFile
 from celery.task import task
-
+import celery
 from osgeo_importer.views import OSGEO_IMPORTER
+import logging
+logger = logging.getLogger(__name__)
 
 
-@task
+class ExceptionLoggingTask(celery.Task):
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        msg = '{}(args={}, kwargs={}): {}\n{}'.format(task_id, args, kwargs, einfo, exc)
+        logger.debug(msg)
+
+
+@task(base=ExceptionLoggingTask)
 def import_object(upload_file_id, configuration_options):
     """
     Imports a file into GeoNode.
@@ -20,7 +28,7 @@ def import_object(upload_file_id, configuration_options):
     return gi.handle(configuration_options=configuration_options)
 
 
-@task
+@task(base=ExceptionLoggingTask)
 def remove_path(path):
     """
     Removes a path using shutil.rmtree.
