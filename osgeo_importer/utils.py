@@ -511,7 +511,7 @@ def import_all_layers(uploaded_data, owner=None):
     return len(import_results)
 
 
-def convert_wkt_to_epsg(wkt, epsg_directory='/usr/share/proj/', forceProj4=False):
+def convert_wkt_to_epsg(wkt, epsg_directory=settings.PROJECTION_DIRECTORY, forceProj4=False):
     """ Transform a WKT string to an EPSG code
         Arguments
         ---------
