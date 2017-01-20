@@ -521,7 +521,6 @@ def convert_wkt_to_epsg(wkt, epsg_directory=settings.PROJECTION_DIRECTORY, force
         forceProj4: whether to perform brute force proj4 epsg file check (last resort).
         Returns: EPSG code.
     """
-    print settings.PROJECTION_DIRECTORY
     epsg_code = None
     srs_in = osr.SpatialReference()
 
