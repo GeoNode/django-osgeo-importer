@@ -45,7 +45,7 @@ sudo apt-get install -y gpsbabel libfreexl-dev unixodbc-dev libwebp-dev libjpeg-
 sudo apt-get install -y libcrypto++-dev netcdf-bin libnetcdf-dev libexpat-dev
 
 # Add additional EPSG Codes
-sudo cp scripts/epsg_extra /usr/local/lib/python2.7/dist-packages/pyproj/data/
+sudo cp scripts/epsg_extra /usr/share/proj
 
 if [ -n "$1" ]
  then
