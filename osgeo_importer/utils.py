@@ -510,11 +510,13 @@ def import_all_layers(uploaded_data, owner=None):
     [ir.wait() for ir in import_results]
     return len(import_results)
 
+
 def convert_wkt_to_epsg(wkt, epsg_directory='/usr/share/proj/', forceProj4=False):
     """ Transform a WKT string to an EPSG code
         Arguments
         ---------
-        wkt: WKT (well known text) definition, you can generally pass this in using ExportToWkt() on a Spatial Reference System instance.
+        wkt: WKT (well known text) definition, you can generally pass this in using
+        ExportToWkt() on a Spatial Reference System instance.
         epsg: the proj.4 epsg file (defaults to '/usr/local/share/proj/epsg_extra').
         forceProj4: whether to perform brute force proj4 epsg file check (last resort).
         Returns: EPSG code.
