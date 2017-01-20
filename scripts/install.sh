@@ -24,7 +24,7 @@ sudo su -c "echo '/usr/local/lib/gdal/lib/' >> /etc/ld.so.conf"
 sudo ldconfig
 sudo touch /etc/profile.d/gdal
 sudo su -c "echo 'export GDAL_DATA=/usr/local/lib/gdal/share/gdal/' >> /etc/profile.d/gdal.sh"
-sudo cp epsg_extra /usr/share/proj/
+sudo cp scripts/epsg_extra /usr/share/proj/
 
 if ["$TRAVIS" = true];
 then
