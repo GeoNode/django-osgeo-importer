@@ -509,3 +509,58 @@ def import_all_layers(uploaded_data, owner=None):
     # Wait for all of the results to complete before returning
     [ir.wait() for ir in import_results]
     return len(import_results)
+
+def convert_wkt_to_epsg(wkt, epsg_directory='/usr/share/proj/', forceProj4=False):
+    """ Transform a WKT string to an EPSG code
+        Arguments
+        ---------
+        wkt: WKT (well known text) definition, you can generally pass this in using ExportToWkt() on a Spatial Reference System instance.
+        epsg: the proj.4 epsg file (defaults to '/usr/local/share/proj/epsg_extra').
+        forceProj4: whether to perform brute force proj4 epsg file check (last resort).
+        Returns: EPSG code.
+    """
+    epsg_code = None
+    srs_in = osr.SpatialReference()
+
+    if srs_in.ImportFromWkt(wkt) == 5:  # Invalid WKT
+        msg = 'Could not import a valid WKT.'
+        logger.error(msg)
+        raise Exception(msg)
+    if srs_in.IsLocal() == 1:
+        return srs_in.ExportToWkt()
+
+    if srs_in.IsGeographic() == 1:
+        srs_type = 'GEOGCS'
+    else:
+        srs_type = 'PROJCS'
+
+    authority_name = srs_in.GetAuthorityName(srs_type)
+    authority_code = srs_in.GetAuthorityCode(srs_type)
+
+    if authority_name is not None and authority_code is not None:  # Return the EPSG code
+        return '%s:%s' % (srs_in.GetAuthorityName(srs_type), srs_in.GetAuthorityCode(srs_type))
+    else:  # If we can't find it any other way, manually brute force match with the EPSG file.
+        projection_out = srs_in.ExportToProj4()
+
+    if projection_out:
+        if forceProj4 is True:
+            return projection_out
+
+        for file in os.listdir(epsg_directory):
+            file_open = open(epsg_directory + file)
+            for line in file_open:
+                if line.find(projection_out) != -1:
+                    match = re.search('<(\\d+)>', line)
+                    if match:
+                        epsg_code = match.group(1)
+                        break
+        if epsg_code:  # Match
+            return 'EPSG:%s' % epsg_code
+        else:  # No match
+            msg = 'Could not find a supported EPSG Code.'
+            logger.error(msg)
+            raise Exception(msg)
+    else:
+        msg = 'Could not find a valid projection.'
+        logger.error(msg)
+        raise Exception(msg)

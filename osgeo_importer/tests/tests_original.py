@@ -1275,6 +1275,18 @@ class UploaderTests(TestCase):
         feature_type = self.catalog.get_resource(result.name)
         self.assertEqual(feature_type.projection, 'EPSG:32635')
 
+    def test_houston_tx_annexations(self):
+        """Tests Shapefile with originally unsupported EPSG Code.
+        """
+        result = self.generic_import(
+            'HoustonTXAnnexations.zip',
+            configs=[
+                {'index': 0}
+            ]
+        )
+        feature_type = self.catalog.get_resource(result.name)
+        self.assertEqual(feature_type.projection, 'EPSG:2278')
+
     def test_gwc_handler(self):
         """Tests the GeoWebCache handler
         """

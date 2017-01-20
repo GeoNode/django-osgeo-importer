@@ -18,7 +18,8 @@ from .utils import (
     increment,
     increment_filename,
     raster_import,
-    decode
+    decode,
+    convert_wkt_to_epsg
 )  # noqa: F401
 
 
@@ -309,6 +310,8 @@ class OGRImport(Import):
                 # pass the srs authority code to handlers
                 if srs.AutoIdentifyEPSG() == 0:
                     layer_options['srs'] = '{0}:{1}'.format(srs.GetAuthorityName(None), srs.GetAuthorityCode(None))
+                else:
+                    layer_options['srs'] = convert_wkt_to_epsg(srs.ExportToWkt())
 
                 n = 0
                 while True:
