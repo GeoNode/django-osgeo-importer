@@ -24,7 +24,6 @@ sudo su -c "echo '/usr/local/lib/gdal/lib/' >> /etc/ld.so.conf"
 sudo ldconfig
 sudo touch /etc/profile.d/gdal
 sudo su -c "echo 'export GDAL_DATA=/usr/local/lib/gdal/share/gdal/' >> /etc/profile.d/gdal.sh"
-sudo cp scripts/epsg_extra /usr/share/proj/
 
 if ["$TRAVIS" = true];
 then
@@ -45,6 +44,8 @@ sudo apt-get install -y sqlite3 libsqlite3-0 libsqlite3-dev libspatialite5 libsp
 sudo apt-get install -y gpsbabel libfreexl-dev unixodbc-dev libwebp-dev libjpeg-dev libpng12-dev libgif-dev liblzma-dev
 sudo apt-get install -y libcrypto++-dev netcdf-bin libnetcdf-dev libexpat-dev
 
+# Add additional EPSG Codes
+sudo cp scripts/epsg_extra /usr/share/proj/
 
 if [ -n "$1" ]
  then
