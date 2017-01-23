@@ -46,11 +46,13 @@ sudo apt-get install -y libcrypto++-dev netcdf-bin libnetcdf-dev libexpat-dev
 
 if ["$TRAVIS" = true];
 then
-   echo "Travis is true"
+   echo $TRAVIS
+   echo "Travis hit the true clause"
    # Add additional EPSG Codes
    sudo cp scripts/epsg_extra /home/travis/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
 else
-   echo "Travis is false"
+   echo $TRAVIS
+   echo "Travis hit the false clause"
    sudo cp scripts/epsg_extra /usr/local/lib/python2.7/dist-packages/pyproj/data/
 fi
 
