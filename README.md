@@ -97,3 +97,14 @@ the Importer's `import` method is sent to each handler which includes the config
 ### Importers
 Importers are Python classes that are responsible for opening incoming geospatial datasets (using one or many inspectors) and
 copying features to a target location - typically a PostGIS database.
+
+### Adding Support for Additional EPSG Codes
+If you have data sets with projections that are not currently supported by the EPSG codes in the Pyproj data directory,
+you can add additional EPSG codes.  Inside the scripts folder there is a file called epsg_extra with some examples
+of additional EPSG codes that we've added.  You can add any additional EPSG code with it's corresponding projection
+in that file using the same format as our examples.
+
+You'll need to copy that file to your Pyproj data directory, which by default is
+/usr/local/lib/python2.7/dist-packages/pyproj/data.  If your Pyproj data directory is in a different location, you may
+need to add the PROJECTION_SETTINGS settings variable in your own Django settings with the directory that you're using.
+

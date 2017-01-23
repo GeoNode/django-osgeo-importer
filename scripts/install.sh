@@ -44,7 +44,6 @@ sudo apt-get install -y sqlite3 libsqlite3-0 libsqlite3-dev libspatialite5 libsp
 sudo apt-get install -y gpsbabel libfreexl-dev unixodbc-dev libwebp-dev libjpeg-dev libpng12-dev libgif-dev liblzma-dev
 sudo apt-get install -y libcrypto++-dev netcdf-bin libnetcdf-dev libexpat-dev
 
-
 if [ -n "$1" ]
  then
  cd $1
@@ -56,3 +55,11 @@ pip install -r requirements.dev.txt
 
 sudo mkdir -p -m 777 importer-test-files
 aws --no-sign-request s3 sync s3://mapstory-data/importer-test-files/ importer-test-files
+
+# Add additional EPSG Codes
+if [ "$TRAVIS" = "true" ];
+then
+   sudo cp scripts/epsg_extra $HOME/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
+else
+   sudo cp scripts/epsg_extra /usr/local/lib/python2.7/dist-packages/pyproj/data/
+fi
