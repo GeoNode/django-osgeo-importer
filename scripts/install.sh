@@ -25,17 +25,14 @@ sudo ldconfig
 sudo touch /etc/profile.d/gdal
 sudo su -c "echo 'export GDAL_DATA=/usr/local/lib/gdal/share/gdal/' >> /etc/profile.d/gdal.sh"
 
-if ["$TRAVIS" == true];
+if ["$TRAVIS" = true];
 then
    sudo apt-get -y --no-install-recommends --force-yes install postgresql-9.3-postgis-2.3
-   # Add additional EPSG Codes
-   sudo cp scripts/epsg_extra /home/travis/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
 else
    sudo add-apt-repository "deb https://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
    sudo apt-get update
    sudo apt-get -y install postgresql-9.3-postgis-2.3
-   sudo cp scripts/epsg_extra /usr/local/lib/python2.7/dist-packages/pyproj/data/
 fi
 
 sudo apt-get install -y python-dev python-lxml libxslt1-dev  libpq-dev
@@ -46,6 +43,16 @@ sudo apt-get install -y libproj0 libproj-dev postgresql-plpython-9.3 python-nump
 sudo apt-get install -y sqlite3 libsqlite3-0 libsqlite3-dev libspatialite5 libspatialite-dev libcurl4-gnutls-dev libxerces-c-dev
 sudo apt-get install -y gpsbabel libfreexl-dev unixodbc-dev libwebp-dev libjpeg-dev libpng12-dev libgif-dev liblzma-dev
 sudo apt-get install -y libcrypto++-dev netcdf-bin libnetcdf-dev libexpat-dev
+
+if ["$TRAVIS" = true];
+then
+   echo "Travis is true"
+   # Add additional EPSG Codes
+   sudo cp scripts/epsg_extra /home/travis/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
+else
+   echo "Travis is false"
+   sudo cp scripts/epsg_extra /usr/local/lib/python2.7/dist-packages/pyproj/data/
+fi
 
 if [ -n "$1" ]
  then
