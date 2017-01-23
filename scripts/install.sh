@@ -56,23 +56,10 @@ pip install -r requirements.dev.txt
 sudo mkdir -p -m 777 importer-test-files
 aws --no-sign-request s3 sync s3://mapstory-data/importer-test-files/ importer-test-files
 
+# Add additional EPSG Codes
 if [ "$TRAVIS" = "true" ];
 then
-   echo $TRAVIS
-   echo "Travis hit the true clause"
-   # Add additional EPSG Codes
-   find . -name epsg
-   find . -name esri.extra
-   echo $HOME
-   echo "ls -la the virtualenv directory"
-   ls -la $HOME/virtualenv/
-   echo "ls -la the python2.7_with_system_site_packages directory"
-   ls -la $HOME/virtualenv/python2.7_with_system_site_packages/
-   echo "ls -la the site packages directory"
-   ls -la $HOME/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/
    sudo cp scripts/epsg_extra $HOME/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
 else
-   echo $TRAVIS
-   echo "Travis hit the false clause"
    sudo cp scripts/epsg_extra /usr/local/lib/python2.7/dist-packages/pyproj/data/
 fi
