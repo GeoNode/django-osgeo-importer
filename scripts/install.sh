@@ -49,7 +49,9 @@ then
    echo $TRAVIS
    echo "Travis hit the true clause"
    # Add additional EPSG Codes
-   sudo cp scripts/epsg_extra /home/travis/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
+   find . -name epsg
+   find . -name esri.extra
+   sudo cp scripts/epsg_extra $HOME/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
 else
    echo $TRAVIS
    echo "Travis hit the false clause"
