@@ -25,9 +25,8 @@ sudo ldconfig
 sudo touch /etc/profile.d/gdal
 sudo su -c "echo 'export GDAL_DATA=/usr/local/lib/gdal/share/gdal/' >> /etc/profile.d/gdal.sh"
 
-if ["$TRAVIS" = true];
+if ["$TRAVIS" == true];
 then
-   echo "Travis is true"
    sudo apt-get -y --no-install-recommends --force-yes install postgresql-9.3-postgis-2.3
    # Add additional EPSG Codes
    sudo cp scripts/epsg_extra /home/travis/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
