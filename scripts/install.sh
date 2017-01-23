@@ -51,7 +51,13 @@ then
    # Add additional EPSG Codes
    find . -name epsg
    find . -name esri.extra
-   ls -la $HOME/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/
+   echo $HOME
+   echo "ls -la the virtualenv directory"
+   ls -la $HOME/virtualenv/
+   echo "ls -la the python2.7_with_system_site_packages directory"
+   ls -la $HOME/virtualenv/python2.7_with_system_site_packages/
+   echo "ls -la the site packages directory"
+   ls -la $HOME/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/
    sudo cp scripts/epsg_extra $HOME/virtualenv/python2.7_with_system_site_packages/local/lib/python2.7/site-packages/pyproj/data/
 else
    echo $TRAVIS
