@@ -22,13 +22,11 @@ import os
 import tempfile
 import logging
 
-from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
-from djcelery.models import TaskState
 from jsonfield import JSONField
 
 try:
@@ -259,18 +257,8 @@ class UploadLayer(models.Model):
         """
         Returns the status of the import of this UploadedLayer.
         """
-        if self.import_status is not None:
-            s = self.import_status
-        else:
-            if self.task_id is not None:
-                try:
-                    s = TaskState.objects.get(task_id=self.task_id).state
-                except ObjectDoesNotExist:
-                    asyncres = AsyncResult(self.task_id)
-                    logger.debug("Import task status: {}".format(asyncres.status))
-                    s = AsyncResult(self.task_id).status
-            else:
-                s = 'UNKNOWN'
+        s = 'UNKNOWN' if self.import_status is None else self.import_status
+
         return s
 
     class Meta:

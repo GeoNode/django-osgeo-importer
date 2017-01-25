@@ -1,13 +1,25 @@
 import json
 import logging
-from django.http import HttpResponse
-from django.views.generic import FormView, ListView, TemplateView
+import os
+import shutil
+from tempfile import mkdtemp
+import threading
+import zipfile
+
 from django.core.urlresolvers import reverse_lazy
+from django.http import HttpResponse
+from django.http.response import JsonResponse, HttpResponseRedirect
+from django.views.generic import FormView, ListView, TemplateView
+from django.views.generic.base import View
+
+from osgeo_importer.utils import import_all_layers
+
 from .forms import UploadFileForm
-from .models import UploadedData, UploadFile
 from .importers import OSGEO_IMPORTER, VALID_EXTENSIONS
 from .inspectors import OSGEO_INSPECTOR
+from .models import UploadedData, UploadFile
 from .utils import import_string, ImportHelper
+
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
@@ -69,7 +81,6 @@ class FileAddView(ImportHelper, FormView, JSONResponseMixin):
         return super(FileAddView, self).form_valid(form)
 
     def render_to_response(self, context, **response_kwargs):
-
         # grab list of valid importer extensions for use in templates
         context["VALID_EXTENSIONS"] = ", ".join(VALID_EXTENSIONS)
 
@@ -78,3 +89,63 @@ class FileAddView(ImportHelper, FormView, JSONResponseMixin):
             return self.render_to_json_response(context, **response_kwargs)
 
         return super(FileAddView, self).render_to_response(context, **response_kwargs)
+
+
+class OneShotImportDemoView(TemplateView):
+    template_name = 'osgeo_importer/one_shot_demo/one_shot.html'
+
+
+class UploadDataImportStatusView(View):
+    def get(self, request, upload_id):
+        ud = UploadedData.objects.prefetch_related('uploadfile_set__uploadlayer_set').get(id=upload_id)
+
+        celery_to_api_status_map = {
+            'UNKNOWN': 'working',
+            'PENDING': 'working',
+            'SUCCESS': 'success',
+            'FAILURE': 'error',
+            'ERROR': 'error',
+        }
+
+        import_status = {
+            uf.name: {
+                ul.layer_name: celery_to_api_status_map[ul.status] for ul in uf.uploadlayer_set.all()
+            } for uf in ud.uploadfile_set.all()
+        }
+
+        return JsonResponse(import_status)
+
+
+class OneShotFileUploadView(ImportHelper, View):
+    def post(self, request):
+        if len(request.FILES) != 1:
+            resp = HttpResponse('Sorry, must be one and only one file')
+        else:
+            file_key = request.FILES.keys()[0]
+            file = request.FILES[file_key]
+            if file.name.split('.')[-1] != 'zip':
+                resp = HttpResponse('Sorry, only a a zip file is allowed')
+            else:
+                # --- Handling the zip extraction & configure_upload() can be integrated into current upload
+                z = zipfile.ZipFile(file)
+                owner = request.user
+                ud = UploadedData(user=owner, name=file.name)
+                ud.save()
+
+                try:
+                    tempdir = mkdtemp()
+                    z.extractall(tempdir)
+                    filelist = [open(os.path.join(tempdir, member_name), 'rb') for member_name in z.namelist()]
+                    self.configure_upload(ud, filelist)
+
+                    # --- Put this in another endpoint
+                    t = threading.Thread(target=import_all_layers, args=[ud])
+                    # We want the program to wait on this thread before shutting down.
+                    t.setDaemon(False)
+                    t.start()
+                finally:
+                    shutil.rmtree(tempdir)
+
+                resp = HttpResponseRedirect('/one-shot-demo?uploadDataId={}'.format(ud.id))
+
+        return resp

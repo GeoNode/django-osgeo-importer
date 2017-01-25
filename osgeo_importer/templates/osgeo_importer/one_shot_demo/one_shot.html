@@ -1,0 +1,46 @@
+{% extends "site_base.html" %}
+{% load i18n %}
+
+{% block head %}
+    {{ block.super }}
+    <script src="https://fb.me/react-15.0.0.js"></script>
+    <script src="https://fb.me/react-dom-15.0.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+    <script type="text/babel" src="/static/osgeo_importer/js/one_shot_demo/uploaded_data_import_status.jsx"></script>
+{% endblock %}
+
+{% block extra_script %}
+    {% include 'osgeo_importer/_importer_scripts.html' %}
+    {% include 'osgeo_importer/_importer_styles.html' %}
+    {{ block.super }}
+
+    <script>
+       function chooseFile() {
+          $("#id_file").click();
+       }
+    
+       $("#id_file").on("change", function() {
+           console.log('The user selected a file, where is it?');
+           $("#file-form").submit();
+        });
+    </script>
+    
+{% endblock %}
+
+{% block body_outer %}
+
+<div class="page-header">
+  <h2 class="page-title">{% trans "Select .zip file to import." %}</h2>
+</div>
+
+<div class="container" ng-app="osgeoImporter.uploader" ng-controller="uploadList">
+    <button class="btn-info col-md-4 btn" type="button" onclick="chooseFile();">choose file</button>
+    <form id='file-form' style="display: none;" method="post" enctype="multipart/form-data" action="/one-shot-demo_file-upload/">
+        {% csrf_token %}
+        <input id="id_file" name="file" multiple="" type="file">
+    </form>
+    
+    <div style='clear: both;' id='import-status'>- react should populate this -</div>
+
+</div>
+{% endblock %}
