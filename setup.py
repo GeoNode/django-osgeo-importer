@@ -14,7 +14,8 @@ setup(
     author_email='garnertb@prominentedge.com',
     maintainer='django-osgeo-importer contributors',
     url='https://github.com/GeoNode/django-osgeo-importer',
-    packages=find_packages(exclude=('tests*',)),
+    # osgeo_importer_prj is only used for development & testing
+    packages=('osgeo_importer',),
     package_data={
         'osgeo_importer': [
             'locale/*/LC_MESSAGES/*',
@@ -40,15 +41,16 @@ setup(
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2.6',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2.7',
-        'Framework :: Django',
+        'Framework :: Django :: 1.8',
     ],
     install_requires=[
         'django-tastypie==0.12.2',
+        'python-dateutil==2.5.3',
+        'numpy==1.11.2',
+        'geonode==2.5.9',
+        'Django==1.8',
     ],
     include_package_data=True,
     zip_safe=False,
