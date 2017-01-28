@@ -27,7 +27,7 @@ DATABASES = {
         'HOST' : 'localhost',
         'PORT' : '5432',
      },
-     'datastore' : {
+     'osgeo_importer_prj' : {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'osgeo_importer_prj',
         'USER' : 'osgeo_importer_prj',
