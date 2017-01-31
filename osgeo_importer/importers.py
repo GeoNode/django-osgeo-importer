@@ -363,9 +363,7 @@ class OGRImport(Import):
                 if wkb_field is not 0:
                     layer.SetIgnoredFields(['wkb_geometry'])
 
-                for i in range(0, layer.GetFeatureCount()):
-                    feature = layer.GetFeature(i)
-
+                for feature in layer:
                     if feature and feature.geometry():
 
                         if not layer.GetFIDColumn():
@@ -405,7 +403,7 @@ class OGRImport(Import):
                             except err as e:
                                 logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
                                 raise e
-
+                layer.ResetReading()
                 self.completed_layers.append([target_layer.GetName(), layer_options])
             else:
                 msg = 'Unexpected layer type: "{}"'.format(layer_options['layer_type'])
