@@ -440,31 +440,36 @@ class ImportHelper(object):
                 for layer_desc in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
                     configuration_options.update({'index': layer_desc.get('index')})
-                    layer_basename = os.path.basename(
-                        layer_desc.get('layer_name') or ''
-                    )
-                    # This is the string to start the layer name with
-                    layer_basename = layer_desc.get('layer_name')
+                    # layer_basename is the string to start the layer name with
+                    # The inspector will use a full path to the file for .tif layer names.
+                    # We'll use just the basename of the path (no modification if it's not a path).
+                    layer_basename = os.path.basename(layer_desc.get('layer_name') or '')
                     if not layer_basename:
+                        msg = ('No layer name provided by inspector, using'
+                               ' name of file containing layer as layer_basename')
+                        logger.error(msg)
                         layer_basename = os.path.basename(upfile.file.name)
-                        layer_basename = layer_basename.replace('.', '_')
+
+                    # Use underscores in place of dots to make layer names clearly differ from file paths.
+                    layer_basename = layer_basename.replace('.', '_')
 
                     layer_name = self.uniquish_layer_name(layer_basename)
-                    while UploadLayer.objects.filter(name=layer_name).exists():
-                        layer_name = self.uniquish_layer_name(layer_basename)
+                    with db.transaction.atomic():
+                        while UploadLayer.objects.filter(name=layer_name).exists():
+                            layer_name = self.uniquish_layer_name(layer_basename)
 
-                    upload_layer = UploadLayer(
-                            upload_file=upfile,
-                            name=upfile.file.name,
-                            layer_name=layer_name,
-                            layer_type=layer_desc['layer_type'],
-                            fields=layer_desc.get('fields', {}),
-                            index=layer_desc.get('index'),
-                            feature_count=layer_desc.get('feature_count', None),
-                            configuration_options=configuration_options
-                    )
-                    # If we wait for upload.save(), we may introduce layer_name collisions.
-                    upload_layer.save()
+                        upload_layer = UploadLayer(
+                                upload_file=upfile,
+                                name=upfile.file.name,
+                                layer_name=layer_name,
+                                layer_type=layer_desc['layer_type'],
+                                fields=layer_desc.get('fields', {}),
+                                index=layer_desc.get('index'),
+                                feature_count=layer_desc.get('feature_count', None),
+                                configuration_options=configuration_options
+                        )
+                        # If we wait for upload.save(), we may introduce layer_name collisions.
+                        upload_layer.save()
 
                     upload.uploadlayer_set.add(upload_layer)
 
