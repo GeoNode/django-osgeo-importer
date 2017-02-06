@@ -2,3 +2,5 @@ include README.md LICENSE
 graft osgeo_importer
 prune osgeo_importer/static/osgeo_importer/test
 prune osgeo_importer_prj
+prune src
+
