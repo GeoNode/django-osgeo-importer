@@ -41,14 +41,23 @@ containing tiles is uploaded::
 Remember, you should not modify this file by hand; its content will be managed by django-osgeo-importer and
 rewritten each time a GeoPackage containging tiles is uploaded.
 
+To run the mapproxy server for development:
+``mapproxy-util serve-develop <path to above-mentioned config file>``
+
 Django
 ------
 
 In your project settings you'll need to:
   * add these global variables:
-    * MAPPROXY_CONFIG_DIR - This is the full path to the directory where your mapproxy configuration files are located.
+
+    * MAPPROXY_CONFIG_DIR - This is the full path to the directory where your mapproxy configuration file is located.
     * MAPPROXY_CONFIG_FILENAME - This is the name of the mapproxy configuration file that the importer will manage.
-    * MAPPROXY_SERVER_LOCATION - This is the root URL for access to your MapProxy 'geonode' instance.
+    * MAPPROXY_SERVER_LOCATION - This is a template URL for TMS access to your MapProxy instance.
+      For example, if you have set up your webserver to proxy http://myserver.org/geonode-mapproxy/ to your mapproxy
+      instance, this would be ``'http://myserver.org/geonode-mapproxy/tms/1.0.0/{layer_name}/{grid_name}'``.
+      Note that {layer_name} and {grid_name} are literal, they'll be replaced by a call to string.format().
+
   * add ``'osgeo_importer.handlers.mapproxy.publish_handler.MapProxyGPKGTilePublishHandler'`` to ``IMPORT_HANDLERS``
     **after** ``'osgeo_importer.handlers.geonode.GeoNodePublishHandler'``.
+
 
