@@ -460,7 +460,7 @@ class ImportHelper(object):
 
                         upload_layer = UploadLayer(
                                 upload_file=upfile,
-                                name=upfile.file.name,
+                                name=layer_name,
                                 layer_name=layer_name,
                                 layer_type=layer_desc['layer_type'],
                                 fields=layer_desc.get('fields', {}),

@@ -228,7 +228,7 @@ class UploaderTests(TestCase):
 
         for upload_layer in upload_layers:
             for config in configs:
-                if config['upload_file_name'] == os.path.basename(upload_layer.name):
+                if config['upload_file_name'] == os.path.basename(upload_layer.upload_file.file.name):
                     payload = config['config']
                     url = '/importer-api/data-layers/{0}/configure/'.format(upload_layer.id)
                     response = client.post(
