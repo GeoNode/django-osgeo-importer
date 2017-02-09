@@ -264,7 +264,7 @@ class OGRImport(Import):
             for datastore_layer in datastore_layers:
                 for lf in lookup_fields:
                     if (lf in datastore_layer and lf in layer_configuration
-                        and datastore_layer.get(lf) == layer_configuration.get(lf)):
+                            and datastore_layer.get(lf) == layer_configuration.get(lf)):
                         # This update will overwrite the layer_name passed in configuration_options, stash the
                         #    intended name so we can correct it.
                         intended_layer_name = layer_configuration.get('layer_name')
