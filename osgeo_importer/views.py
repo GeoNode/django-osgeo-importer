@@ -135,13 +135,13 @@ class OneShotFileUploadView(ImportHelper, View):
                 try:
                     tempdir = mkdtemp()
                     z.extractall(tempdir)
-
                     # Skip .TXT files (like license agreement provided with Digital Globe data)
                     # Skip DS_STORE files (something from OSX)
                     # Not sure if this is valid to be merged back into master.
                     filelist = [
                         open(os.path.join(tempdir, member_name), 'rb') for member_name in z.namelist()
-                        if member_name[-4:].lower() != '.txt' and member_name.lower() != 'ds_store'
+                        if (member_name[-4:].lower() != '.txt' and member_name.lower() != 'ds_store'
+                            and member_name[:8].lower() != '__macosx')
                     ]
                     self.configure_upload(ud, filelist)
 
