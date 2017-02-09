@@ -155,7 +155,7 @@ class UploaderTests(TestCase):
         """
         if configs is None:
             configs = []
-        self.assertTrue(os.path.exists(path))
+        self.assertTrue(os.path.exists(path), path)
 
         # run ogr2ogr
         ogr = OGRImport(path)
@@ -1281,7 +1281,7 @@ class UploaderTests(TestCase):
         result = self.generic_import(
             'HoustonTXAnnexations.zip',
             configs=[
-                {'index': 0}
+                {'index': 0, 'layer_name': 'some_houston_layer'}
             ]
         )
         feature_type = self.catalog.get_resource(result.name)

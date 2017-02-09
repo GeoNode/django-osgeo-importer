@@ -118,3 +118,4 @@ MAPPROXY_CONFIG_FILENAME = 'geonode.yaml'
 MAPPROXY_SERVER_LOCATION = 'http://localhost:8088/geonode/tms/1.0.0/{layer_name}/{grid_name}/'
 
 PROJECTION_DIRECTORY = os.path.join(os.path.dirname(pyproj.__file__), 'data/')
+
