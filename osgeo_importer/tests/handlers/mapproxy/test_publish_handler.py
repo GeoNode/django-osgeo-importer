@@ -10,6 +10,7 @@ from osgeo_importer.handlers.mapproxy.publish_handler import MapProxyGPKGTilePub
 import osgeo_importer.handlers.mapproxy.publish_handler
 from osgeo_importer.models import MapProxyCacheConfig
 from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
+from django.conf import settings
 
 
 class TestMapProxyGPKGTilePublishHandler(TestCase):
@@ -93,11 +94,19 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
             # --- The handler should have tried to create a Link
             MockLink.objects.create.assert_called_once()
 
-    def ensure_layer_name_respected(self):
+    def test_ensure_layer_name_respected(self):
         """ Checks that the 'layer_name' given in the layer configuration is the name given to the layer
             in the mapproxy yaml config created for the layer.  This ensures that the default layer name
             isn't used if a name is provided.
         """
+        # Create the mapproxy config directory if it doesn't exist
+        try:
+            os.makedirs(settings.MAPPROXY_CONFIG_DIR)
+        except OSError as ex:
+            already_exists_errno = 17
+            if ex.errno != already_exists_errno:
+                raise
+
         # This MP handler doesn't use the 'layer' string argument.
         path_to_gpkg_file = os.path.join(_TEST_FILES_DIR, 'gebco.gpkg')
         ignored_layer_arg = 'ignored'
@@ -112,4 +121,10 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
         mpph.handle(ignored_layer_arg, layer_config)
         prepared_config_yaml = MapProxyCacheConfig.objects.first().config
         prepared_config = yaml.load(prepared_config_yaml)
+        # The layer name we asked for is the one we got
         self.assertEqual(prepared_config['layers'][0]['name'], expected_layer_name)
+        # The layer name we asked for is the name given to the cache entry for that layer
+        self.assertIn(expected_layer_name, prepared_config['caches'])
+        # The layer name we asked for is the name given to the grid for that layer
+        self.assertIn(expected_layer_name, prepared_config['grids'])
+        self.assertIn(expected_layer_name, prepared_config['caches'][expected_layer_name]['grids'])
