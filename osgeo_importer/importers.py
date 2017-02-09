@@ -111,7 +111,6 @@ class Import(object):
         """
         if configuration_options is None:
             configuration_options = [{'index': 0}]
-
         layers = self.import_file(configuration_options=configuration_options)
 
         for layer, config in layers:
@@ -129,7 +128,6 @@ class Import(object):
         :return: A list of handler results.
         """
         self.handler_results = []
-
         for handler in self.import_handlers:
             self.handler_results.append({type(handler).__name__: handler.handle(layer, layer_config, *args, **kwargs)})
 
@@ -232,7 +230,6 @@ class OGRImport(Import):
         gdal.PushErrorHandler(err.handler)
         gdal.UseExceptions()
         configuration_options = kwargs.get('configuration_options', [{'index': 0}])
-
         # Configuration options should be a list at this point since the
         # importer can process multiple layers in a single import
         if isinstance(configuration_options, dict):
@@ -247,21 +244,41 @@ class OGRImport(Import):
 
         layers_info = []
 
-        # Add index for any layers configured by name
+        # It looks like this code allowed users to configure a portion of layers in the file by specifying an
+        # index or a 'layer_name' option.  I'm not sure if lookups by 'layer_name' are still being used anywhere.
+        # 'layer_name' now specifies the name to give to a layer on import to geonode.  If the previous
+        # behavior is needed, add a 'internal_layer_name' value to the configuration options using the name
+        # of the layer the file uses.
+        lookup_fields = ['index', 'internal_layer_name']
         for layer_configuration in configuration_options:
-            if 'layer_name' in layer_configuration:
-                lookup = 'layer_name'
-            elif 'index' in layer_configuration:
-                lookup = 'index'
-            else:
-                lookup = None
-                logger.debug('could not find lookup')
+            lookup_found = False
+            for lf in lookup_fields:
+                if lf in layer_configuration:
+                    lookup_found = True
+                    break
+
+            if not lookup_found:
+                logger.warn('No recognized layer lookup field provided in configuration options')
                 continue
 
             for datastore_layer in datastore_layers:
-                if datastore_layer.get(lookup) == layer_configuration.get(lookup):
-                    layer_configuration.update(datastore_layer)
-                    layers_info.append(layer_configuration)
+                for lf in lookup_fields:
+                    if (lf in datastore_layer and lf in layer_configuration
+                            and datastore_layer.get(lf) == layer_configuration.get(lf)):
+                        # This update will overwrite the layer_name passed in configuration_options, stash the
+                        #    intended name so we can correct it.
+                        intended_layer_name = layer_configuration.get('layer_name')
+                        layer_configuration.update(datastore_layer)
+                        if intended_layer_name:
+                            layer_configuration.update({'layer_name': intended_layer_name})
+                        else:
+                            msg = ('layer_name not provided in configuration options, will use name provided '
+                                   'by inspector which will likely lead to name collisions')
+                            logger.warn(msg)
+
+                        layers_info.append(layer_configuration)
+                    else:
+                        logger.warn('Could not find matching lookup field, will ignore layer.')
 
         for layer_options in layers_info:
             if layer_options['layer_type'] == 'tile' and layer_options.get('driver', '').lower() == 'gpkg':

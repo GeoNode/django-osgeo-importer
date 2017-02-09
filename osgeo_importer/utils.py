@@ -505,7 +505,7 @@ def import_all_layers(uploaded_data, owner=None):
             configuration_options = layer_details.copy()
             configuration_options.update({
                 'layer_owner': owner.username, 'layer_type': upload_layer.layer_type,
-                'upload_layer_id': upload_layer.id
+                'upload_layer_id': upload_layer.id, 'layer_name': upload_layer.layer_name
             })
             msg = 'Kicking off a celery task to import layer: {}'.format(upload_layer.layer_name)
             logger.info(msg)
