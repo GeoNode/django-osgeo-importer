@@ -4,6 +4,7 @@ from unittest.case import skipUnless
 from django.test import TestCase
 import mock
 from mock.mock import patch, Mock
+import yaml
 
 from osgeo_importer.handlers.mapproxy.publish_handler import MapProxyGPKGTilePublishHandler
 import osgeo_importer.handlers.mapproxy.publish_handler
@@ -26,13 +27,13 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
     @skipUnless(adequate_mapproxy_version, 'Need mapproxy 1.10 or later to test this')
     def test_handle_non_gpkg(self):
         # Should do nothing but log an info-level message.
-        with mock.patch.object(osgeo_importer.handlers.mapproxy.publish_handler, 'logger') as logger:
+        with mock.patch.object(osgeo_importer.handlers.mapproxy.publish_handler, 'logger') as call_logger:
             layer_name = 'not_really_a_layer'
             layer_config = {'driver': 'anything_but_gpkg'}
             importer = None
             mpph = MapProxyGPKGTilePublishHandler(importer)
             mpph.handle(layer_name, layer_config)
-            self.assertEqual(logger.info.call_count, 1)
+            self.assertEqual(call_logger.info.call_count, 1)
 
     @skipUnless(adequate_mapproxy_version, 'Need mapproxy 1.10 or later to test this')
     @patch.object(osgeo_importer.handlers.mapproxy.publish_handler, 'Link')
@@ -91,3 +92,24 @@ class TestMapProxyGPKGTilePublishHandler(TestCase):
 
             # --- The handler should have tried to create a Link
             MockLink.objects.create.assert_called_once()
+
+    def ensure_layer_name_respected(self):
+        """ Checks that the 'layer_name' given in the layer configuration is the name given to the layer
+            in the mapproxy yaml config created for the layer.  This ensures that the default layer name
+            isn't used if a name is provided.
+        """
+        # This MP handler doesn't use the 'layer' string argument.
+        path_to_gpkg_file = os.path.join(_TEST_FILES_DIR, 'gebco.gpkg')
+        ignored_layer_arg = 'ignored'
+        expected_layer_name = 'my_boring_layer_name'
+        layer_config = {
+            'layer_type': 'tile', 'driver': 'gpkg', 'path': path_to_gpkg_file, 'index': 0,
+            'layer_name': expected_layer_name
+        }
+        # This handler doesn't rely on an importer
+        importer = None
+        mpph = MapProxyGPKGTilePublishHandler(importer)
+        mpph.handle(ignored_layer_arg, layer_config)
+        prepared_config_yaml = MapProxyCacheConfig.objects.first().config
+        prepared_config = yaml.load(prepared_config_yaml)
+        self.assertEqual(prepared_config['layers'][0]['name'], expected_layer_name)

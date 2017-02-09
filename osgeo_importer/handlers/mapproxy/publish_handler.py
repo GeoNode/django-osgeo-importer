@@ -37,8 +37,13 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
             if configure:
                 logger.info('First layer of a geopackage file containing tiles; generating config.')
                 # --- Generate the config for mapproxy to serve the layers from this layer's file.
-                config = conf_from_geopackage(uploaded_path)
-                MapProxyCacheConfig.objects.create(gpkg_filepath=uploaded_path, config=config)
+                config_yaml = conf_from_geopackage(uploaded_path)
+
+                # override the default name provided by conf_from_geopackage with the one from layer_config
+                config_dict = yaml.load(config_yaml)
+                config_dict['layers'][0]['name'] = layer_config['layer_name']
+                config_yaml = yaml.safe_dump(config_dict)
+                MapProxyCacheConfig.objects.create(gpkg_filepath=uploaded_path, config=config_yaml)
 
                 # --- Update the config file on disk.
                 config_path = os.path.join(settings.MAPPROXY_CONFIG_DIR, settings.MAPPROXY_CONFIG_FILENAME)
@@ -49,17 +54,19 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
                     config_file.write(combined_config)
 
                 # --- Configure a tms link for this layer
-                geonode_layer_id = layer_config['geonode_layer_id']
-                geonode_layer = Layer.objects.get(id=geonode_layer_id)
-                layer_name = geonode_layer.name
-                # Grab the grid name given to the grid for this layer by conf_from_geopackage()
-                config_dict = yaml.load(config)
-                grid_name = config_dict['grids'].keys()[0]
-                link_url = settings.MAPPROXY_SERVER_LOCATION.format(layer_name=layer_name, grid_name=grid_name)
-                Link.objects.create(
-                    extension='html', link_type='TMS', name='Tiles-MapProxy', mime='text/html',
-                    url=link_url, resource=geonode_layer.resourcebase_ptr
-                )
+                if 'geonode_layer_id' in layer_config:
+                    geonode_layer_id = layer_config['geonode_layer_id']
+                    geonode_layer = Layer.objects.get(id=geonode_layer_id)
+                    layer_name = geonode_layer.name
+                    # Grab the grid name given to the grid for this layer by conf_from_geopackage()
+                    grid_name = config_dict['grids'].keys()[0]
+                    link_url = settings.MAPPROXY_SERVER_LOCATION.format(layer_name=layer_name, grid_name=grid_name)
+                    Link.objects.create(
+                        extension='html', link_type='TMS', name='Tiles-MapProxy', mime='text/html',
+                        url=link_url, resource=geonode_layer.resourcebase_ptr
+                    )
+                else:
+                    logger.warn('No geonode_layer_id provided, layer is imported but Link metadata was not created')
             else:
                 logger.debug(
                     'Additional layer of a geopackage file containing tiles, index "{}"; doing nothing.'
