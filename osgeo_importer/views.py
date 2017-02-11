@@ -100,6 +100,7 @@ class OneShotImportDemoView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return TemplateView.dispatch(self, request, *args, **kwargs)
 
+
 class UploadDataImportStatusView(View):
     def get(self, request, upload_id):
         ud = UploadedData.objects.prefetch_related('uploadfile_set__uploadlayer_set').get(id=upload_id)
