@@ -19,6 +19,8 @@ from .importers import OSGEO_IMPORTER, VALID_EXTENSIONS
 from .inspectors import OSGEO_INSPECTOR
 from .models import UploadedData, UploadFile
 from .utils import import_string, ImportHelper
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
 
 
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
@@ -94,6 +96,9 @@ class FileAddView(ImportHelper, FormView, JSONResponseMixin):
 class OneShotImportDemoView(TemplateView):
     template_name = 'osgeo_importer/one_shot_demo/one_shot.html'
 
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return TemplateView.dispatch(self, request, *args, **kwargs)
 
 class UploadDataImportStatusView(View):
     def get(self, request, upload_id):
@@ -141,7 +146,7 @@ class OneShotFileUploadView(ImportHelper, View):
                     filelist = [
                         open(os.path.join(tempdir, member_name), 'rb') for member_name in z.namelist()
                         if (member_name[-4:].lower() != '.txt' and member_name.lower() != 'ds_store'
-                            and member_name[:8].lower() != '__macosx')
+                            and member_name[:8].lower() != '__macosx') and member_name[-4:].lower() != '.qgs'
                     ]
                     self.configure_upload(ud, filelist)
 
