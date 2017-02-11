@@ -41,6 +41,12 @@ containing tiles is uploaded::
 Remember, you should not modify this file by hand; its content will be managed by django-osgeo-importer and
 rewritten each time a GeoPackage containging tiles is uploaded.
 
+Write permission for the directory containing this config needs to be granted to the user the mapproxy instance is
+running as.
+
+Write permission for the config itself needs to be granted for the users which the geonode & celery worker
+instances are running as.
+
 To run the mapproxy server for development:
 ``mapproxy-util serve-develop <path to above-mentioned config file>``
 
