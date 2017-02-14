@@ -105,41 +105,65 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
               'enabled': 'True',
               'name': db_settings['NAME']}
 
+    @staticmethod
+    def multiprocess_safe_create_store(catalog, conn_str, workspace_name):
+        """ *catalog*: geoserver catalog object
+            *conn_str*: connection string defining the details for creating the store
+            *workspace_name*: name of the geoserver workspaace to create the store in.
+        """
+        try:
+            store = catalog.create_datastore(conn_str['name'], workspace=workspace_name)
+            store.connection_parameters.update(conn_str)
+            catalog.save(store)
+            s = catalog.get_store(conn_str['name'])
+        except FailedRequestError:
+            # A failed request to create the datastore can be the result of a race condition with
+            # multiple celery worker processes, check if the store still doesn't exist before re-raising.
+            try:
+                s = catalog.get_store(conn_str['name'])
+                # No error, It was a race condition with one of the other processes creating the store first, carry on.
+            except:
+                raise
+        return s
+
     def get_or_create_datastore(self, layer_config):
         connection_string = layer_config.get('geoserver_store')
         default_connection_string = self.get_default_store()
 
+        # If no connection is specified or geogig is requested use default (geogig no longer supported)
+        if connection_string is None:
+            use_conn_str = default_connection_string
+        else:
+            use_conn_str = connection_string
+
         # Create a geoserver workspace named self.workspace if one doesn't already exist
         ensure_workspace_exists(self.catalog, self.workspace, self.workspace_namespace_uri)
 
-        # If a connection is specified, get or create it.
-        if connection_string is not None:
-            try:
-                s = self.catalog.get_store(connection_string['name'])
-            except FailedRequestError:
-                store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
-                store.connection_parameters.update(connection_string)
-                self.catalog.save(store)
-                s = self.catalog.get_store(connection_string['name'])
+        if use_conn_str is None:
+            raise Exception('No connection string available to create datastore')
 
-        # If no connection is specified or geogig is requested but not configured on geoserver, use default
-        if connection_string is None or (s.type is None and connection_string.get('type') == 'geogig'):
+        try:
+            s = self.catalog.get_store(use_conn_str['name'])
+        except FailedRequestError:
+            # Couldn't get the store, try creating it.
+            s = self.multiprocess_safe_create_store(self.catalog, use_conn_str, self.workspace)
+
+        # Override with default store if a geogig store was requested but geogig isn't configured
+        if (s.type is None and use_conn_str.get('type') == 'geogig'):
             if connection_string is not None:
                 self.catalog.delete(s)
                 msg = 'GeoGig is requested but not configured on geoserver instance, '\
                       'overriding connection "{}" with default "{}"'\
                       .format(connection_string, default_connection_string)
                 logger.warn(msg)
-            layer_config['geoserver_store'] = default_connection_string
-            connection_string = default_connection_string
+                use_conn_str = connection_string
+
+            layer_config['geoserver_store'] = use_conn_str
 
             try:
-                s = self.catalog.get_store(connection_string['name'])
+                s = self.catalog.get_store(use_conn_str['name'])
             except FailedRequestError:
-                store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
-                store.connection_parameters.update(connection_string)
-                self.catalog.save(store)
-                s = self.catalog.get_store(connection_string['name'])
+                s = self.multiprocess_safe_create_store(self.catalog, use_conn_str, self.workspace)
 
         return s
 
