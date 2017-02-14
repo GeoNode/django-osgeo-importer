@@ -113,14 +113,26 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         ensure_workspace_exists(self.catalog, self.workspace, self.workspace_namespace_uri)
 
         # If a connection is specified, get or create it.
+        # If there's a call to create the datastore only if it doesn't exist rather than error if it exists,
+        # please update this to use it.
         if connection_string is not None:
             try:
                 s = self.catalog.get_store(connection_string['name'])
             except FailedRequestError:
-                store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
-                store.connection_parameters.update(connection_string)
-                self.catalog.save(store)
-                s = self.catalog.get_store(connection_string['name'])
+                # Couldn't get the store, try creating it.
+                try:
+                    store = self.catalog.create_datastore(connection_string['name'], workspace=self.workspace)
+                    store.connection_parameters.update(connection_string)
+                    self.catalog.save(store)
+                    s = self.catalog.get_store(connection_string['name'])
+                except FailedRequestError:
+                    # A failed request to create the datastore can be the result of a race condition with
+                    # multiple celery worker processes, check if the store still doesn't exist before re-raising.
+                    try:
+                        s = self.catalog.get_store(connection_string['name'])
+                        # No error, then it was a race condition, carry on
+                    except:
+                        raise
 
         # If no connection is specified or geogig is requested but not configured on geoserver, use default
         if connection_string is None or (s.type is None and connection_string.get('type') == 'geogig'):

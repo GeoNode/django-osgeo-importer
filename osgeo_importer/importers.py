@@ -258,7 +258,10 @@ class OGRImport(Import):
                     break
 
             if not lookup_found:
-                logger.warn('No recognized layer lookup field provided in configuration options')
+                logger.warn(
+                    'No recognized layer lookup field provided in configuration options, should be one of {}'
+                    .format(lookup_fields)
+                )
                 continue
 
             for datastore_layer in datastore_layers:
@@ -267,6 +270,9 @@ class OGRImport(Import):
                             and datastore_layer.get(lf) == layer_configuration.get(lf)):
                         # This update will overwrite the layer_name passed in configuration_options, stash the
                         #    intended name so we can correct it.
+                        msg = 'Will configure layer from file {} identifed by field {} with value {}'\
+                                  .format(self.file, lf, layer_configuration[lf])
+                        logger.info(msg)
                         intended_layer_name = layer_configuration.get('layer_name')
                         layer_configuration.update(datastore_layer)
                         if intended_layer_name:
@@ -277,8 +283,6 @@ class OGRImport(Import):
                             logger.warn(msg)
 
                         layers_info.append(layer_configuration)
-                    else:
-                        logger.warn('Could not find matching lookup field, will ignore layer.')
 
         for layer_options in layers_info:
             if layer_options['layer_type'] == 'tile' and layer_options.get('driver', '').lower() == 'gpkg':

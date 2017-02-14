@@ -68,6 +68,8 @@ def import_object(self, upload_file_id, configuration_options=None):
     :param configuration_options: List of configuration objects for each layer that is being imported.
     """
     logger.info('Starting import_object() task')
+
+    logger.info('Import requested for layer "{}"'.format(configuration_options.get('layer_name', 'n/a')))
     ulid = configuration_options['upload_layer_id']
     try:
         ul = UploadLayer.objects.get(id=ulid)
