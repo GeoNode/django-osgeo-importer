@@ -16,10 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# *** need to add:
-# ***   cache.gpkg, util-conf-base-grids.yaml, util-conf-wms-111-cap.xml, util-conf-overwrite.yaml,
-# ***   mapproxy_cache_gpkg.yaml, mapproxy_cache_gpkg_base_grids.yaml
-
 from __future__ import with_statement
 
 import os
