@@ -202,7 +202,7 @@ class UploadLayer(models.Model):
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
     upload_file = models.ForeignKey(UploadFile, null=True, blank=True)
     index = models.IntegerField(default=0)
-    name = models.CharField(max_length=64, null=True)
+    name = models.TextField(null=True)
     fields = JSONField(null=True, default={})
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
     object_id = models.PositiveIntegerField(blank=True, null=True)
@@ -211,7 +211,7 @@ class UploadLayer(models.Model):
     import_status = models.CharField(max_length=15, blank=True, null=True)
     task_id = models.CharField(max_length=36, blank=True, null=True)
     feature_count = models.IntegerField(null=True, blank=True)
-    layer_name = models.CharField(max_length=64, null=True)
+    layer_name = models.TextField(null=True)
     layer_type = models.CharField(max_length=10, null=True)
 
     @property
