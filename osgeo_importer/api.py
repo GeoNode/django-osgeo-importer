@@ -62,6 +62,8 @@ class UploadedLayerResource(ModelResource):
         """Imports a layer
         """
         self.method_check(request, allowed=['post'])
+        # pk will be parsed from the url as a string but is an integer internally
+        if pk: pk = int(pk)
 
         bundle = Bundle(request=request)
 
@@ -88,7 +90,7 @@ class UploadedLayerResource(ModelResource):
 
         uploaded_file = obj.upload_file
 
-        configuration_options.update({'upload_layer_id': pk})
+        configuration_options.update({'upload_layer_id': int(pk)})
         import_result = import_object.delay(uploaded_file.id, configuration_options=configuration_options)
 
         task_id = getattr(import_result, 'id', None)
@@ -96,7 +98,7 @@ class UploadedLayerResource(ModelResource):
         return self.create_response(request, {'task': task_id})
 
     def prepend_urls(self):
-        return [url(r"^(?P<resource_name>{0})/(?P<pk>\w[\w/-]*)/configure{1}$".format(self._meta.resource_name,
+        return [url(r"^(?P<resource_name>{0})/(?P<pk>\d+)/configure{1}$".format(self._meta.resource_name,
                                                                                       trailing_slash()),
                 self.wrap_view('import_layer'), name="importer_configure"),
                 ]

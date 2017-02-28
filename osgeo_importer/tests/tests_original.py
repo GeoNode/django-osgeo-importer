@@ -1,35 +1,36 @@
 # -*- coding: UTF-8 -*-
 # (see test_utf8 for the reason why this file needs a coding cookie)
 
-import os
+from geonode.geoserver.helpers import ogc_server_settings
+from geonode.layers.models import Layer
 import json
-import unittest
 import logging
+import os
+import unittest
 
-import osgeo
-import gdal
 from django import db
 from django.conf import settings
-from django.test import TestCase, Client
-from django.test.utils import setup_test_environment
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.urlresolvers import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.gis.gdal import DataSource
-from osgeo_importer.handlers.geoserver import configure_time
-from osgeo_importer.inspectors import GDALInspector
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.urlresolvers import reverse
+from django.test import TestCase, Client
+from django.test.utils import setup_test_environment
+import gdal
 from geoserver.catalog import Catalog, FailedRequestError
-from geonode.layers.models import Layer
-from geonode.geoserver.helpers import ogc_server_settings
+import osgeo
+
+from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
+from osgeo_importer.handlers.geoserver import configure_time
+from osgeo_importer.importers import OGRImport
+from osgeo_importer.inspectors import GDALInspector
 from osgeo_importer.models import (
     UploadedData, UploadFile, UploadLayer,
     validate_file_extension, ValidationError, validate_inspector_can_read
 )
-from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
-from osgeo_importer.importers import OGRImport
-
-from osgeo_importer.utils import load_handler, launder
 from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
+from osgeo_importer.utils import load_handler, launder, ImportHelper
+
 
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 
@@ -800,8 +801,11 @@ class UploaderTests(TestCase):
         """
         endpoint = 'http://sampleserver6.arcgisonline.com/arcgis/rest/services/Water_Network/FeatureServer/16/query'\
             '?where=objectid=326&outfields=*&f=json'
+        ih = ImportHelper()
+        ih.configure_endpoint(endpoint)
+
         ogr = OGRImport(endpoint)
-        configs = [{'index': 0}]
+        configs = [{'index': 0, 'upload_layer_id': 1}]
         layers = ogr.handle(configuration_options=configs)
         for result in layers:
             layer = Layer.objects.get(name=result[0])
@@ -1190,7 +1194,8 @@ class UploaderTests(TestCase):
             'convert_to_date': ['date'],
             'start_date': 'date',
             'configureTime': True,
-            'editable': True
+            'editable': True,
+            'upload_layer_id': 1,
         }
 
         self.assertIsInstance(

@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import sys
+from urlparse import urlparse
 import uuid
 
 from dateutil.parser import parse
@@ -392,6 +393,37 @@ class ImportHelper(object):
         random_string = uuid.uuid4().hex[:8]
         uniquish_name = '{}_{}'.format(layer_base_name, random_string)
         return uniquish_name
+
+    def configure_endpoint(self, endpoint_str):
+        """
+            Configures a specific import from an endpoint identified by *endpoint_str*
+            *desc*:
+                1. Creates a new UploadedData instance referencing the endpoint
+                2. Reads the endpoint data & creates related UploadFile & UploadeLayer instances
+        """
+        from osgeo_importer.models import UploadedData, UploadLayer
+
+        ud = UploadedData.objects.create(name=endpoint_str)
+        layer_descs = self.get_fields(endpoint_str)
+        layer_configs = []
+        for layer_desc in layer_descs:
+            layer_conf = {'index': layer_desc['index']}
+            layer_configs.append(layer_conf)
+
+            layer_basename = layer_desc.get('layer_name')
+            if layer_basename is None or layer_basename == 'OGRGeoJSON':
+                layer_basename = urlparse(endpoint_str).netloc.split('.')[0]
+
+            layer_name = self.uniquish_layer_name(layer_basename)
+            with db.transaction.atomic():
+                while UploadLayer.objects.filter(name=layer_name).exists():
+                    layer_name = self.uniquish_layer_name(layer_basename)
+
+                UploadLayer.objects.create(
+                    upload=ud,
+                    layer_name=layer_name
+                )
+
 
     def configure_upload(self, upload, files):
         """
