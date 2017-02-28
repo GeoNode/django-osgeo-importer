@@ -34,10 +34,10 @@ try:
 except ImportError:
     from django.contrib.contenttypes.generic import GenericForeignKey
 
-from .importers import OSGEO_IMPORTER
 from .utils import NoDataSourceFound
 from .utils import sizeof_fmt, load_handler
 
+OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 DEFAULT_LAYER_CONFIGURATION = {'configureTime': False,
                                'editable': True,
                                'convert_to_date': [],
