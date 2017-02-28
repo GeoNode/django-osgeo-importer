@@ -1,7 +1,10 @@
 import os
-from .utils import NoDataSourceFound, load_handler
-from .importers import OSGEO_IMPORTER, VALID_EXTENSIONS
+from django.conf import settings
+from osgeo_importer.utils import NoDataSourceFound, load_handler
+from osgeo_importer.importers import VALID_EXTENSIONS
 import logging
+
+OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 
 logger = logging.getLogger(__name__)
 

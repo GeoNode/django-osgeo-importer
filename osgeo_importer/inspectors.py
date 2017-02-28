@@ -1,3 +1,4 @@
+from logging import getLogger
 import os
 import sqlite3
 
@@ -6,8 +7,10 @@ from django.conf import settings
 import gdal
 import ogr
 
-from .utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
+from osgeo_importer.utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
 
+
+logger = getLogger(__name__)
 
 OSGEO_INSPECTOR = getattr(settings, 'OSGEO_INSPECTOR', 'osgeo_importer.inspectors.GDALInspector')
 
@@ -144,10 +147,14 @@ class GDALInspector(InspectorMixin):
         try:
             self.data = gdal.OpenEx(filename, open_options=open_options)
         except RuntimeError:
-            raise NoDataSourceFound
+            msg = 'gdal.OpenEx({}, {}) failed.'.format(filename, open_options)
+            logger.error(msg)
+            raise NoDataSourceFound(msg)
 
         if self.data is None:
-            raise NoDataSourceFound
+            msg = 'gdal.OpenEx({}, {}) returned None.'.format(filename, open_options)
+            logger.error(msg)
+            raise NoDataSourceFound(msg)
 
         return self.data
 

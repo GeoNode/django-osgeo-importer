@@ -9,6 +9,7 @@ import logging
 import osgeo
 import gdal
 from django import db
+from django.conf import settings
 from django.test import TestCase, Client
 from django.test.utils import setup_test_environment
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -25,10 +26,13 @@ from osgeo_importer.models import (
     validate_file_extension, ValidationError, validate_inspector_can_read
 )
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
-from osgeo_importer.importers import OSGEO_IMPORTER, OGRImport
+from osgeo_importer.importers import OGRImport
 
 from osgeo_importer.utils import load_handler, launder
 from osgeo_importer.tests.test_settings import _TEST_FILES_DIR
+
+OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
+
 
 # In normal unittest runs, this will be set in setUpModule; set here for the
 # benefit of static analysis and users importing this instead of running tests.

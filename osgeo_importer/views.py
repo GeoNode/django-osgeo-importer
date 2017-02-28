@@ -6,23 +6,25 @@ from tempfile import mkdtemp
 import threading
 import zipfile
 
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponse
 from django.http.response import JsonResponse, HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.base import View
 
 from osgeo_importer.utils import import_all_layers
 
 from .forms import UploadFileForm
-from .importers import OSGEO_IMPORTER, VALID_EXTENSIONS
+from .importers import VALID_EXTENSIONS
 from .inspectors import OSGEO_INSPECTOR
 from .models import UploadedData, UploadFile
 from .utils import import_string, ImportHelper
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 
 
+OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 OSGEO_INSPECTOR = import_string(OSGEO_INSPECTOR)
 OSGEO_IMPORTER = import_string(OSGEO_IMPORTER)
 

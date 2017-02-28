@@ -8,6 +8,8 @@ import gdal
 import ogr
 import osr
 
+from osgeo_importer.models import UploadLayer
+
 from .handlers import IMPORT_HANDLERS
 from .inspectors import GDALInspector, OGRInspector
 from .utils import (
@@ -27,7 +29,6 @@ logger = logging.getLogger(__name__)
 ogr.UseExceptions()
 
 MEDIA_ROOT = getattr(settings, 'MEDIA_ROOT', FileSystemStorage().location)
-OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 DEFAULT_SUPPORTED_EXTENSIONS = ['shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json',
                                 'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml',
                                 'sld', 'ntf', 'nitf']
@@ -223,6 +224,11 @@ class OGRImport(Import):
     def import_file(self, *args, **kwargs):
         """
         Loads data that has been uploaded into whatever format we need for serving.
+        Expects kwarg "configuration_options" which is a list of dicts, one for each layer to import.
+            each dict must contain "upload_layer_id" referencing the UploadLayer being imported
+            and must contain "index" which is a 0-based index to identify which layer from the file is being referenced.
+            and can contain an optional "layer_name" to assign a custom name.  "layer_name" may be ignored
+            if it is already in use.
         """
         filename = self.file
         self.completed_layers = []
@@ -234,6 +240,38 @@ class OGRImport(Import):
         # importer can process multiple layers in a single import
         if isinstance(configuration_options, dict):
             configuration_options = [configuration_options]
+
+        # Ensure that upload_layer_id exists in configuration for each layer
+        nbad_config = 0
+        for co in configuration_options:
+            if 'upload_layer_id' not in co:
+                nbad_config += 1
+
+        if nbad_config > 0:
+            msg = '{} of {} configs missing upload_layer_id'.format(nbad_config, len(configuration_options))
+            logger.critical(msg)
+            raise Exception(msg)
+
+
+        # --- Resolve any disparity between automatically-assigned UploadLayer.layer_name and layer_name in
+        # configuration options.
+        # If layer_name is present in configuration_options either update UploadLayer.layer_name to match if it's unique
+        #    or update configuration_options' 'layer_name' to match value in UploadLayer.layer_name if it's not unique.
+        with db.transaction.atomic():
+            upload_layer_ids = [co['upload_layer_id'] for co in configuration_options]
+            upload_layers = UploadLayer.objects.filter(id__in=upload_layer_ids)
+            upload_layers_by_id = {ul.id: ul for ul in upload_layers}
+
+            for co in configuration_options:
+                ul = upload_layers_by_id[co['upload_layer_id']]
+                if co.get('layer_name') is None:
+                    co['layer_name'] = ul.layer_name
+                elif co['layer_name'] != ul.layer_name:
+                    if UploadLayer.objects.filter(layer_name=co['layer_name']).exists():
+                        co['layer_name'] = ul.layer_name
+                    else:
+                        ul.layer_name = co['layer_name']
+                        ul.save()
 
         data, inspector = self.open_source_datastore(filename, *args, **kwargs)
 
@@ -311,17 +349,9 @@ class OGRImport(Import):
 
                 layer_options['modified_fields'] = {}
                 layer = data.GetLayer(layer_options.get('index'))
-                layer_name = layer_options.get('name', layer.GetName().lower())
+                layer_name = layer_options['layer_name']
                 layer_type = self.get_layer_type(layer, data)
                 srs = layer.GetSpatialRef()
-
-                if layer_name.lower() == 'ogrgeojson':
-                    try:
-                        layer_name = os.path.splitext(os.path.basename(filename))[0].lower()
-                    except IndexError:
-                        pass
-
-                layer_name = launder(str(layer_name))
 
                 # default the layer to 4326 if a spatial reference is not provided
                 if not srs:
@@ -334,26 +364,9 @@ class OGRImport(Import):
                 else:
                     layer_options['srs'] = convert_wkt_to_epsg(srs.ExportToWkt())
 
-                n = 0
-                while True:
-                    n += 1
-                    try:
-                        target_layer = self.create_target_dataset(target_file, layer_name, srs, layer_type,
-                                                                  options=target_create_options)
-                    except RuntimeError as e:
-                        # logger.exception('exception in creating target dataset')
-                        # the layer already exists in the target store, increment the name
-                        if 'Use the layer creation option OVERWRITE=YES to replace it.' in e.message:
-                            layer_name = increment(layer_name)
-
-                            # try 100 times to increment then break
-                            if n >= 100:
-                                break
-
-                            continue
-                        else:
-                            raise e
-                    break
+                logger.info('Creating dataset "{}" from file "{}"'.format(layer_name, target_file))
+                target_layer = self.create_target_dataset(target_file, str(layer_name), srs, layer_type,
+                                                          options=target_create_options)
 
                 # adding fields to new layer
                 layer_definition = ogr.Feature(layer.GetLayerDefn())
