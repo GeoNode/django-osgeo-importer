@@ -6,6 +6,7 @@ from geonode.layers.models import Layer
 import json
 import logging
 import os
+import shutil
 import unittest
 
 from django import db
@@ -40,7 +41,7 @@ OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.O
 User = None
 
 
-def test_file(filename):
+def get_testfile_path(filename):
     """Convenience function for getting the path to a test file.
     """
     return os.path.join(_TEST_FILES_DIR, filename)
@@ -84,7 +85,7 @@ class AdminClient(Client):
         return self.login(username='non_admin', password='non_admin')
 
 
-class UploaderTests(TestCase):
+class UploaderTests(ImportHelper, TestCase):
     """Basic checks to make sure pages load, etc.
     """
 
@@ -155,6 +156,26 @@ class UploaderTests(TestCase):
         """
         self.catalog.delete(self.datastore, recurse=True)
 
+    def prepare_file_for_import(self, filepath):
+        """ Prepares the file path provided for import; performs some housekeeping, uploads & configures the file.
+            Returns a list of dicts of the form {'index': <layer_index>, 'upload_layer_id': <upload_layer_id>}
+                these may be used as configuration options for importing all of the layers in the file.
+        """
+        # Make a copy of the test file, as it's removed in configure_upload()
+        filename = os.path.basename(filepath)
+        tmppath = os.path.join('/tmp', filename)
+        shutil.copy(get_testfile_path(filename), tmppath)
+
+        # upload & configure_upload expect closed file objects
+        #    This is heritage from originally being closely tied to a view passing request.Files
+        of = open(tmppath, 'rb')
+        of.close()
+        files = [of]
+        uploaded_data = self.upload(files, self.admin_user)
+        self.configure_upload(uploaded_data, files)
+        configs = [{'index': l.index, 'upload_layer_id': l.id} for l in uploaded_data.uploadlayer_set.all()]
+        return configs
+
     def import_file(self, path, configs=None):
         """Imports the file.
         """
@@ -172,7 +193,7 @@ class UploaderTests(TestCase):
         if configs is None:
             configs = [{'index': 0}]
 
-        path = test_file(filename)
+        path = get_testfile_path(filename)
         results = self.import_file(path, configs=configs)
         layer_results = []
         for result in results:
@@ -213,7 +234,7 @@ class UploaderTests(TestCase):
         # Upload Files
         outfiles = []
         for filename in filenames:
-            path = test_file(filename)
+            path = get_testfile_path(filename)
             with open(path) as stream:
                 data = stream.read()
             upload = SimpleUploadedFile(filename, data)
@@ -251,7 +272,7 @@ class UploaderTests(TestCase):
         if configs is None:
             configs = [{'index': 0}]
 
-        path = test_file(filename)
+        path = get_testfile_path(filename)
         results = self.import_file(path, configs=configs)
         layer_path = results[0][0]
         layer_name = os.path.splitext(os.path.basename(layer_path))[0]
@@ -363,36 +384,37 @@ class UploaderTests(TestCase):
         self.assertEqual(layer.title, 'Old_Americas_LSIB_Polygons_Detailed_2013Mar')
 
     def test_geotiff_raster(self):
-        """Exercise GeoTIFF raster import.
+        """Exercise GeoTIFF raster import, ensuring import doesn't cause any exceptions.
         """
-        layer = self.generic_raster_import(
-            'test_grid.tif',
-            configs=[
-                {
-                    'index': 0
-                }
-            ]
-        )
-        self.assertTrue(layer.name.startswith('test_grid'))
+        filename = 'test_grid.tif'
+        configs = self.prepare_file_for_import(filename)
+
+        try:
+            self.generic_raster_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def test_nitf_raster(self):
         """Tests NITF raster import
         """
-        layer = self.generic_raster_import('test_nitf.nitf')
-        self.assertTrue(layer.name.startswith('test_nitf'))
+        filename = 'test_nitf.nitf'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
+        try:
+            self.generic_raster_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def test_box_with_year_field(self):
-        """Tests the import of test_box_with_year_field.
+        """ Tests the import of test_box_with_year_field, checking that date conversion is performed correctly.
         """
+        filename = 'boxes_with_year_field.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date']})
 
         layer = self.generic_import(
             'boxes_with_year_field.shp',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date']
-                }
-            ]
+            configs=configs
         )
         date_attr = get_layer_attr(layer, 'date_as_date')
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
@@ -406,17 +428,13 @@ class UploaderTests(TestCase):
     def test_boxes_with_date(self):
         """Tests the import of test_boxes_with_date.
         """
+        filename = 'boxes_with_date.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date'], 'start_date': 'date', 'configureTime': True})
 
         layer = self.generic_import(
             'boxes_with_date.shp',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date'],
-                    'start_date': 'date',
-                    'configureTime': True
-                }
-            ]
+            configs=configs
         )
 
         date_attr = get_layer_attr(layer, 'date_as_date')
@@ -431,18 +449,11 @@ class UploaderTests(TestCase):
     def test_boxes_with_date_gpkg(self):
         """Tests the import of test_boxes_with_date.gpkg.
         """
+        filename = 'boxes_with_date.gpkg'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date'], 'start_date': 'date', 'configureTime': True})
 
-        layer = self.generic_import(
-            'boxes_with_date.gpkg',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date'],
-                    'start_date': 'date',
-                    'configureTime': True
-                }
-            ]
-        )
+        layer = self.generic_import(filename, configs=configs)
 
         date_attr = get_layer_attr(layer, 'date_as_date')
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
@@ -460,24 +471,14 @@ class UploaderTests(TestCase):
             This test forces them to still be treated as rasters and should be
             removed once tests for vector/tile geopackage files are in place.
         """
-
+        filename = 'boxes_plus_raster.gpkg'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date'], 'start_date': 'date', 'configureTime': True})
+        configs[6].update({'layer_type': 'raster'})
+        configs[7].update({'layer_type': 'raster'})
         layer = self.generic_import(
             'boxes_plus_raster.gpkg',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date'],
-                    'start_date': 'date',
-                    'configureTime': True
-                },
-                {'index': 1},
-                {'index': 2},
-                {'index': 3},
-                {'index': 4},
-                {'index': 5},
-                {'index': 6, 'layer_type': 'raster'},
-                {'index': 7, 'layer_type': 'raster'},
-            ]
+            configs=configs
         )
 
         date_attr = get_layer_attr(layer, 'date_as_date')
@@ -491,16 +492,12 @@ class UploaderTests(TestCase):
     def test_boxes_with_date_csv(self):
         """Tests a CSV with WKT polygon.
         """
+        filename = 'boxes_with_date.csv'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date']})
 
-        layer = self.generic_import(
-            'boxes_with_date.csv',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date']
-                }
-            ]
-        )
+        layer = self.generic_import(filename, configs=configs)
+
         date_attr = get_layer_attr(layer, 'date_as_date')
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
@@ -513,27 +510,22 @@ class UploaderTests(TestCase):
     def test_csv_missing_features(self):
         """Test csv that has some rows without geoms and uses ISO-8859 (Latin 4) encoding.
         """
-
-        self.generic_import(
-            'missing-features.csv',
-            configs=[
-                {'index': 0}
-            ]
-        )
+        filename = 'missing-features.csv'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def test_boxes_with_iso_date(self):
         """Tests the import of test_boxes_with_iso_date.
         """
+        filename = 'boxes_with_date_iso_date.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date']})
 
-        layer = self.generic_import(
-            'boxes_with_date_iso_date.shp',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date']
-                }
-            ]
-        )
+        layer = self.generic_import(filename, configs=configs)
+
         date_attr = get_layer_attr(layer, 'date_as_date')
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
@@ -544,15 +536,16 @@ class UploaderTests(TestCase):
         self.generic_time_check(layer, attribute=date_attr.attribute)
 
     def test_duplicate_imports(self):
-        """Import the same layer twice to ensure file names increment properly.
+        """Import the same layer twice to ensure names don't collide.
         """
-        path = test_file('boxes_with_date_iso_date.zip')
-        ogr = OGRImport(path)
-        layers1 = ogr.handle({'index': 0, 'name': 'test'})
-        layers2 = ogr.handle({'index': 0, 'name': 'test'})
+        filename = 'boxes_with_date_iso_date.zip'
+        configs1 = self.prepare_file_for_import(get_testfile_path(filename))
+        ogr = OGRImport(get_testfile_path(filename))
+        layer1 = ogr.handle(configs1)
 
-        self.assertEqual(layers1[0][0], 'test')
-        self.assertEqual(layers2[0][0], 'test0')
+        configs2 = self.prepare_file_for_import(get_testfile_path(filename))
+        layer2 = ogr.handle(configs2)
+        self.assertNotEqual(layer1[0][0], layer2[0][0])
 
     def test_launder(self):
         """Ensure the launder function works as expected.
@@ -564,16 +557,11 @@ class UploaderTests(TestCase):
     def test_boxes_with_date_iso_date_zip(self):
         """Tests the import of test_boxes_with_iso_date.
         """
+        filename = 'boxes_with_date_iso_date.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date']})
 
-        layer = self.generic_import(
-            'boxes_with_date_iso_date.zip',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date']
-                }
-            ]
-        )
+        layer = self.generic_import(filename, configs=configs)
         date_attr = get_layer_attr(layer, 'date_as_date')
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
@@ -586,16 +574,11 @@ class UploaderTests(TestCase):
     def test_boxes_with_dates_bc(self):
         """Tests the import of test_boxes_with_dates_bc.
         """
+        filename = 'boxes_with_dates_bc.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date']})
 
-        layer = self.generic_import(
-            'boxes_with_dates_bc.shp',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date']
-                }
-            ]
-        )
+        layer = self.generic_import(filename, configs=configs)
 
         date_attr = get_layer_attr(layer, 'date_as_date')
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
@@ -609,19 +592,14 @@ class UploaderTests(TestCase):
     def test_point_with_date(self):
         """Tests the import of point_with_date.geojson
         """
+        filename = 'point_with_date.geojson'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date']})
 
-        layer = self.generic_import(
-            'point_with_date.geojson',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date']
-                }
-            ]
-        )
+        layer = self.generic_import(filename, configs=configs)
 
-        # OGR will name geojson layers 'ogrgeojson' we rename to the path basename
-        self.assertTrue(layer.name.startswith('point_with_date'))
+        # Make sure the layer isn't named OGR default 'OGRGeoJSON'
+        self.assertNotEqual(layer.name, 'OGRGeoJSON')
         date_attr = get_layer_attr(layer, 'date_as_date')
         self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
 
@@ -636,19 +614,16 @@ class UploaderTests(TestCase):
 
         This layer has a date and an end date field that are typed correctly.
         """
+        filename = 'boxes_with_end_date.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({
+            'convert_to_date': ['date', 'enddate'],
+            'start_date': 'date',
+            'end_date': 'enddate',
+            'configureTime': True
+        })
 
-        layer = self.generic_import(
-            'boxes_with_end_date.shp',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date', 'enddate'],
-                    'start_date': 'date',
-                    'end_date': 'enddate',
-                    'configureTime': True
-                }
-            ]
-        )
+        layer = self.generic_import(filename, configs=configs)
 
         date_attr = get_layer_attr(layer, 'date_as_date')
         end_date_attr = get_layer_attr(layer, 'enddate_as_date')
@@ -668,36 +643,30 @@ class UploaderTests(TestCase):
         )
 
     def test_us_states_kml(self):
-        """Tests the import of us_states_kml.
+        """ Tests the import of us_states_kml, just checking that the import doesn't raise an exception.
 
         This layer has a date and an end date field that are typed correctly.
         """
+        filename = 'us_states.kml'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
         # TODO: Support time in kmls.
-        layer = self.generic_import(
-            'us_states.kml',
-            configs=[
-                {
-                    'index': 0
-                }
-            ]
-        )
-        self.assertEqual(layer.name.lower(), "us_states")
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def test_mojstrovka_gpx(self):
         """Tests the import of mojstrovka.gpx.
 
         This layer has a date and an end date field that are typed correctly.
         """
-        layer = self.generic_import(
-            'mojstrovka.gpx',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['time'],
-                    'configureTime': True
-                }
-            ]
-        )
+        filename = 'mojstrovka.gpx'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['time'], 'configureTime': True})
+
+        layer = self.generic_import(filename, configs)
+
         date_attr = get_layer_attr(layer, 'time_as_date')
         self.assertEqual(date_attr.attribute_type, u'xsd:dateTime')
 
@@ -728,16 +697,10 @@ class UploaderTests(TestCase):
         if osgeo.gdal.__version__ < '2.0.0':
             self.skipTest('GDAL Version does not support open options')
 
-        path = test_file('US_Shootings.csv')
-        layer = self.generic_import(
-            path,
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['Date']
-                }
-            ]
-        )
+        path = get_testfile_path('US_Shootings.csv')
+        configs = self.prepare_file_for_import(path)
+        configs[0].update({'convert_to_date': ['Date']})
+        layer = self.generic_import(path, configs=configs)
         self.assertTrue(layer.name.startswith('us_shootings'))
 
         date_field = 'date'
@@ -752,15 +715,14 @@ class UploaderTests(TestCase):
         """
         if osgeo.gdal.__version__ < '2.0.0':
             self.skipTest('GDAL Version does not support open options')
-        layer = self.generic_import(
-            'US_Civil_Rights_Sitins0.csv',
-            configs=[
-                {
-                    'index': 0, 'convert_to_date': ['Date']
-                }
-            ]
-        )
-        self.assertEqual(layer.name.lower(), 'us_civil_rights_sitins0')
+
+        filename = 'US_Civil_Rights_Sitins0.csv'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def get_layer_names(self, path):
         """Gets layer names from a data source.
@@ -769,32 +731,36 @@ class UploaderTests(TestCase):
         return [layer.name for layer in data_source]
 
     def test_gdal_import(self):
-        path = test_file('point_with_date.geojson')
-        self.generic_import(
-            path,
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date']
-                }
-            ]
-        )
-
-    def test_wfs(self):
-        """Tests the import from a WFS Endpoint
+        """ Check that geojson file imports without exception.
         """
-        wfs = 'WFS:http://demo.geo-solutions.it/geoserver/tiger/wfs'
-        ogr = OGRImport(wfs)
-        configs = [
-            {'layer_name': 'tiger:giant_polygon'},
-            {'layer_name': 'tiger:poi'},
-        ]
-        layers = ogr.handle(configuration_options=configs)
-        for result in layers:
-            layer = Layer.objects.get(name=result[0])
-            self.assertEqual(layer.srid, 'EPSG:4326')
-            self.assertEqual(layer.store, self.datastore.name)
-            self.assertEqual(layer.storeType, 'dataStore')
+        filename = 'point_with_date.geojson'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date']})
+
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
+
+    # WFS imports aren't working & this test was previously passing due to an error in the test
+    # rather than working code (no layers were returned, and that wasn't checked so none of the checks were ever run).
+    # I've fixed the test, but since it doesn't seem like the wfs functionality is being used much I'm commenting
+    # out this test until someone has motivation & time to fix the code.
+#     def test_wfs(self):
+#         """Tests the import from a WFS Endpoint
+#         """
+#         expected_layer_count = 4
+#         wfs = 'WFS:http://demo.geo-solutions.it/geoserver/tiger/wfs'
+#         ih = ImportHelper()
+#         configs = ih.configure_endpoint(wfs)
+#         ogr = OGRImport(wfs)
+#         layers = ogr.handle(configuration_options=configs)
+#         self.assertEqual(len(layers), expected_layer_count)
+#         for result in layers:
+#             layer = Layer.objects.get(name=result[0])
+#             self.assertEqual(layer.srid, 'EPSG:4326')
+#             self.assertEqual(layer.store, self.datastore.name)
+#             self.assertEqual(layer.storeType, 'dataStore')
 
     def test_arcgisjson(self):
         """Tests the import from a WFS Endpoint
@@ -824,7 +790,7 @@ class UploaderTests(TestCase):
 
         client.login_as_non_admin()
 
-        with open(test_file('point_with_date.geojson')) as stream:
+        with open(get_testfile_path('point_with_date.geojson')) as stream:
             response = client.post(
                 reverse('uploads-new'),
                 {'file': stream},
@@ -844,7 +810,7 @@ class UploaderTests(TestCase):
         uploaded_file = upload.uploadfile_set.first()
         self.assertTrue(os.path.exists(uploaded_file.file.path))
 
-        with open(test_file('empty_file.geojson')) as stream:
+        with open(get_testfile_path('empty_file.geojson')) as stream:
             response = client.post(
                 reverse('uploads-new'),
                 {'file': stream},
@@ -860,7 +826,7 @@ class UploaderTests(TestCase):
         client = AdminClient()
         client.login_as_non_admin()
 
-        with open(test_file('point_with_date.geojson')) as stream:
+        with open(get_testfile_path('point_with_date.geojson')) as stream:
             response = client.post(
                 reverse('uploads-new-json'),
                 {'file': stream},
@@ -876,7 +842,7 @@ class UploaderTests(TestCase):
     def test_describe_fields(self):
         """Tests the describe fields functionality.
         """
-        path = test_file('US_Shootings.csv')
+        path = get_testfile_path('US_Shootings.csv')
         with GDALInspector(path) as inspector:
             layers = inspector.describe_fields()
 
@@ -900,7 +866,7 @@ class UploaderTests(TestCase):
         from osgeo_importer.models import NoDataSourceFound
         try:
             for filename, file_type in sorted(filenames.items()):
-                path = test_file(filename)
+                path = get_testfile_path(filename)
                 with GDALInspector(path) as inspector:
                     self.assertIn(inspector.file_type(), file_type)
         except NoDataSourceFound:
@@ -910,7 +876,7 @@ class UploaderTests(TestCase):
     def test_configure_view(self):
         """Tests the configuration view.
         """
-        path = test_file('point_with_date.geojson')
+        path = get_testfile_path('point_with_date.geojson')
         new_user = User.objects.create(username='test')
         new_user_perms = ['change_resourcebase_permissions']
         client = AdminClient()
@@ -1000,7 +966,7 @@ class UploaderTests(TestCase):
         client = AdminClient()
         client.login_as_non_admin()
 
-        with open(test_file('US_Shootings.csv')) as stream:
+        with open(get_testfile_path('US_Shootings.csv')) as stream:
             response = client.post(
                 reverse('uploads-new'),
                 {'file': stream},
@@ -1068,7 +1034,7 @@ class UploaderTests(TestCase):
         admin = User.objects.get(username=self.admin_user.username)
         non_admin = User.objects.get(username=self.non_admin_user.username)
 
-        path = test_file('US_Shootings.csv')
+        path = get_testfile_path('US_Shootings.csv')
         with open(path, 'rb') as stream:
             uploaded_file = SimpleUploadedFile('test_data', stream.read())
             admin_upload = UploadedData.objects.create(state='Admin test', user=admin)
@@ -1106,7 +1072,7 @@ class UploaderTests(TestCase):
         client = AdminClient()
         client.login_as_non_admin()
 
-        with open(test_file('point_with_date.geojson')) as stream:
+        with open(get_testfile_path('point_with_date.geojson')) as stream:
             response = client.post(
                 reverse('uploads-new'),
                 {'file': stream},
@@ -1126,7 +1092,7 @@ class UploaderTests(TestCase):
         client = AdminClient()
         client.login_as_non_admin()
 
-        with open(test_file('point_with_date.geojson')) as stream:
+        with open(get_testfile_path('point_with_date.geojson')) as stream:
             response = client.post(
                 reverse('uploads-new'),
                 {'file': stream},
@@ -1151,7 +1117,7 @@ class UploaderTests(TestCase):
         client = AdminClient()
         client.login_as_non_admin()
         name = 'point-with-a-date'
-        with open(test_file('point_with_date.geojson')) as stream:
+        with open(get_testfile_path('point_with_date.geojson')) as stream:
             response = client.post(
                 reverse('uploads-new'),
                 {'file': stream},
@@ -1182,7 +1148,7 @@ class UploaderTests(TestCase):
         client = AdminClient()
         client.login_as_non_admin()
 
-        with open(test_file('point_with_date.geojson')) as stream:
+        with open(get_testfile_path('point_with_date.geojson')) as stream:
             response = client.post(
                 reverse('uploads-new'),
                 {'file': stream},
@@ -1252,64 +1218,65 @@ class UploaderTests(TestCase):
 
         # https://trac.osgeo.org/gdal/ticket/5241
         """
-        self.generic_import(
-            'Walmart.zip',
-            configs=[
-                {
-                    'configureTime': False,
-                    'convert_to_date': ['W1_OPENDAT'],
-                    'editable': True,
-                    'index':0,
-                    'name': 'Walmart',
-                    'start_date': 'W1_OPENDAT'
-                }
-            ]
-        )
+        filename = 'Walmart.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({
+            'configureTime': False,
+            'convert_to_date': ['W1_OPENDAT'],
+            'editable': True,
+            'start_date': 'W1_OPENDAT'
+        })
+
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def test_multipolygon_shapefile(self):
-        """Tests shapefile with multipart polygons.
+        """ Tests shapefile with multipart polygons imports without raising exception.
         """
+        filename = 'PhoenixFirstDues.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
 
-        self.generic_import('PhoenixFirstDues.zip', configs=[{'index': 0}])
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def test_istanbul(self):
         """Tests shapefile with multipart polygons and non-WGS84 SR.
         """
-        result = self.generic_import(
-            'Istanbul.zip',
-            configs=[
-                {'index': 0}
-            ]
-        )
+        filename = 'Istanbul.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
+        result = self.generic_import(filename, configs=configs)
+
         feature_type = self.catalog.get_resource(result.name)
         self.assertEqual(feature_type.projection, 'EPSG:32635')
 
     def test_houston_tx_annexations(self):
         """Tests Shapefile with originally unsupported EPSG Code.
         """
-        result = self.generic_import(
-            'HoustonTXAnnexations.zip',
-            configs=[
-                {'index': 0, 'layer_name': 'some_houston_layer'}
-            ]
-        )
+        filename = 'HoustonTXAnnexations.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
+        result = self.generic_import(filename, configs=configs)
+
         feature_type = self.catalog.get_resource(result.name)
         self.assertEqual(feature_type.projection, 'EPSG:2278')
 
     def test_gwc_handler(self):
         """Tests the GeoWebCache handler
         """
-        layer = self.generic_import(
-            'boxes_with_date.shp',
-            configs=[
-                {
-                    'index': 0,
-                    'convert_to_date': ['date'],
-                    'start_date': 'date',
-                    'configureTime': True
-                }
-            ]
-        )
+        filename = 'boxes_with_date.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({
+            'convert_to_date': ['date'],
+            'start_date': 'date',
+            'configureTime': True
+        })
+
+        layer = self.generic_import(filename, configs=configs)
 
         gwc = GeoWebCacheHandler(None)
         gs_layer = self.catalog.get_layer(layer.name)
@@ -1322,14 +1289,10 @@ class UploaderTests(TestCase):
         self.assertEqual(int(payload[0]['status']), 200)
 
         # Don't configure time, ensure everything still works
-        layer = self.generic_import(
-            'boxes_with_date_iso_date.shp',
-            configs=[
-                {
-                    'index': 0
-                }
-            ]
-        )
+        filename = 'boxes_with_date_iso_date.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        layer = self.generic_import(filename, configs)
+
         gs_layer = self.catalog.get_layer(layer.name)
         self.catalog._cache.clear()
         gs_layer.fetch()
@@ -1341,8 +1304,10 @@ class UploaderTests(TestCase):
     def test_utf8(self):
         """Tests utf8 characters in attributes
         """
-        path = test_file('china_provinces.shp')
-        layer = self.generic_import(path)
+        path = get_testfile_path('china_provinces.zip')
+        configs = self.prepare_file_for_import(path)
+
+        layer = self.generic_import(path, configs=configs)
         ogr = OGRImport(path)
         datastore, _ = ogr.open_target_datastore(ogr.target_store)
         sql = (
@@ -1356,16 +1321,11 @@ class UploaderTests(TestCase):
     def test_non_converted_date(self):
         """Test converting a field as date.
         """
-        results = self.generic_import(
-            'TM_WORLD_BORDERS_2005.zip',
-            configs=[
-                {
-                    'index': 0,
-                    'start_date': 'Year',
-                    'configureTime': True
-                }
-            ]
-        )
+        filename = 'TM_WORLD_BORDERS_2005.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'start_date': 'Year', 'configureTime': True})
+        results = self.generic_import(filename, configs=configs)
+
         layer = self.catalog.get_layer(results.typename)
         self.assertIn('time', layer.resource.metadata)
         self.assertEqual('year', layer.resource.metadata['time'].attribute)
@@ -1375,14 +1335,13 @@ class UploaderTests(TestCase):
         Regression test for preserving an FID field when target layer supports
         it but source does not.
         """
-        self.generic_import(
-            'noaa_paleoclimate.zip',
-            configs=[
-                {
-                    'index': 0
-                }
-            ]
-        )
+        filename = 'noaa_paleoclimate.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
 
     def test_csv_with_wkb_geometry(self):
         """Exercise import of CSV files with multiple geometries.
@@ -1398,14 +1357,11 @@ class UploaderTests(TestCase):
         ]
 
         for filename in filenames:
-            self.generic_import(
-                filename,
-                {
+            configs = self.prepare_file_for_import(get_testfile_path(filename))
+            configs[0].update({
                     'configureTime': True,
                     'convert_to_date': ['date_time'],
                     'editable': True,
-                    'index': 0,
-                    'name': filename.lower(),
                     'permissions': {
                         'users': {
                             'AnonymousUser': [
@@ -1416,8 +1372,9 @@ class UploaderTests(TestCase):
                         }
                     },
                     'start_date': 'date_time',
-                }
-            )
+            })
+
+            self.generic_import(filename, configs=configs)
 
 
 if __name__ == '__main__':

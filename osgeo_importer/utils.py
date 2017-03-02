@@ -415,15 +415,18 @@ class ImportHelper(object):
                 layer_basename = urlparse(endpoint_str).netloc.split('.')[0]
 
             layer_name = self.uniquish_layer_name(layer_basename)
+            internal_layer_name = layer_basename
             with db.transaction.atomic():
                 while UploadLayer.objects.filter(name=layer_name).exists():
                     layer_name = self.uniquish_layer_name(layer_basename)
 
-                UploadLayer.objects.create(
+                ul = UploadLayer.objects.create(
                     upload=ud,
-                    layer_name=layer_name
+                    internal_layer_name=internal_layer_name,
+                    layer_name=layer_name,
                 )
-
+                layer_conf.update({'upload_layer_id': ul.id})
+        return layer_configs
 
     def configure_upload(self, upload, files):
         """
@@ -482,8 +485,9 @@ class ImportHelper(object):
                         logger.error(msg)
                         layer_basename = os.path.basename(upfile.file.name)
 
-                    # Use underscores in place of dots to make layer names clearly differ from file paths.
-                    layer_basename = layer_basename.replace('.', '_')
+                    internal_layer_name = layer_basename
+                    # Use underscores in place of dots & spaces.
+                    layer_basename = re.sub('[. ]', '_', layer_basename)
 
                     layer_name = self.uniquish_layer_name(layer_basename)
                     with db.transaction.atomic():
@@ -493,6 +497,7 @@ class ImportHelper(object):
                         upload_layer = UploadLayer(
                                 upload_file=upfile,
                                 name=layer_name,
+                                internal_layer_name=internal_layer_name,
                                 layer_name=layer_name,
                                 layer_type=layer_desc['layer_type'],
                                 fields=layer_desc.get('fields', {}),

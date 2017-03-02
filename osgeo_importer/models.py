@@ -202,6 +202,7 @@ class UploadLayer(models.Model):
     upload = models.ForeignKey(UploadedData, null=True, blank=True)
     upload_file = models.ForeignKey(UploadFile, null=True, blank=True)
     index = models.IntegerField(default=0)
+    # *deprecated* name of the layer, sometimes other data
     name = models.CharField(max_length=64, null=True)
     fields = JSONField(null=True, default={})
     content_type = models.ForeignKey(ContentType, blank=True, null=True)
@@ -211,6 +212,9 @@ class UploadLayer(models.Model):
     import_status = models.CharField(max_length=15, blank=True, null=True)
     task_id = models.CharField(max_length=36, blank=True, null=True)
     feature_count = models.IntegerField(null=True, blank=True)
+    # Name of the layer as known in the file/package/endpoint it came from.
+    internal_layer_name = models.CharField(max_length=64, null=True)
+    # Geonode-wide unique name for layer.
     layer_name = models.CharField(max_length=64, null=True)
     layer_type = models.CharField(max_length=10, null=True)
 

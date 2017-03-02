@@ -16,8 +16,6 @@ from .utils import (
     FileTypeNotAllowed,
     GdalErrorHandler,
     load_handler,
-    launder,
-    increment,
     increment_filename,
     raster_import,
     decode,
@@ -252,7 +250,6 @@ class OGRImport(Import):
             logger.critical(msg)
             raise Exception(msg)
 
-
         # --- Resolve any disparity between automatically-assigned UploadLayer.layer_name and layer_name in
         # configuration options.
         # If layer_name is present in configuration_options either update UploadLayer.layer_name to match if it's unique
@@ -308,7 +305,7 @@ class OGRImport(Import):
                             and datastore_layer.get(lf) == layer_configuration.get(lf)):
                         # This update will overwrite the layer_name passed in configuration_options, stash the
                         #    intended name so we can correct it.
-                        msg = 'Will configure layer from file {} identifed by field {} with value {}'\
+                        msg = 'Will configure layer from file {} identifed by field "{}" with value {}'\
                                   .format(self.file, lf, layer_configuration[lf])
                         logger.info(msg)
                         intended_layer_name = layer_configuration.get('layer_name')
