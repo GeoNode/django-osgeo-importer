@@ -13,7 +13,7 @@ sphinx-autobuild
 Django==1.8.15
 
 # Install GeoNode latest master
--e git+https://github.com/GeoNode/geonode.git#egg=GeoNode
+-e git+https://github.com/GeoNode/geonode.git@2.6.x#egg=GeoNode
 
 awscli
 flake8
