@@ -1,24 +1,25 @@
 # gdal/ogr python bindings
-python-dateutil
-psycopg2
-numpy
+python-dateutil==1.5
+psycopg2==2.7.1
+numpy==1.8.2
 
 # Needed for testing.
-mock
+mock==2.0.0
 
 # Just for documentation generation
-sphinx
-sphinx-autobuild
+sphinx==1.5.3
+sphinx-autobuild==0.6.0
 
 Django==1.8.15
 
-# Install GeoNode latest master
--e git+https://github.com/GeoNode/geonode.git#egg=GeoNode
+# Install GeoNode tagged at version 2.5.15
+-e git+https://github.com/GeoNode/geonode.git@2.5.15#egg=GeoNode
 
-awscli
-flake8
-coverage
+awscli==1.11.63
+flake8==3.3.0
+coverage==4.3.4
 
-git+https://github.com/mapproxy/mapproxy.git@eeb162ee0604#egg=MapProxy==1.10.0a
+# This mapproxy commit includes support for dashes in geopackage table names.
+git+https://github.com/mapproxy/mapproxy.git@07552da8
 
 # You will also need gdal/ogr.  See Developer Notes section of docs.

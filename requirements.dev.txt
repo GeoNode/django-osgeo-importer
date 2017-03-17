@@ -1,14 +1,14 @@
 Django==1.8.15
-psycopg2
+psycopg2==2.7.1
 
-# Install GeoNode latest master
--e git+https://github.com/GeoNode/geonode.git#egg=GeoNode
+# Install GeoNode tagged at version 2.5.15
+-e git+https://github.com/GeoNode/geonode.git@2.5.15#egg=GeoNode
 
-awscli
-numpy
-python-dateutil
-flake8
-coverage
+awscli==1.11.63
+numpy==1.8.2
+python-dateutil==1.5
+flake8==3.3.0
+coverage==4.3.4
 
 # This mapproxy commit includes support for dashes in geopackage table names.
 git+https://github.com/mapproxy/mapproxy.git@07552da8
