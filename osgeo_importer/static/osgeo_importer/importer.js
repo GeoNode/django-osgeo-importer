@@ -41,6 +41,20 @@
       var dates = [];
       layer.configuration_options.convert_to_date = [];
 
+      if (layer.configuration_options.always_geogig == true) {
+          layer.configuration_options.geoserver_store = {'type': 'geogig'};
+
+          if (layer.configuration_options.editable == false) {
+              layer.configuration_options.permissions = {'users': {'AnonymousUser': ['download_resourcebase', 'view_resourcebase']}};
+          }
+      } else {
+          if (layer.configuration_options.editable === true) {
+              layer.configuration_options.geoserver_store = {'type': 'geogig'};
+          } else {
+              delete layer.configuration_options.geoserver_store;
+          }
+      }
+
       if (layer.configuration_options.editable === true) {
          layer.configuration_options.geoserver_store = {'type': 'geogig'};
       } else {
@@ -161,7 +175,7 @@
       $scope.animationsEnabled = true;
 
       // TODO: Refactor args into a config object.
-      $scope.open = function (layer, templateUrl, modalImage, staticUrl, appendTo, shapefile_link, csv_link) {
+      $scope.open = function (layer, templateUrl, modalImage, staticUrl, appendTo, shapefile_link, csv_link, always_geogig) {
 
         var modalInstance = $uibModal.open({
             animation: $scope.animationsEnabled,
@@ -186,6 +200,9 @@
                 },
                 csv_link: function () {
                     return csv_link;
+                },
+                always_geogig: function () {
+                  return always_geogig;
                 }
             }
         });
@@ -203,7 +220,7 @@
 
   })
 
-  .controller('WizardController', function ($scope, $modalInstance, layer, layerService, $interval, modalImage, staticUrl, appendTo, shapefile_link, csv_link) {
+  .controller('WizardController', function ($scope, $modalInstance, layer, layerService, $interval, modalImage, staticUrl, appendTo, shapefile_link, csv_link, always_geogig) {
       $scope.appendTo = appendTo;
       $scope.layer = layer;
       $scope.errors = false;
@@ -212,6 +229,7 @@
       $scope.staticUrl = staticUrl;
       $scope.shapefile_link = shapefile_link;
       $scope.csv_link = csv_link;
+      $scope.always_geogig = always_geogig;
       $scope.layerSet = ($scope.layer != null).toString();
       $scope.defaultPermissions = {'users':{'AnonymousUser':['change_layer_data', 'download_resourcebase', 'view_resourcebase']}};
       var stop;
@@ -227,7 +245,7 @@
         if ($scope.layer.configuration_options.permissions == null) {
             $scope.layer.configuration_options.permissions = $scope.defaultPermissions;
         }
-
+        $scope.layer.configuration_options.always_geogig = $scope.always_geogig;
         $scope.layer.configuration_options.editable = true;
       };
 
