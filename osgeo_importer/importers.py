@@ -113,7 +113,7 @@ class Import(object):
         layers = self.import_file(configuration_options=configuration_options)
 
         for layer, config in layers:
-            config['handler_results'] = self.run_import_handlers(layer, config)
+            config['handler_results'] = self.run_import_handlers(layer, config, **kwargs)
 
         return layers
 
