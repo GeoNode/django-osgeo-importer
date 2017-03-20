@@ -41,6 +41,6 @@ class TestGeoserverPublishHandler(SimpleTestCase):
         self.assertRaises(FailedRequestError, gs_catalog.get_store, ds_name)
 
         layer_config = {'geoserver_store': connection_string}
-        gph.get_or_create_datastore(layer_config)
+        gph.get_or_create_datastore(layer_config, None)
         ds2 = gs_catalog.get_store(ds_name)
         self.assertNotEqual(ds2, None)

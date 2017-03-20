@@ -61,7 +61,7 @@ except AttributeError:
 
 
 @app.task(base=RecordImportStateTask, soft_time_limit=import_task_soft_time_limit, bind=True)
-def import_object(self, upload_file_id, configuration_options=None, request_cookies=None):
+def import_object(self, upload_file_id, configuration_options=None, request_cookies=None, request_user=None):
     """
     Imports a file into GeoNode.
 
@@ -84,7 +84,7 @@ def import_object(self, upload_file_id, configuration_options=None, request_cook
     logger.info('Creating importer')
     gi = OSGEO_IMPORTER(upload_file.file.path, upload_file=upload_file)
     logger.info('Calling importer.handle()')
-    gi.handle(configuration_options=configuration_options, request_cookies=request_cookies)
+    gi.handle(configuration_options=configuration_options, request_cookies=request_cookies, request_user=request_user)
     return
 
 
