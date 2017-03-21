@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 from osgeo_importer.inspectors import OGRInspector, GDALInspector
 from osgeo_importer.utils import NoDataSourceFound
+import logging
 
 
 def check_inspector_open_bad_connection(test_case, InspectorClass):
@@ -11,8 +12,10 @@ def check_inspector_open_bad_connection(test_case, InspectorClass):
     inspector_invalid = InspectorClass(invalid_connection_string)
     inspector_nonexistent = InspectorClass(nonexistent_connection_string)
 
+    logging.disable(logging.ERROR)
     test_case.assertRaises(NoDataSourceFound, inspector_invalid.open)
     test_case.assertRaises(NoDataSourceFound, inspector_nonexistent.open)
+    logging.disable(logging.NOTSET)
 
 
 class TestOGRInspector(SimpleTestCase):

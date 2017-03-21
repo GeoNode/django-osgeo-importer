@@ -1,24 +1,45 @@
-import os
-from django.conf import settings
-from osgeo_importer.utils import NoDataSourceFound, load_handler
-from osgeo_importer.importers import VALID_EXTENSIONS
 import logging
+import os
+from zipfile import is_zipfile, ZipFile
+
+from django.conf import settings
+
+from osgeo_importer.importers import VALID_EXTENSIONS
+from osgeo_importer.utils import NoDataSourceFound, load_handler
+
 
 OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.OGRImport')
 
 logger = logging.getLogger(__name__)
 
 NONDATA_EXTENSIONS = ['shx', 'prj', 'dbf', 'xml', 'sld']
+IGNORE_EXTENSIONS = ['txt']
+
+ALL_OK_EXTENSIONS = set(VALID_EXTENSIONS) | set(NONDATA_EXTENSIONS) | set(IGNORE_EXTENSIONS)
 
 
-def validate_extension(filename):
-    filedir, file = os.path.split(filename)
-    base, extension = os.path.splitext(file)
+def valid_file(file):
+    """ Returns an empty list if file is valid, or a list of strings describing problems with the file.
+        @see VALID_EXTENSIONS, NONDATA_EXTENSIONS, IGNORE_EXTENSIONS
+    """
+    errors = []
+    basename = os.path.basename(file.name)
+    _, extension = os.path.splitext(basename)
     extension = extension.lstrip('.').lower()
-    if extension not in VALID_EXTENSIONS:
-        return False
-    else:
-        return True
+
+    if is_zipfile(file):
+        with ZipFile(file) as zip:
+            for content_name in zip.namelist():
+                content_file = zip.open(content_name)
+                content_errors = valid_file(content_file)
+                if not content_errors:
+                    errors.extend(content_errors)
+    elif extension not in ALL_OK_EXTENSIONS:
+        errors.append(
+            '{}: "{}" not found in VALID_EXTENSIONS, NONDATA_EXTENSIONS, IGNORE_EXTENSIONS'.format(basename, extension)
+        )
+
+    return errors
 
 
 def validate_shapefiles_have_all_parts(filenamelist):

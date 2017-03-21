@@ -1200,15 +1200,18 @@ class UploaderTests(ImportHelper, TestCase):
             upload = SimpleUploadedFile(filename, '')
             self.assertIsNone(validate_file_extension(upload))
 
+        logging.disable(logging.ERROR)
         with self.assertRaises(ValidationError):
             validate_file_extension(SimpleUploadedFile('test.txt', ''))
+        logging.disable(logging.NOTSET)
 
     def test_no_geom(self):
         """Test the file extension validator.
         """
-
+        logging.disable(logging.ERROR)
         with self.assertRaises(ValidationError):
             validate_inspector_can_read(SimpleUploadedFile('test.csv', 'test,loc\nyes,POINT(0,0)'))
+        logging.disable(logging.NOTSET)
 
         # This should pass (geom type is unknown)
         validate_inspector_can_read(SimpleUploadedFile('test.csv', 'test,WKT\nyes,POINT(0,0)'))
