@@ -150,10 +150,6 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
             if connection_string['type'] == 'geogig':
                 if request_user is not None:
                     username = request_user.username
-                    if request_user.first_name is not None and request_user.last_name is not None \
-                            and request_user.first_name != '' and request_user.last_name != '':
-                        username = request_user.first_name + ' ' + request_user.last_name
-
                     useremail = request_user.email
                     payload = make_geogig_rest_payload(username, useremail)
                 else:
@@ -181,7 +177,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         return s
 
-    def geogig_handler(self, store, layer, layer_config):
+    def geogig_handler(self, store, layer, layer_config, request_user):
         """
         Facilitates the workflow required to import data from PostGIS into GeoGIG via the GeoGIG-Geoserver
         REST interface.
@@ -196,6 +192,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         repo_url = self.catalog.service_url.replace('/rest', '/geogig/repos/{0}/'.format(repo))
         transaction_url = repo_url + 'beginTransaction.json'
         transaction = requests.get(transaction_url, **request_params)
+        author_name = request_user.username
+        author_email = request_user.email
 
         logger.debug("""response status_code {} \n
                         response headers {} \n
@@ -220,7 +218,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         if status == 'FINISHED':
             requests.get(repo_url + 'add.json', params={'transactionId': transaction_id}, **request_params)
-            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id}, **request_params)
+            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id, 'authorName': author_name, 'authorEmail': author_email},
+                         **request_params)
             requests.get(repo_url + 'endTransaction.json', params={'transactionId': transaction_id}, **request_params)
 
     @ensure_can_run
@@ -241,7 +240,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         store_type = getattr(store, 'type', None) or ''
         if store_type.lower() == 'geogig':
-            self.geogig_handler(store, layer, layer_config)
+            self.geogig_handler(store, layer, layer_config, request_user)
 
         return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config, request_user),
                                                 layer_config.get('srs', self.srs))
