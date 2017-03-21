@@ -218,8 +218,9 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         if status == 'FINISHED':
             requests.get(repo_url + 'add.json', params={'transactionId': transaction_id}, **request_params)
-            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id, 'authorName': author_name, 'authorEmail': author_email},
-                         **request_params)
+            requests.get(repo_url + 'commit.json', params={'transactionId': transaction_id,
+                                                           'authorName': author_name,
+                                                           'authorEmail': author_email}, **request_params)
             requests.get(repo_url + 'endTransaction.json', params={'transactionId': transaction_id}, **request_params)
 
     @ensure_can_run
