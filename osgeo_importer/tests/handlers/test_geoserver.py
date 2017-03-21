@@ -1,9 +1,13 @@
 # Needed to ignore 'geonode' name which appears in this package & grab the one we want.
 from __future__ import absolute_import
-from django.test import SimpleTestCase
+
 from geonode.geoserver.helpers import gs_catalog
-from osgeo_importer.handlers.geoserver import ensure_workspace_exists, GeoserverPublishHandler
+import logging
+
+from django.test import SimpleTestCase
 from geoserver.catalog import FailedRequestError
+
+from osgeo_importer.handlers.geoserver import ensure_workspace_exists, GeoserverPublishHandler
 
 
 class TestHandlerFunctions(SimpleTestCase):
@@ -38,7 +42,9 @@ class TestGeoserverPublishHandler(SimpleTestCase):
         connection_string = gph.get_default_store()
         ds_name = connection_string['name']
         # FailedRequestError indicates the data store couldn't be found
+        logging.disable(logging.ERROR)
         self.assertRaises(FailedRequestError, gs_catalog.get_store, ds_name)
+        logging.disable(logging.NOTSET)
 
         layer_config = {'geoserver_store': connection_string}
         gph.get_or_create_datastore(layer_config, None)

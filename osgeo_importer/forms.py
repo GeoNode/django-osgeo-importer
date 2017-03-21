@@ -1,11 +1,17 @@
-import os
-from django import forms
-from .models import UploadFile
-from .validators import validate_extension, validate_inspector_can_read, validate_shapefiles_have_all_parts
-from zipfile import is_zipfile, ZipFile
-import tempfile
 import logging
+import os
 import shutil
+import tempfile
+from zipfile import is_zipfile, ZipFile
+
+from django import forms
+
+from osgeo_importer.validators import valid_file, IGNORE_EXTENSIONS
+
+from .models import UploadFile
+from .validators import validate_inspector_can_read, validate_shapefiles_have_all_parts
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,41 +26,44 @@ class UploadFileForm(forms.Form):
         cleaned_data = super(UploadFileForm, self).clean()
         outputdir = tempfile.mkdtemp()
         files = self.files.getlist('file')
-        validfiles = []
+        # Files that need to be processed
+        process_files = []
 
         # Create list of all potentially valid files, exploding first level zip files
-        for file in files:
-            if not validate_extension(file.name):
-                self.add_error('file', 'Filetype not supported.')
+        for f in files:
+            errors = valid_file(f)
+            if errors != []:
+                self.add_error('file', ', '.join(errors))
                 continue
 
-            if is_zipfile(file):
-                with ZipFile(file) as zip:
+            if is_zipfile(f):
+                with ZipFile(f) as zip:
                     for zipname in zip.namelist():
-                        if not validate_extension(zipname):
-                            self.add_error('file', 'Filetype in zip not supported.')
-                            continue
-                        validfiles.append(zipname)
+                        if zipname not in IGNORE_EXTENSIONS:
+                            process_files.append(zipname)
             else:
-                validfiles.append(file.name)
+                process_files.append(f.name)
+
         # Make sure shapefiles have all their parts
-        if not validate_shapefiles_have_all_parts(validfiles):
+        if not validate_shapefiles_have_all_parts(process_files):
             self.add_error('file', 'Shapefiles must include .shp,.dbf,.shx,.prj')
-        # Unpack all zip files and create list of cleaned file objects
+
+        # Unpack all zip files and create list of cleaned file objects, excluding any with extensions in
+        #    IGNORE_EXTENSIONS
         cleaned_files = []
-        for file in files:
-            if file.name in validfiles:
-                with open(os.path.join(outputdir, file.name), 'w') as outfile:
-                    for chunk in file.chunks():
+        for f in files:
+            if f.name in process_files:
+                with open(os.path.join(outputdir, f.name), 'w') as outfile:
+                    for chunk in f.chunks():
                         outfile.write(chunk)
                 cleaned_files.append(outfile)
-            elif is_zipfile(file):
-                with ZipFile(file) as zip:
+            elif is_zipfile(f):
+                with ZipFile(f) as zip:
                     for zipfile in zip.namelist():
-                        if zipfile in validfiles:
-                            with zip.open(zipfile) as f:
+                        if zipfile in process_files:
+                            with zip.open(zipfile) as zf:
                                 with open(os.path.join(outputdir, zipfile), 'w') as outfile:
-                                    shutil.copyfileobj(f, outfile)
+                                    shutil.copyfileobj(zf, outfile)
                                     cleaned_files.append(outfile)
 
         # After moving files in place make sure they can be opened by inspector
