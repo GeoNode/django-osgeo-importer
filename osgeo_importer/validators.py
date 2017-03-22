@@ -13,7 +13,14 @@ OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.O
 logger = logging.getLogger(__name__)
 
 NONDATA_EXTENSIONS = ['shx', 'prj', 'dbf', 'xml', 'sld']
-IGNORE_EXTENSIONS = ['txt']
+IGNORE_EXTENSIONS = ['txt', 'qgs']
+
+# These are files to skip processing if they're found inside of a zip
+# Make sure these are all lowercase & note they will match any case,
+#    i.e. 'hi' will ignore 'hi', 'Hi', 'hI', 'HI'
+IGNORE_FILES = [
+    '__macosx', 'ds_store',  # added to OSX-generated zip files
+]
 
 ALL_OK_EXTENSIONS = set(VALID_EXTENSIONS) | set(NONDATA_EXTENSIONS) | set(IGNORE_EXTENSIONS)
 
