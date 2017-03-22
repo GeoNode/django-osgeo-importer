@@ -6,7 +6,7 @@ from zipfile import is_zipfile, ZipFile
 
 from django import forms
 
-from osgeo_importer.validators import valid_file, IGNORE_EXTENSIONS
+from osgeo_importer.validators import valid_file, IGNORE_EXTENSIONS, IGNORE_FILES
 
 from .models import UploadFile
 from .validators import validate_inspector_can_read, validate_shapefiles_have_all_parts
@@ -39,7 +39,9 @@ class UploadFileForm(forms.Form):
             if is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipname in zip.namelist():
-                        if zipname not in IGNORE_EXTENSIONS:
+                        _, zipext = os.path.splitext(os.path.basename(zipname))
+                        zipext = zipext.lstrip('.').lower()
+                        if zipext not in IGNORE_EXTENSIONS and zipname.lower() not in IGNORE_FILES:
                             process_files.append(zipname)
             else:
                 process_files.append(f.name)
