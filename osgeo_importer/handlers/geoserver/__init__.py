@@ -147,15 +147,16 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
             s = self.catalog.get_store(use_conn_str['name'])
         except FailedRequestError:
             # Couldn't get the store, try creating it.
-            if connection_string['type'] == 'geogig':
-                if request_user is not None:
-                    username = request_user.username
-                    useremail = request_user.email
-                    payload = make_geogig_rest_payload(username, useremail)
-                else:
-                    payload = make_geogig_rest_payload()
-                init_response = init_geogig_repo(payload, connection_string['name'])
-                headers, body = init_response
+            if connection_string is not None:
+                if connection_string['type'] == 'geogig':
+                    if request_user is not None:
+                        username = request_user.username
+                        useremail = request_user.email
+                        payload = make_geogig_rest_payload(username, useremail)
+                    else:
+                        payload = make_geogig_rest_payload()
+                    init_response = init_geogig_repo(payload, connection_string['name'])
+                    headers, body = init_response
             s = self.multiprocess_safe_create_store(self.catalog, use_conn_str, self.workspace)
 
         # Override with default store if a geogig store was requested but geogig isn't configured
