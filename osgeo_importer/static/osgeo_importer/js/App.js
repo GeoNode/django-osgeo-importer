@@ -94,7 +94,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var store = (0, _configureStore2.default)();
-	store.dispatch((0, _actions.setServerUrl)('http://192.168.56.153:8000'));
+	store.dispatch((0, _actions.setServerUrl)('http://importer.terranodo.io'));
 
 	var muiTheme = (0, _getMuiTheme2.default)({
 	  palette: {
