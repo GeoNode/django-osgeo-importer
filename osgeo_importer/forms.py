@@ -51,8 +51,8 @@ class UploadFileForm(forms.Form):
         if not validate_shapefiles_have_all_parts(process_files):
             self.add_error('file', 'Shapefiles must include .shp,.dbf,.shx,.prj')
 
-        # Unpack all zip files and create list of cleaned file objects, excluding any with extensions in
-        #    IGNORE_EXTENSIONS
+        # Unpack all zip files and create list of cleaned file objects, excluding any not in
+        #    VALID_EXTENSIONS
         cleaned_files = []
         for f in files:
             if f.name in process_files:

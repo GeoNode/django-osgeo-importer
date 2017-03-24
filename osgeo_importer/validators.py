@@ -19,7 +19,7 @@ ALL_OK_EXTENSIONS = set(VALID_EXTENSIONS) | set(NONDATA_EXTENSIONS)
 
 def valid_file(file):
     """ Returns an empty list if file is valid, or a list of strings describing problems with the file.
-        @see VALID_EXTENSIONS, NONDATA_EXTENSIONS, IGNORE_EXTENSIONS
+        @see VALID_EXTENSIONS, NONDATA_EXTENSIONS
     """
     errors = []
     basename = os.path.basename(file.name)
