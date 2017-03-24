@@ -29,6 +29,6 @@ class ValidatorTests(TestCase):
         with open(invalid_filepath, 'rb') as invalid_file:
             # The invalid file should return an error
             expected_errors = [
-                'example.pdf: "pdf" not found in VALID_EXTENSIONS, NONDATA_EXTENSIONS, IGNORE_EXTENSIONS'
+                'example.pdf: "pdf" not found in VALID_EXTENSIONS, NONDATA_EXTENSIONS'
             ]
             self.assertEqual(valid_file(invalid_file), expected_errors)
