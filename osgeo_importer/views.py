@@ -124,6 +124,10 @@ class UploadDataImportStatusView(View):
         return JsonResponse(import_status)
 
 
+class BulkImport(TemplateView):
+    template_name = 'osgeo_importer/bulk_import.html'
+
+
 class OneShotFileUploadView(ImportHelper, View):
     def post(self, request):
         if len(request.FILES) != 1:
