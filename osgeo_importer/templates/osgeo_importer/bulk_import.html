@@ -1,0 +1,23 @@
+{% extends "site_base.html" %}
+{% load i18n %}
+
+{% block head %}
+    {{ block.super }}
+{% endblock %}
+
+{% block extra_script %}
+    {% include 'osgeo_importer/_importer_scripts.html' %}
+    {% include 'osgeo_importer/_importer_styles.html' %}
+    {{ block.super }}
+{% endblock %}
+
+{% block body_outer %}
+
+<div class="page-header">
+  <h2 class="page-title">{% trans "Import files." %}</h2>
+</div>
+<div id="main"></div>
+
+<script type="text/javascript" src="/static/osgeo_importer/js/importer-client_0.0.1.js"></script>
+
+{% endblock %}
