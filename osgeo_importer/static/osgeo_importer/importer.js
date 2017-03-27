@@ -239,8 +239,10 @@
             return
         }
 
-        if ($scope.default_config !== null) {
+        if ($scope.default_config !== null && $scope.default_config !== undefined) {
           $scope.layer.configuration_options = $scope.default_config;
+        } else {
+          $scope.layer.configuration_options = {'always_geogig': true, 'configureTime': true, 'editable': true, 'convert_to_date': [], 'index': 0 };
         }
 
         if ($scope.layer.hasOwnProperty('name') && !($scope.layer.configuration_options.hasOwnProperty('name'))) {
