@@ -18,6 +18,10 @@
 </div>
 <div id="main"></div>
 
-<script type="text/javascript" src="/static/osgeo_importer/js/importer-client_0.0.1.js"></script>
+<script type="text/javascript" src="/static/osgeo_importer_client/js/osgeo_importer_client.min.js"></script>
+<script type="text/javascript">
+	var importer = new Importer('main', { server: '{{SITEURL}}'});
+	importer.view();
+</script>
 
 {% endblock %}
