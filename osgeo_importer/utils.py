@@ -1,6 +1,7 @@
 from cStringIO import StringIO
 import collections
 from datetime import datetime
+import errno
 import logging
 import os
 import re
@@ -126,6 +127,16 @@ class GdalErrorHandler(object):
 
 
 lastNum = re.compile(r'(?:[^\d]*(\d+)[^\d]*)+')
+
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
 def increment(s):

@@ -7,6 +7,7 @@ from zipfile import is_zipfile, ZipFile
 from django import forms
 
 from osgeo_importer.importers import VALID_EXTENSIONS
+from osgeo_importer.utils import mkdir_p
 from osgeo_importer.validators import valid_file
 
 from .models import UploadFile
@@ -65,6 +66,7 @@ class UploadFileForm(forms.Form):
                     for zipfile in zip.namelist():
                         if zipfile in process_files:
                             with zip.open(zipfile) as zf:
+                                mkdir_p(os.path.join(outputdir, os.path.dirname(zipfile)))
                                 with open(os.path.join(outputdir, zipfile), 'w') as outfile:
                                     shutil.copyfileobj(zf, outfile)
                                     cleaned_files.append(outfile)
