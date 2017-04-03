@@ -92,7 +92,12 @@ class UploadedLayerResource(ModelResource):
 
         uploaded_file = obj.upload_file
 
-        import_result = import_object.delay(uploaded_file.id, configuration_options=configuration_options)
+        import_result = import_object.delay(
+            uploaded_file.id,
+            configuration_options=configuration_options,
+            request_cookies=request.COOKIES,
+            request_user=request.user
+        )
 
         task_id = getattr(import_result, 'id', None)
         # The task id will be useless if no backend is configured or a non-persistent backend is used.

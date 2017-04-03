@@ -193,8 +193,13 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         repo_url = self.catalog.service_url.replace('/rest', '/geogig/repos/{0}/'.format(repo))
         transaction_url = repo_url + 'beginTransaction.json'
         transaction = requests.get(transaction_url, **request_params)
-        author_name = request_user.username
-        author_email = request_user.email
+
+        if request_user is not None:
+            author_name = request_user.username
+            author_email = request_user.email
+        else:
+            author_name = None
+            author_email = None
 
         logger.debug("""response status_code {} \n
                         response headers {} \n
