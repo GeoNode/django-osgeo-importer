@@ -1,6 +1,6 @@
 import os
 
-__version__ = (0, 1, 1, 'alpha', 3)
+__version__ = (0, 2, 0)
 
 os.environ.setdefault('PGCLIENTENCODING', 'UTF-8')
 os.environ.setdefault('SHAPE_ENCODING', 'UTF-8')
