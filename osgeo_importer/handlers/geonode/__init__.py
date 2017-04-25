@@ -65,15 +65,13 @@ class GeoNodePublishHandler(ImportHandlerMixin):
                     store_name = config_store_name
             filter = layer
 
-        layer_title = layer_config.get('name') or layer_config['featureType']['title']
         results = gs_slurp(workspace=self.workspace,
                            store=store_name,
                            filter=filter,
                            owner=owner,
                            # This is a create layer only change to permissions as currently create layer sends in a different layer_config
                            # than import layer does so we need to check for both.
-                           permissions=layer_config.get('permissions') or layer_config['featureType'].get('permissions'),
-                           layer_title=layer_title)
+                           permissions=layer_config.get('permissions') or layer_config['featureType'].get('permissions'))
 
         if self.importer.upload_file and results['layers'][0]['status'] == 'created':
             matched_layer = Layer.objects.get(name=results['layers'][0]['name'])
