@@ -67,7 +67,9 @@ class OGRInspector(InspectorMixin):
         self.data = ogr.Open(self.connection_string, 1)
 
         if self.data is None:
-            raise NoDataSourceFound
+            msg = 'ogr.Open() failed with connection string: "{}"'.format(self.connection_string)
+            logger.error(msg)
+            raise NoDataSourceFound(msg)
 
         return self.data
 
