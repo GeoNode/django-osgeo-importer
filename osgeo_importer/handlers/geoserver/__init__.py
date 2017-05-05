@@ -97,7 +97,6 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         return {
               'database': db_settings['NAME'],
               'passwd': db_settings['PASSWORD'],
-              'namespace': self.workspace_namespace_uri,
               'type': 'PostGIS',
               'dbtype': 'postgis',
               'host': db_settings['HOST'],

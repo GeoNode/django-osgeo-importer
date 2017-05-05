@@ -73,9 +73,18 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
 
     def convert_field_to_time(self, layer, field):
         d = db.connections[settings.OSGEO_DATASTORE].settings_dict
-        connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s'" % (d['NAME'], d['USER'],
+
+        schema = 'public'
+
+        if 'OPTIONS' in d and 'options' in d['OPTIONS']:
+            search_path = d['OPTIONS']['options'].split('=')[-1]
+            schema = map(str.strip, search_path.split(','))[0]
+
+        connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s' schemas=%s" % (
+                                                                                            d['NAME'], d['USER'],
                                                                                             d['PASSWORD'], d['HOST'],
-                                                                                            d['PORT'])
+                                                                                            d['PORT'],
+                                                                                            schema)
 
         with self.field_converter(connection_string) as datasource:
             return datasource.convert_field(layer, field)
