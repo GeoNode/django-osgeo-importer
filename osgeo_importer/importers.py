@@ -171,9 +171,18 @@ class OGRImport(Import):
 
         if target_store is None:
             d = db.connections[settings.OSGEO_DATASTORE].settings_dict
-            connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s'" % (d['NAME'], d['USER'],
+
+            schema = 'public'
+
+            if 'OPTIONS' in d and 'options' in d['OPTIONS']:
+                search_path = d['OPTIONS']['options'].split('=')[-1]
+                schema = map(str.strip, search_path.split(','))[0]
+
+            connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s' schemas=%s" % (
+                                                                                                d['NAME'], d['USER'],
                                                                                                 d['PASSWORD'],
-                                                                                                d['HOST'], d['PORT'])
+                                                                                                d['HOST'], d['PORT'],
+                                                                                                schema)
             self.target_store = connection_string
 
     def open_target_datastore(self, connection_string, *args, **kwargs):
