@@ -2,6 +2,7 @@ import logging
 from django import db
 from django.conf import settings
 from osgeo_importer.inspectors import OGRFieldConverter, BigDateOGRFieldConverter
+from osgeo_importer.utils import database_schema_name
 
 
 DEFAULT_IMPORT_HANDLERS = []
@@ -73,18 +74,11 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
 
     def convert_field_to_time(self, layer, field):
         d = db.connections[settings.OSGEO_DATASTORE].settings_dict
-
-        schema = 'public'
-
-        if 'OPTIONS' in d and 'options' in d['OPTIONS']:
-            search_path = d['OPTIONS']['options'].split('=')[-1]
-            schema = map(str.strip, search_path.split(','))[0]
-
         connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s' schemas=%s" % (
                                                                                             d['NAME'], d['USER'],
                                                                                             d['PASSWORD'], d['HOST'],
                                                                                             d['PORT'],
-                                                                                            schema)
+                                                                                            database_schema_name())
 
         with self.field_converter(connection_string) as datasource:
             return datasource.convert_field(layer, field)

@@ -621,3 +621,14 @@ def convert_wkt_to_epsg(wkt, epsg_directory=settings.PROJECTION_DIRECTORY, force
         msg = 'Could not find a valid projection.'
         logger.error(msg)
         raise Exception(msg)
+
+
+def database_schema_name():
+    db_settings = db.connections[settings.OSGEO_DATASTORE].settings_dict
+    schema = 'public'
+
+    if 'OPTIONS' in db_settings and 'options' in db_settings['OPTIONS']:
+        search_path = db_settings['OPTIONS']['options'].split('=')[-1]
+        schema = map(str.strip, search_path.split(','))[0]
+
+    return schema

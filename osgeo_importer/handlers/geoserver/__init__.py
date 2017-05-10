@@ -10,8 +10,8 @@ from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
 from geonode.upload.utils import make_geogig_rest_payload, init_geogig_repo
 from geoserver.support import DimensionInfo
-from osgeo_importer.utils import increment_filename
-
+from osgeo_importer.utils import increment_filename, database_schema_name
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +96,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         return {
               'database': db_settings['NAME'],
+              'schema': database_schema_name(),
               'passwd': db_settings['PASSWORD'],
               'type': 'PostGIS',
               'dbtype': 'postgis',
@@ -156,6 +157,10 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
                         payload = make_geogig_rest_payload()
                     init_response = init_geogig_repo(payload, connection_string['name'])
                     headers, body = init_response
+
+                    if self.geogig_version() >= 1.1:
+                        # Enable automatic spatial, time and elevation indexing for Geogig 1.1+
+                        use_conn_str['autoIndexing'] = 'true'
             s = self.multiprocess_safe_create_store(self.catalog, use_conn_str, self.workspace)
 
         # Override with default store if a geogig store was requested but geogig isn't configured
@@ -208,10 +213,18 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
                                 transaction.request.headers))
 
         transaction_id = transaction.json()['response']['Transaction']['ID']
-        params = self.get_default_store()
-        params['password'] = params['passwd']
-        params['table'] = layer
-        params['transactionId'] = transaction_id
+        default_params = self.get_default_store()
+
+        params = {
+          'host': default_params['host'],
+          'user': default_params['user'],
+          'password': default_params['passwd'],
+          'port': default_params['port'],
+          'database': default_params['database'],
+          'schema': default_params['schema'],
+          'table': layer,
+          'transactionId': transaction_id
+        }
 
         import_command = requests.get(repo_url + 'postgis/import.json', params=params, **request_params)
         task = import_command.json()['task']
@@ -250,6 +263,27 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config, request_user),
                                                 layer_config.get('srs', self.srs))
+
+    def geogig_version(self):
+        """
+        Will retrieve the geogig version from Geoserver. Defaults to 1.0.
+        """
+        version_url = "{}/about/manifest.json".format(self.catalog.service_url)
+        version = 1.0
+        try:
+            resp = requests.get(version_url, auth=(self.catalog.username, self.catalog.password))
+            for dep in resp.json()['about']['resource']:
+                if 'geogig-api' in dep['@name']:
+                    version = dep['Implementation-Version']
+                    break
+        except (TypeError, KeyError, requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError):
+            return 1.0
+
+        if isinstance(version, float):
+            return version
+        elif isinstance(version, basestring):
+            pattern = re.compile("\d+.\d+")
+            return float(pattern.search(version).group(0))
 
 
 class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
