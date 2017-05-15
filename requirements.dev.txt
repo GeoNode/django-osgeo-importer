@@ -1,8 +1,7 @@
 Django==1.8.15
 psycopg2==2.7.1
 
-# Install GeoNode tagged at version 2.5.15
--e git+https://github.com/GeoNode/geonode.git@2.5.15#egg=GeoNode
+GeoNode<=2.6c1, >=2.5.12
 
 awscli==1.11.63
 numpy==1.8.2
