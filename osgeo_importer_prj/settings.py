@@ -49,6 +49,8 @@ LOCAL_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
+MEDIA_ROOT = LOCAL_ROOT + "/uploaded"
+
 WSGI_APPLICATION = "osgeo_importer_prj.wsgi.application"
 
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'
