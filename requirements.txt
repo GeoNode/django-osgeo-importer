@@ -22,4 +22,4 @@ coverage==4.3.4
 git+https://github.com/mapproxy/mapproxy.git@07552da8
 
 # You will also need gdal/ogr.  See Developer Notes section of docs.
-django-osgeo-importer-client==0.0.4
+django-osgeo-importer-client==0.1.0
