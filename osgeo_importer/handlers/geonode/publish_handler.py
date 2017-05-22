@@ -30,6 +30,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
                 if feature_type and hasattr(feature_type, 'store'):
                     return feature_type.store.name
 
+        # The layer_config dictionary contains mostly unicode strings so we can't use hasattr here.
         if 'featureType' in layer_config:
             if 'store' in layer_config['featureType']:
                 if 'name' in layer_config['featureType']['store']:
