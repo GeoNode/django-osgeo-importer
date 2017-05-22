@@ -22,14 +22,18 @@ class GeoNodePublishHandler(ImportHandlerMixin):
 
     workspace = 'geonode'
 
-    @property
-    def store_name(self):
+    def store_name(self, layer_config):
         geoserver_publishers = self.importer.filter_handler_results('GeoserverPublishHandler')
 
         for result in geoserver_publishers:
             for key, feature_type in result.items():
                 if feature_type and hasattr(feature_type, 'store'):
                     return feature_type.store.name
+
+        if 'featureType' in layer_config:
+            if 'store' in layer_config['featureType']:
+                if 'name' in layer_config['featureType']['store']:
+                    return layer_config['featureType']['store']['name']
 
         return db.connections[settings.OSGEO_DATASTORE].settings_dict['NAME']
 
@@ -66,7 +70,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             fields = None
         elif layer_type == 'vector':
             layer_name = layer
-            store_name = self.store_name
+            store_name = self.store_name(layer_config)
             store_type = 'dataStore'
             fields = layer_config['fields']
         elif layer_type == 'tile':
