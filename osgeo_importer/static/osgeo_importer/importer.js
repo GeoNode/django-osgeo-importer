@@ -245,6 +245,10 @@
           $scope.layer.configuration_options = {'always_geogig': true, 'configureTime': true, 'editable': true, 'convert_to_date': [], 'index': 0 };
         }
 
+        if (($scope.appending()) === true) {
+            $scope.layer.configuration_options.appendTo = $scope.appendTo;
+        }
+
         if ($scope.layer.hasOwnProperty('name') && !($scope.layer.configuration_options.hasOwnProperty('name'))) {
             $scope.layer.configuration_options.name = $scope.layer.name;
         }
@@ -267,10 +271,6 @@
 
       $scope.setLayer = function(layer) {
         $scope.layer = layer;
-
-        if (($scope.appending()) === true) {
-            $scope.layer.configuration_options.appendTo = $scope.appendTo;
-        }
 
         $scope.setDefaults();
       };
