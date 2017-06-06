@@ -33,6 +33,12 @@ def valid_file(file):
                 content_errors = valid_file(content_file)
                 if not content_errors:
                     errors.extend(content_errors)
+    elif hasattr(file, '_size') and file._size < 10:
+        # Hackish way of making sure we don't process emptish files.
+        # We should instead pass the file to the reader and rescue
+        errors.append(
+            '{}: File is empty'.format(file.name)
+        )
     elif extension not in ALL_OK_EXTENSIONS:
         errors.append(
             '{}: "{}" not found in VALID_EXTENSIONS, NONDATA_EXTENSIONS'.format(basename, extension)
