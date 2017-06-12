@@ -41,6 +41,9 @@ class UploadFileForm(forms.Form):
             if is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipname in zip.namelist():
+                        # Skip mac directory sidecar
+                        if zipname == '__MACOSX/':
+                            continue
                         _, zipext = zipname.split(os.extsep, 1)
                         zipext = zipext.lstrip('.').lower()
                         if zipext in VALID_EXTENSIONS:
