@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
-import osgeo_importer
+import osgeo_importer.version
 
 with open('README.md') as f:
     readme = f.read()
 
 setup(
     name='django-osgeo-importer',
-    version='.'.join(str(i) for i in osgeo_importer.__version__),
+    version=osgeo_importer.version.get_version(),
     description='django-osgeo-importer is a reusable Django application for '
                 'inspecting geospatial data using GDAL/OGR and importing the '
                 'data into an application.',
