@@ -1,15 +1,21 @@
-Django==1.8.15
+# gdal/ogr python bindings
+python-dateutil==1.5
 psycopg2==2.7.1
+numpy==1.8.2
 
-GeoNode<=2.6c1, >=2.5.12
+# Needed for testing.
+mock==2.0.0
+
+# Just for documentation generation
+sphinx==1.5.3
+sphinx-autobuild==0.6.0
+
+Django==1.8.15
+
+GeoNode>=2.5.12
+
+django-tastypie>=0.12.2,<0.14
 
 awscli==1.11.63
-numpy==1.8.2
-python-dateutil==1.5
 flake8==3.3.0
 coverage==4.3.4
-
-# This mapproxy commit includes support for dashes in geopackage table names.
-git+https://github.com/mapproxy/mapproxy.git@07552da8
-
-# You will also need gdal/ogr.  See Developer Notes section of docs.
