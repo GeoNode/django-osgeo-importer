@@ -25,6 +25,7 @@ class UploadFileForm(forms.Form):
         fields = ['file']
 
     def clean(self):
+        # clean
         cleaned_data = super(UploadFileForm, self).clean()
         outputdir = tempfile.mkdtemp()
         files = self.files.getlist('file')
