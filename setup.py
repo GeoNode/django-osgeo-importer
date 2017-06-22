@@ -29,6 +29,13 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Framework :: Django :: 1.8',
     ],
+    install_requires=[
+        'django-tastypie>=0.12.2,<0.14',
+        'python-dateutil>=2.5.3,<2.7',
+        'numpy>=1.11.2,<1.12',
+        'geonode>=2.5.9,<2.6',
+        'Django>=1.8,<1.9',
+    ],
     include_package_data=True,
     zip_safe=False,
 )
