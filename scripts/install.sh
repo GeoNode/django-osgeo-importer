@@ -50,8 +50,8 @@ if [ -n "$1" ]
 fi
 
 # Python packages, requirements & additional development requirements
-pip install -r requirements.txt
 pip install -r requirements.dev.txt
+pip install -r requirements.txt
 
 sudo mkdir -p -m 777 importer-test-files
 aws --no-sign-request s3 sync s3://mapstory-data/importer-test-files/ importer-test-files
