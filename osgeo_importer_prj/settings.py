@@ -94,9 +94,30 @@ DATABASES = {
         'NAME': 'osgeo_importer_test',
         'USER' : 'osgeo',
         'PASSWORD' : 'osgeo',
-        'HOST' : 'localhost',
+        'HOST' : 'postgres',
         'PORT' : '5432',
      }
+}
+
+# OGC (WMS/WFS/WCS) Server Settings
+OGC_SERVER = {
+    'default' : {
+        'BACKEND' : 'geonode.geoserver',
+        'LOCATION' : 'http://geoserver:8080/geoserver/',
+        'LOGIN_ENDPOINT': 'j_spring_oauth2_geonode_login',
+        'LOGOUT_ENDPOINT': 'j_spring_oauth2_geonode_logout',
+        'PUBLIC_LOCATION' : 'http://geoserver:8080/geoserver/',
+        'USER' : 'admin',
+        'PASSWORD' : 'geoserver',
+        'MAPFISH_PRINT_ENABLED' : True,
+        'PRINT_NG_ENABLED' : True,
+        'GEONODE_SECURITY_ENABLED' : True,
+        'GEOGIG_ENABLED' : False,
+        'WMST_ENABLED' : False,
+        # Set to name of database in DATABASES dictionary to enable
+        'DATASTORE': 'datastore',
+
+    }
 }
 
 OSGEO_DATASTORE = 'datastore'
