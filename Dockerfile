@@ -1,7 +1,23 @@
-FROM mapstory/python-gdal
+FROM python:2.7
+
+ENV TMP /tmp
+ENV GDAL_VERSION 2.1.3
 
 RUN mkdir /app
 WORKDIR /app
+
+### Build and install GDAL
+RUN set -ex \
+    && wget -qP $TMP http://download.osgeo.org/gdal/$GDAL_VERSION/gdal-$GDAL_VERSION.tar.gz \
+    && tar -xf $TMP/gdal-$GDAL_VERSION.tar.gz -C $TMP \
+    && cd $TMP/gdal-$GDAL_VERSION \
+    && ./configure --with-python \
+    && make \
+    && make install \
+    && ldconfig \
+    && cd .. \
+    && rm -r gdal* \
+    && pip install --no-cache-dir GDAL==$GDAL_VERSION
 
 # Install misc libs
 RUN apt-get update \
