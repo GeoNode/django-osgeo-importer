@@ -1,14 +1,17 @@
 version: '3'
 services:
-  web:
+  django:
     build: .
+    depends_on:
+      - postgres
     command: python manage.py runserver 0.0.0.0:8000
     networks:
       backend:
     ports:
       - "8000:8000"
-    depends_on:
-      - postgres
+    volumes:
+     - '.:/app'
+
   postgres:
     image: mdillon/postgis:9.3
     environment:
