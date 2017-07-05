@@ -1,5 +1,5 @@
 # Provides this geoserver image with 'localhost' remapped to the host machine so db requests are made to host port 5432.
-from winsent/geoserver:2.9.2
+FROM winsent/geoserver:2.11.0
 
 ENV TERM=linux
 
