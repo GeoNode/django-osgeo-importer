@@ -34,12 +34,9 @@ officially supported formats.
 
 ## Running test cases.
 
-Requires [Vagrant](http://vagrantup.com).
-
 ```shell
-vagrant up
-vagrant ssh
-python /vagrant/manage.py test osgeo_importer
+docker-compose up --build
+docker exec -it djangoosgeoimporter_django_1 python manage.py test osgeo_importer
 ```
 
 ## Frontend
