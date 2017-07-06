@@ -1,11 +1,25 @@
-version: '2'
+version: '3'
 services:
+  django:
+    build: .
+    depends_on:
+      - postgres
+    command: python manage.py runserver 0.0.0.0:8000
+    networks:
+      backend:
+    ports:
+      - "8000:8000"
+    volumes:
+     - '.:/app'
+
   postgres:
     image: mdillon/postgis:9.3
     environment:
      - POSTGRES_USER=osgeo
      - POSTGRES_PASSWORD=osgeo
      - POSTGRES_DB=osgeo_importer_test
+    networks:
+      backend:
     ports:
      - "5432:5432"
     expose:
@@ -13,7 +27,14 @@ services:
   geoserver:
     build: "geoserver/"
     image: "geoserver-host-postgres:2.9.2"
+    networks:
+      backend:
     ports:
      - "8080:8080"
+    expose:
+     - "8080"
     links:
      - postgres
+
+networks:
+  backend:

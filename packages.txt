@@ -10,7 +10,6 @@ python-pyproj
 python-shapely
 python-nose
 python-httplib2
-python-httplib2
 gettext git
 python-pip
 build-essential
