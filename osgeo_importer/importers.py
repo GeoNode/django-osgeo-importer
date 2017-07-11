@@ -20,6 +20,7 @@ from .utils import (
     raster_import,
     decode,
     convert_wkt_to_epsg,
+    reproject_coordinate_system,
     database_schema_name
 )  # noqa: F401
 
@@ -362,7 +363,18 @@ class OGRImport(Import):
                 if srs.AutoIdentifyEPSG() == 0:
                     layer_options['srs'] = '{0}:{1}'.format(srs.GetAuthorityName(None), srs.GetAuthorityCode(None))
                 else:
-                    layer_options['srs'] = convert_wkt_to_epsg(srs.ExportToWkt())
+                    # layer_options['srs'] = convert_wkt_to_epsg(srs.ExportToWkt())
+                    layer_ids = []
+                    for configuration_option in configuration_options:
+                        layer_ids = [configuration_option['upload_layer_id']]
+                    layer_id = layer_ids[0]
+                    layer_path = '{}/{}'.format(UPLOAD_DIR, layer_id)
+                    original_layer_name = layer.GetName()
+                    layer_options['srs'] = reproject_coordinate_system(original_layer_name, layer_name, layer, layer_path)
+                    data, inspector = self.open_source_datastore(filename, *args, **kwargs)
+                    target_file, _ = self.open_target_datastore(self.target_store)
+                    layer = data.GetLayer(layer_options.get('index'))
+                    srs = layer.GetSpatialRef()
 
                 logger.info('Creating dataset "{}" from file "{}"'.format(layer_name, target_file))
                 target_layer = self.create_target_dataset(target_file, str(layer_name), srs, layer_type,
