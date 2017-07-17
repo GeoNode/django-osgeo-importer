@@ -625,6 +625,17 @@ def convert_wkt_to_epsg(wkt, epsg_directory=settings.PROJECTION_DIRECTORY, force
 
 def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, layer_path):
 
+    def get_geometry_type(geometry_name):
+        switcher = {
+            "POINT": ogr.wkbPoint,
+            "MULTIPOINT": ogr.wkbMultiPoint,
+            "LINESTRING": ogr.wkbLineString,
+            "MULTILINESTRING": ogr.wkbMultiLineString,
+            "POLYGON": ogr.wkbPolygon,
+            "MULTIPOLYGON": ogr.wkbMultiPolygon
+        }
+        return switcher.get(geometry_name)
+
     shp_driver = ogr.GetDriverByName('ESRI Shapefile')
 
     # input SpatialReference
@@ -648,7 +659,10 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     output_shp_dataset = shp_driver.CreateDataSource(output_shp_file)
 
     # create a new layer in output Shapefile and define its geometry type
-    output_shp_layer = output_shp_dataset.CreateLayer('{}_4326'.format(layer_name), geom_type=ogr.wkbMultiPolygon)
+    feature = in_shp_layer.GetNextFeature()
+    geometry = feature.GetGeometryRef()
+    geometry_type = get_geometry_type(geometry.GetGeometryName())
+    output_shp_layer = output_shp_dataset.CreateLayer('{}_4326'.format(layer_name), output_srs, geometry_type)
 
     # add fields to the new output Shapefile
     # get list of attribute fields
@@ -695,13 +709,11 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     for file_name in os.listdir(layer_path):
         if os.path.splitext(file_name)[0] == original_layer_name:
             os.remove(os.path.join(layer_path, file_name))
-            print 'Removed {}'.format(file_name)
 
     for file_name in os.listdir(layer_path):
         if os.path.splitext(file_name)[0] == '{}_reproj'.format(layer_name):
             extension = os.path.splitext(file_name)[1][1:].strip().lower()
             os.rename(os.path.join(layer_path, file_name), os.path.join(layer_path, '{}.{}'.format(original_layer_name, extension)))
-            print 'Renaming {} to {}'.format(file_name, original_layer_name)
 
     return '{0}:{1}'.format(output_srs.GetAuthorityName(None), output_srs.GetAuthorityCode(None))
 

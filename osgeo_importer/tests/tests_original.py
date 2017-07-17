@@ -1266,7 +1266,7 @@ class UploaderTests(ImportHelper, TestCase):
         result = self.generic_import(filename, configs=configs)
 
         feature_type = self.catalog.get_resource(result.name)
-        self.assertEqual(feature_type.projection, 'EPSG:2278')
+        self.assertEqual(feature_type.projection, 'EPSG:4326')
 
     def test_gwc_handler(self):
         """Tests the GeoWebCache handler
