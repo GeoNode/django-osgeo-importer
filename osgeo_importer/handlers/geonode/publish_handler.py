@@ -10,6 +10,7 @@ from osgeo_importer.models import UploadLayer
 from geonode.layers.models import Layer
 from backward_compatibility import set_attributes
 from django.contrib.auth import get_user_model
+from geonode.base.models import TopicCategory
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -105,6 +106,13 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             'owner': owner,
             'uuid': layer_uuid,
         }
+        
+        if 'category' in layer_config:
+            try:
+                category = TopicCategory.objects.get(id=layer_config.get('category'))
+                new_layer_kwargs.update({'category': category})
+            except TopicCategory.DoesNotExist:
+                logger.warn('TopicCategory "{}" not found.'.format(layer_config['category']))
 
         new_layer, created = Layer.objects.get_or_create(**new_layer_kwargs)
         layer_config['geonode_layer_id'] = new_layer.id
