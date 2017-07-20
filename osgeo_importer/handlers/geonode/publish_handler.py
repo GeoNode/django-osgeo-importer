@@ -92,8 +92,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             logger.critical(msg)
             raise Exception(msg)
 
-        workspace_name = self.workspace
-        typename = '{}:{}'.format(workspace_name.encode('utf-8'), layer_name.encode('utf-8'))
+        typename = '{}'.format(layer_name.encode('utf-8'))
 
         new_layer_kwargs = {
             'name': layer_name,
