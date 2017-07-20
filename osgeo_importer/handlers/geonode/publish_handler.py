@@ -72,11 +72,13 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         layer_uuid = str(uuid.uuid4())
         if layer_type == 'raster':
             layer_name = os.path.splitext(os.path.basename(layer))[0]
+            layer_title = layer_config.get('layer_name', layer)
             store_name = layer_name
             store_type = 'coverageStore'
             fields = None
         elif layer_type == 'vector':
             layer_name = layer
+            layer_title = layer_config.get('layer_name', layer)
             store_name = self.store_name(layer_config)
             store_type = 'dataStore'
             fields = layer_config['fields']
@@ -84,6 +86,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             if 'layer_name' not in layer_config:
                 logger.warn('No layer name set, using uuid "{}" as layer name.'.format(layer_uuid))
             layer_name = layer_config.get('layer_name', layer_uuid)
+            layer_title = layer_config.get('layer_name', layer)
             store_name = layer_config['path']
             store_type = 'tileStore'
             fields = None
@@ -101,7 +104,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             'store': store_name,
             'storeType': store_type,
             'typename': typename,
-            'title': layer_name,
+            'title': layer_title,
             "abstract": layer_abstract,
             'owner': owner,
             'uuid': layer_uuid,
