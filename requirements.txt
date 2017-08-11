@@ -3,3 +3,6 @@ git+https://github.com/mapproxy/mapproxy.git@07552da8
 
 # You will also need gdal/ogr.  See Developer Notes section of docs.
 django-osgeo-importer-client==0.0.4
+
+# Require an earlier version of django-activity-stream as the latest breaks.
+django-activity-stream==0.6.1
