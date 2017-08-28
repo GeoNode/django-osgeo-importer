@@ -90,16 +90,22 @@
     this.configureUpload = function(layer) {
       var deferredResponse = q_.defer();
       this.validateConfigurationOptions(layer);
-      httpService_.post(layer.resource_uri + 'configure/', layer.configuration_options).success(function(data, status) {
-        // extend current object with get request to resource_uri
-        deferredResponse.resolve(layerService_.update(layer));
-      }).error(function(data, status) {
-          var error = 'Error configuring layer.';
-          if (data.hasOwnProperty('error_message')) {
-              error = data.error_message;
+      httpService_.post(layer.resource_uri + 'configure/', layer.configuration_options)
+        .then(
+          /* success */
+          function(response, status) {
+            // extend current object with get request to resource_uri
+            deferredResponse.resolve(layerService_.update(layer));
+          },
+          /* failure */
+          function(response, status) {
+            var error = 'Error configuring layer.';
+            if (response.data.hasOwnProperty('error_message')) {
+                error = response.data.error_message;
+            }
+            deferredResponse.reject(error, response.data, status);
           }
-          deferredResponse.reject(error, data, status);
-        });
+        );
       return deferredResponse.promise;
     };
 
@@ -121,8 +127,8 @@
 
     this.update = function(layer) {
       var deferredResponse = q_.defer();
-      httpService_.get(layer.resource_uri).success(function(data, status) {
-            deferredResponse.resolve(angular.extend(layer, data));
+      httpService_.get(layer.resource_uri).then(function(response, status) {
+            deferredResponse.resolve(angular.extend(layer, response.data));
         });
       return deferredResponse.promise;
     };
@@ -415,16 +421,21 @@
                       return;
                   }
                   scope.showImportWaiting = true;
-                  $http.get('/uploads/fields/' + scope.upload.id, {}).success(function(data, status) {
-                      scope.layers = data;
+                  $http.get('/uploads/fields/' + scope.upload.id, {})
+                  .then(
+                    /* success */
+                    function(response, status) {
+                      scope.layers = response.data;
                       scope.showImportWaiting = false;
                       scope.canGetFields = false;
-
-                }).error(function(data, status) {
-                   scope.showImportWaiting = false;
-                   scope.configuring = false;
-                   scope.hasError = true;
-                  });
+                    },
+                    /* failure */
+                    function(response, status) {
+                      scope.showImportWaiting = false;
+                      scope.configuring = false;
+                      scope.hasError = true;
+                    }
+                  );
               };
 
           }
@@ -508,9 +519,9 @@
               };
 
               function update(){
-                  $http.get(scope.layer.resource_uri).success(function(data, status) {
-                        console.log(scope.layer, data);
-                        scope.layer = angular.extend(scope.layer, data);
+                  $http.get(scope.layer.resource_uri).then(function(response, status) {
+                       console.log(scope.layer, response.data);
+                        scope.layer = angular.extend(scope.layer, response.data);
 
                         if (scope.processing() !== false) {
                             setTimeout(function() {
@@ -526,14 +537,20 @@
                   alert('what');
                   scope.configuring = true;
                   validateImportOptions();
-                  $http.post(scope.layer.resource_uri + 'configure/', scope.layer.configuration_options).success(function(data, status) {
-                    // extend current object with get request to resource_uri
-                    console.log('configuration started');
-                    update();
-                }).error(function(data, status) {
-                   scope.configuring = false;
-                   scope.hasError = true;
-                  });
+                  $http.post(scope.layer.resource_uri + 'configure/', scope.layer.configuration_options)
+                    .then(
+                      /* success */
+                      function(response, status) {
+                       // extend current object with get request to resource_uri
+                        console.log('configuration started');
+                        update();
+                      },
+                      /* failure */
+                      function(response, status) {
+                        scope.configuring = false;
+                        scope.hasError = true;
+                      }
+                    );
               }
           }
         };
