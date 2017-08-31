@@ -93,19 +93,18 @@
       httpService_.post(layer.resource_uri + 'configure/', layer.configuration_options)
         .then(
           /* success */
-          function(response, status) {
+          function(response) {
             // extend current object with get request to resource_uri
             deferredResponse.resolve(layerService_.update(layer));
           },
           /* failure */
-          function(response, status) {
+          function(response) {
             var error = 'Error configuring layer.';
             if (response.data.hasOwnProperty('error_message')) {
                 error = response.data.error_message;
             }
-            deferredResponse.reject(error, response.data, status);
-          }
-        );
+            deferredResponse.reject(error, response.data);
+          })
       return deferredResponse.promise;
     };
 
@@ -127,7 +126,9 @@
 
     this.update = function(layer) {
       var deferredResponse = q_.defer();
-      httpService_.get(layer.resource_uri).then(function(response, status) {
+      httpService_.get(layer.resource_uri)
+        .then(
+          function(response) {
             deferredResponse.resolve(angular.extend(layer, response.data));
         });
       return deferredResponse.promise;
@@ -424,13 +425,13 @@
                   $http.get('/uploads/fields/' + scope.upload.id, {})
                   .then(
                     /* success */
-                    function(response, status) {
+                    function(response) {
                       scope.layers = response.data;
                       scope.showImportWaiting = false;
                       scope.canGetFields = false;
                     },
                     /* failure */
-                    function(response, status) {
+                    function(response) {
                       scope.showImportWaiting = false;
                       scope.configuring = false;
                       scope.hasError = true;
@@ -519,8 +520,10 @@
               };
 
               function update(){
-                  $http.get(scope.layer.resource_uri).then(function(response, status) {
-                       console.log(scope.layer, response.data);
+                  $http.get(scope.layer.resource_uri)
+                    .then(
+                      /* success */
+                      function(response) {
                         scope.layer = angular.extend(scope.layer, response.data);
 
                         if (scope.processing() !== false) {
@@ -540,13 +543,13 @@
                   $http.post(scope.layer.resource_uri + 'configure/', scope.layer.configuration_options)
                     .then(
                       /* success */
-                      function(response, status) {
+                      function(response) {
                        // extend current object with get request to resource_uri
                         console.log('configuration started');
                         update();
                       },
                       /* failure */
-                      function(response, status) {
+                      function(response) {
                         scope.configuring = false;
                         scope.hasError = true;
                       }
