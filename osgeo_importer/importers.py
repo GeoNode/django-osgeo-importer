@@ -368,7 +368,7 @@ class OGRImport(Import):
                     for configuration_option in configuration_options:
                         layer_ids = [configuration_option['upload_layer_id']]
                     layer_id = layer_ids[0]
-                    layer_path = '{}/{}'.format(UPLOAD_DIR, layer_id)
+                    layer_path = os.path.dirname(filename)
                     original_layer_name = layer.GetName()
                     layer_options['srs'] = reproject_coordinate_system(original_layer_name, layer_name, layer, layer_path)
                     data, inspector = self.open_source_datastore(filename, *args, **kwargs)
