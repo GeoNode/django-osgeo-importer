@@ -308,7 +308,7 @@ class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
         ensure_workspace_exists(self.catalog, self.workspace_name, self.workspace_namespace_uri)
         workspace = self.catalog.get_workspace(self.workspace_name)
 
-        return self.catalog.create_coveragestore(name, layer, workspace, False)
+        return self.catalog._create_coveragestore(name, "file:{}".format(layer), workspace, False, True)
 
 
 class GeoWebCacheHandler(GeoserverHandlerMixin):

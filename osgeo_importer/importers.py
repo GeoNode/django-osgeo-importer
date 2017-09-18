@@ -193,6 +193,20 @@ class OGRImport(Import):
         """
         return target_datastore.CreateLayer(layer_name, *args, **kwargs)
 
+    def get_features_geometry_types(self, layer, type='id'):
+        """
+        Returns a list of distinct geometry types in a layer.
+        """
+        geom_types = []
+        if type == 'name':
+            [geom_types.append(f.geometry().GetGeometryName()) for f in layer]
+        else:
+            [geom_types.append(f.geometry().GetGeometryType()) for f in layer]
+
+        geom_types = list(set(geom_types))
+        layer.ResetReading()
+        return geom_types
+
     def get_layer_type(self, layer, source):
         """
         A hook for returning the GeometryType of a layer.
@@ -207,18 +221,21 @@ class OGRImport(Import):
         driver = source.GetDriver().LongName
 
         if driver == 'ESRI Shapefile':
-            geom_type = layer.GetGeomType()
+            geom_types = self.get_features_geometry_types(layer)
 
-            # If point return MultiPoint
-            if geom_type == 1:
+            # If both a Point and MultiPoint, return MultiPoint
+            if 1 in geom_types and 4 in geom_types:
+                logger.warn("Found Point and MultiPoint geometry types in shapefile, using MultiPoint")
                 return 4
 
-            # If LineString return MultiLineString
-            if geom_type == 2:
+            # If both a LineString and MultiLineString, return MultiLineString
+            if 2 in geom_types and 5 in geom_types:
+                logger.warn("Found LineString and MultiLineString geometry types in shapefile, using MultiLineString")
                 return 5
 
-            # if Polygon return MutliPolygon
-            if geom_type == 3:
+            # If both a Polygon and MutliPolygon, return MutliPolygon
+            if 3 in geom_types and 6 in geom_types:
+                logger.warn("Found Polygon and MutliPolygon geometry types in shapefile, using MutliPolygon")
                 return 6
 
         return layer.GetGeomType()
@@ -336,7 +353,7 @@ class OGRImport(Import):
                 """
                 #  Increment filename to make sure target doesn't exists
                 filedir, filebase = os.path.split(filename)
-                outfile = '%s.tif' % os.path.splitext(filebase)[0]
+                outfile = "{}/{}.tif".format(filedir, layer_options['layer_name'].lower())
                 fileout = increment_filename(os.path.join(RASTER_FILES, outfile))
                 raster_import(layer_options['path'], fileout)
                 self.completed_layers.append([fileout, layer_options])
@@ -351,7 +368,7 @@ class OGRImport(Import):
                 layer_options['modified_fields'] = {}
                 layer = data.GetLayer(layer_options.get('index'))
                 layer_name = layer_options['layer_name']
-                layer_type = self.get_layer_type(layer, data)
+                layer_geom_type = self.get_layer_type(layer, data)
                 srs = layer.GetSpatialRef()
 
                 # default the layer to 4326 if a spatial reference is not provided
@@ -377,7 +394,7 @@ class OGRImport(Import):
                     srs = layer.GetSpatialRef()
 
                 logger.info('Creating dataset "{}" from file "{}"'.format(layer_name, target_file))
-                target_layer = self.create_target_dataset(target_file, str(layer_name), srs, layer_type,
+                target_layer = self.create_target_dataset(target_file, str(layer_name), srs, layer_geom_type,
                                                           options=target_create_options)
 
                 # adding fields to new layer
@@ -418,13 +435,12 @@ class OGRImport(Import):
                         if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
                                 target_layer.GetGeomType() in range(4, 7):
 
-                            conversion_function = ogr.ForceToMultiPolygon
-
                             if target_layer.GetGeomType() == 5:
                                 conversion_function = ogr.ForceToMultiLineString
-
                             elif target_layer.GetGeomType() == 4:
                                 conversion_function = ogr.ForceToMultiPoint
+                            else:
+                                conversion_function = ogr.ForceToMultiPolygon
 
                             geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
                             feature.SetGeometry(conversion_function(geom))
