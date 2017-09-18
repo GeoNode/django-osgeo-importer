@@ -239,15 +239,20 @@ def increment_filename(filename):
 
 
 def raster_import(infile, outfile, *args, **kwargs):
-
     if os.path.exists(outfile):
         raise FileExists
 
-    options = get_kwarg('options', kwargs, ['TILED=YES'])
+    options = get_kwarg('options', kwargs, ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=4'])
+    gdal.SetCacheMax = 524288000
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)
     t_srs_prj = sr.ExportToWkt()
     build_overviews = get_kwarg('build_overviews', kwargs, True)
+
+    # gdal.WarpOptions(
+    #     multithread=True,
+    #     warpMemoryLimit=524288000
+    # )
 
     geotiff = gdal.GetDriverByName("GTiff")
     if geotiff is None:
@@ -262,12 +267,23 @@ def raster_import(infile, outfile, *args, **kwargs):
 
     vrt = gdal.AutoCreateWarpedVRT(indata, None, t_srs_prj, 0, .125)
     outdata = geotiff.CreateCopy(outfile, vrt, 0, options)
+    outdata = None
+    indata = None
 
     if build_overviews:
-        outdata.BuildOverviews("AVERAGE")
+        overviews_levels = get_kwarg('overviews_levels', kwargs, [2, 4, 8, 16, 32])
+        overviews_resampling = get_kwarg('overviews_resampling', kwargs, 'AVERAGE')
+        overviews_options = get_kwarg('overviews_options', kwargs, ['COMPRESS_OVERVIEW=LZW'])
+
+        for opt in overviews_options:
+            key, value = opt.split('=')
+            gdal.SetConfigOption(key, value)
+
+        ds = gdal.Open(outfile)
+        ds.BuildOverviews(overviews_resampling, overviews_levels)
+        ds = None
 
     return outfile
-
 
 def quote_ident(str):
     conn = db.connections[settings.OSGEO_DATASTORE]
@@ -663,6 +679,7 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     geometry = feature.GetGeometryRef()
     geometry_type = get_geometry_type(geometry.GetGeometryName())
     output_shp_layer = output_shp_dataset.CreateLayer('{}_4326'.format(layer_name), output_srs, geometry_type)
+    in_shp_layer.ResetReading()
 
     # add fields to the new output Shapefile
     # get list of attribute fields

@@ -231,7 +231,7 @@ class GDALInspector(InspectorMixin):
         # Get main layer first.
         elif opened_file.RasterCount > 0:
             layer_description = {'index': len(description),
-                                 'layer_name': self.file,
+                                 'layer_name': os.path.splitext(os.path.basename(self.file))[0],
                                  'path': self.file,
                                  'raster': True,
                                  'layer_type': 'raster',
