@@ -199,9 +199,9 @@ class OGRImport(Import):
         """
         geom_types = []
         if type == 'name':
-            [geom_types.append(f.geometry().GetGeometryName()) for f in layer]
+            [geom_types.append(f.geometry().GetGeometryName()) for f in layer if f.geometry()]
         else:
-            [geom_types.append(f.geometry().GetGeometryType()) for f in layer]
+            [geom_types.append(f.geometry().GetGeometryType()) for f in layer if f.geometry()]
 
         geom_types = list(set(geom_types))
         layer.ResetReading()
