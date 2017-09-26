@@ -107,6 +107,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             "abstract": layer_abstract,
             'owner': owner,
             'uuid': layer_uuid,
+            'is_published': False,
         }
         
         if 'category' in layer_config:
