@@ -19,3 +19,5 @@ django-tastypie>=0.12.2,<0.14
 awscli==1.11.63
 flake8==3.3.0
 coverage==4.3.4
+
+six==1.10.0
