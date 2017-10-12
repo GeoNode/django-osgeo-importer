@@ -145,6 +145,10 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
 
         try:
             s = self.catalog.get_store(use_conn_str['name'])
+
+            if s is None:
+                raise FailedRequestError
+
         except FailedRequestError:
             # Couldn't get the store, try creating it.
             if connection_string is not None:
