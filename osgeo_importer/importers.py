@@ -203,6 +203,7 @@ class OGRImport(Import):
         else:
             [geom_types.append(f.geometry().GetGeometryType()) for f in layer if f.geometry()]
 
+        geom_types.append(layer.GetGeomType())
         geom_types = list(set(geom_types))
         layer.ResetReading()
         return geom_types
