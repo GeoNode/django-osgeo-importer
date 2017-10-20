@@ -58,6 +58,14 @@
                     <input id="layerName" type="text" class=input-lg ng-model="layer.configuration_options.name">
                 </div>
 
+                <div class="form-group" ng-if="layer.configuration_options.styles">
+                    <label for="default_style">Default Style</label>
+                    <select class="form-control ng-pristine ng-valid" id="default_style" name="default_style" ng-model="layer.configuration_options.default_style">
+                        <option value="" selected="selected">---------</option>
+                        <option ng-repeat="style in layer.configuration_options.styles" value="{{style}}">{{style}}</option>
+                    </select>
+                </div>
+
                 <div class="import-wizard-button">
                     <button class="btn" type="submit" wz-next value="Continue">Continue <i class="fa fa-arrow-circle-right"></i></button>
                 </div>
