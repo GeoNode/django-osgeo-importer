@@ -482,6 +482,7 @@ class ImportHelper(object):
 
         # Loop through and create uploadfiles and uploadlayers
         upfiles = []
+        styles = [os.path.basename(x) for x in finalfiles if '.sld' in x.lower()]
         for each in finalfiles:
             upfile = UploadFile.objects.create(upload=upload)
             upfiles.append(upfile)
@@ -502,6 +503,8 @@ class ImportHelper(object):
                 for layer_desc in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
                     configuration_options.update({'index': layer_desc.get('index')})
+                    if styles:
+                        configuration_options.update({'styles': styles})
                     # layer_basename is the string to start the layer name with
                     # The inspector will use a full path to the file for .tif layer names.
                     # We'll use just the basename of the path (no modification if it's not a path).
