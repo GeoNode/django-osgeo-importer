@@ -5,7 +5,7 @@ import celery
 from osgeo_importer.views import OSGEO_IMPORTER
 import logging
 from geonode.celery_app import app
-from osgeo_importer.models import UploadLayer
+from osgeo_importer.models import UploadLayer, UploadException
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,9 @@ class RecordImportStateTask(ExceptionLoggingTask):
         ulid = configuration_options['upload_layer_id']
         try:
             ul = UploadLayer.objects.get(id=ulid)
+            UploadException.objects.create(error=exc,
+                                   verbose_traceback=einfo,
+                                   task_id=task_id, upload_layer=ul)
         except UploadLayer.DoesNotExist:
             msg = 'Got invalid UploadLayer id: {}'.format(ulid)
             logger.error(msg)
