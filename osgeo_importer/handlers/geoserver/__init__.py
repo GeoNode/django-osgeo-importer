@@ -314,7 +314,15 @@ class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
         ensure_workspace_exists(self.catalog, self.workspace_name, self.workspace_namespace_uri)
         workspace = self.catalog.get_workspace(self.workspace_name)
 
-        return self.catalog._create_coveragestore(name, "file:{}".format(layer), workspace, False, True)
+        """
+        Hack to allow raster upload to geoserver, or use the importer generated one via NFS/EFS instead.
+        This should be a per layer attribute instead of a global config.
+        """
+        UPLOAD_RASTER = getattr(settings, 'OSGEO_IMPORTER_UPLOAD_RASTER_TO_GEOSERVER', True)
+        if UPLOAD_RASTER:
+            return self.catalog._create_coveragestore(name, layer, workspace, False, False)
+        else:
+            return self.catalog._create_coveragestore(name, "file:{}".format(layer), workspace, False, True)
 
 
 class GeoWebCacheHandler(GeoserverHandlerMixin):
