@@ -458,8 +458,10 @@ class GenericSLDHandler(GeoserverHandlerMixin):
         """
         self.catalog._cache.clear()
         self.layer = self.catalog.get_layer(layer)
-        is_default_type = self.layer.default_style.name in ['generic', 'polygon', 'point', 'line', 'raster']
-
+        try:
+            is_default_type = self.layer.default_style.name in ['generic', 'polygon', 'point', 'line', 'raster']
+        except:
+            return False
         return self.layer and self.layer.default_style and is_default_type
 
     @ensure_can_run
