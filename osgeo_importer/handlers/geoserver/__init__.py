@@ -9,6 +9,8 @@ from osgeo_importer.importers import UPLOAD_DIR
 from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
 from geonode.upload.utils import make_geogig_rest_payload, init_geogig_repo
+from geonode.geoserver.helpers import get_sld_for, _style_contexts, _style_templates
+from geoserver.catalog import ConflictingDataError
 from geoserver.support import DimensionInfo
 from osgeo_importer.utils import increment_filename, database_schema_name
 import re
@@ -447,25 +449,64 @@ class GeoServerBoundsHandler(GeoserverHandlerMixin):
 
 class GenericSLDHandler(GeoserverHandlerMixin):
     """
-    Handles cases in Geoserver 2.8x+ where the generic sld is used.  The generic style causes service exceptions.
+    Creates a unique style if one of the Geoserver defaults is applied.
     """
 
     def can_run(self, layer, layer_config, *args, **kwargs):
         """
-        Only run this handler if the layer is found in Geoserver and the layer's style is the generic style.
+        Only run this handler if the layer is found in Geoserver and the layer's style is one of the default styles.
         """
         self.catalog._cache.clear()
         self.layer = self.catalog.get_layer(layer)
 
-        return self.layer and self.layer.default_style and self.layer.default_style.name == 'generic'
+        if self.layer and self.layer.default_style:
+            return self.layer.default_style.name in ['generic', 'polygon', 'point', 'line', 'raster']
+        else:
+            return False
+
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         """
-        Replace the generic layer with the 'point' layer.
+        Replace the default layer style with one of the boilerplate styles.
         """
-        self.layer.default_style = 'point'
-        self.catalog.save(self.layer)
+        name = self.layer.name
+
+        sld = get_sld_for(self.catalog, self.layer)
+
+        style = None
+
+        if sld is not None:
+            try:
+                self.catalog.create_style(name, sld, raw=True)
+            except ConflictingDataError as e:
+                msg = 'There was already a style named %s in GeoServer, try using another name: "%s"' % (name, str(e))
+                logger.error(msg)
+                try:
+                    self.catalog.create_style(name + '_layer', sld, raw=True)
+                except ConflictingDataError as e:
+                    msg = 'There was already a style named %s in GeoServer, cannot overwrite: "%s"' % (name, str(e))
+                    logger.error(msg)
+                    e.args = (msg,)
+
+            if style is None:
+                try:
+                    style = self.catalog.get_style(name)
+                except BaseException:
+                    logger.warn('Could not retreive the Layer default Style name')
+                    # what are we doing with this var?
+                    msg = 'No style could be created for the layer, falling back to POINT default one'
+                    try:
+                        style = self.catalog.get_style(name + '_layer')
+                    except BaseException:
+                        style = self.catalog.get_style('point')
+                        logger.warn(msg)
+                        e.args = (msg,)
+
+            if style:
+                self.layer.default_style = style
+                self.catalog.save(self.layer)
+
 
 
 class GeoServerStyleHandler(GeoserverHandlerMixin):
