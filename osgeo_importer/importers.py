@@ -454,23 +454,19 @@ class OGRImport(Import):
                         if source_fid is not None:
                             feature.SetFID(feature.GetField(source_fid))
 
+                        for field in range(0, feature.GetFieldCount()):
+                            if feature.GetFieldType(field) == ogr.OFTString:
+                                try:
+                                    feature.GetField(field).decode('utf8')
+                                except UnicodeDecodeError:
+                                    feature.SetField(field, decode(feature.GetField(field)))
+                                except AttributeError:
+                                    continue
                         try:
                             target_layer.CreateFeature(feature)
-
-                        except:
-                            for field in range(0, feature.GetFieldCount()):
-                                if feature.GetFieldType(field) == ogr.OFTString:
-                                    try:
-                                        feature.GetField(field).decode('utf8')
-                                    except UnicodeDecodeError:
-                                        feature.SetField(field, decode(feature.GetField(field)))
-                                    except AttributeError:
-                                        continue
-                            try:
-                                target_layer.CreateFeature(feature)
-                            except err as e:
-                                logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
-                                raise e
+                        except err as e:
+                            logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
+                            raise e
                 layer.ResetReading()
                 self.completed_layers.append([target_layer.GetName(), layer_options])
             else:
