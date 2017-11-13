@@ -219,27 +219,32 @@ class OGRImport(Import):
         but depending on the number of parts of each geometry, the actual type can be either OGRPolygon or
         OGRMultiPolygon.
         """
-        driver = source.GetDriver().LongName
+        driver = source.GetDriver().ShortName.lower()
+        formats_to_inspect = ['esri shapefile', 'kml', 'libkml']
+        layer_geom_type = layer.GetGeomType()
 
-        if driver == 'ESRI Shapefile':
-            geom_types = self.get_features_geometry_types(layer)
+        if driver in formats_to_inspect:
+            features_geom_types = self.get_features_geometry_types(layer)
 
-            # If both a Point and MultiPoint, return MultiPoint
-            if 1 in geom_types and 4 in geom_types:
-                logger.warn("Found Point and MultiPoint geometry types in shapefile, using MultiPoint")
-                return 4
+            types_dict = {
+                'MultiPoint_Point': [1, 4],
+                'MultiLineString_LineString': [2, 5],
+                'MutliPolygon_Polygon': [3, 6]
+            }
 
-            # If both a LineString and MultiLineString, return MultiLineString
-            if 2 in geom_types and 5 in geom_types:
-                logger.warn("Found LineString and MultiLineString geometry types in shapefile, using MultiLineString")
-                return 5
+            for k in types_dict:
+                if all(t in features_geom_types for t in types_dict[k]):
+                    plural, singular = k.split('_')
+                    logger.warn("Found {plural} and {singular} geometry types in dataset, using {plural}".format(
+                                      plural=plural, singular=singular))
+                    layer_geom_type = max(types_dict[k])
+                    break
 
-            # If both a Polygon and MutliPolygon, return MutliPolygon
-            if 3 in geom_types and 6 in geom_types:
-                logger.warn("Found Polygon and MutliPolygon geometry types in shapefile, using MutliPolygon")
-                return 6
+            # Cover a case where KML/LIBKML layer geometry type is Geometry/Unknown, but don't fail
+            if layer_geom_type == 0:
+                layer_geom_type = max(features_geom_types) if features_geom_types else layer_geom_type
 
-        return layer.GetGeomType()
+        return layer_geom_type
 
     def import_file(self, *args, **kwargs):
         """
