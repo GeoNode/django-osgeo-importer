@@ -166,3 +166,6 @@ MAPPROXY_SERVER_LOCATION = 'http://localhost:8088/geonode/tms/1.0.0/{layer_name}
 
 PROJECTION_DIRECTORY = os.path.join(os.path.dirname(pyproj.__file__), 'data/')
 
+# Lifetime Quota for User Uploads in Bytes, defaults to 140M (big enough it won't trip other tests) for tests
+USER_UPLOAD_QUOTA = 140000000
+

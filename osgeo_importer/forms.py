@@ -5,13 +5,16 @@ import tempfile
 from zipfile import is_zipfile, ZipFile
 
 from django import forms
+from django.conf import settings
+from django.db.models import Sum
 
 from osgeo_importer.importers import VALID_EXTENSIONS
-from osgeo_importer.utils import mkdir_p
+from osgeo_importer.utils import mkdir_p, sizeof_fmt
 from osgeo_importer.validators import valid_file
 
-from .models import UploadFile
+from .models import UploadFile, UploadedData
 from .validators import validate_inspector_can_read, validate_shapefiles_have_all_parts
+USER_UPLOAD_QUOTA = getattr(settings, 'USER_UPLOAD_QUOTA', None)
 
 
 logger = logging.getLogger(__name__)
@@ -19,6 +22,10 @@ logger = logging.getLogger(__name__)
 
 class UploadFileForm(forms.Form):
     file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super(UploadFileForm, self).__init__(*args, **kwargs)
 
     class Meta:
         model = UploadFile
@@ -29,6 +36,7 @@ class UploadFileForm(forms.Form):
         outputdir = tempfile.mkdtemp()
         files = self.files.getlist('file')
         # Files that need to be processed
+
         process_files = []
 
         # Create list of all potentially valid files, exploding first level zip files
@@ -73,6 +81,7 @@ class UploadFileForm(forms.Form):
         # After moving files in place make sure they can be opened by inspector
         inspected_files = []
         file_names = [os.path.basename(f.name) for f in cleaned_files]
+        upload_size = 0
 
         for cleaned_file in cleaned_files:
             cleaned_file_path = os.path.join(outputdir, cleaned_file.name)
@@ -95,5 +104,23 @@ class UploadFileForm(forms.Form):
                 logger.warning('Inspector could not read file {} or file is empty'.format(cleaned_file_path))
                 continue
 
+            upload_size += os.path.getsize(cleaned_file_path)
+            inspected_files.append(cleaned_file)
+
         cleaned_data['file'] = inspected_files
+        # Get total file size
+        cleaned_data['upload_size'] = upload_size
+        if USER_UPLOAD_QUOTA is not None:
+            # Get the total size of all data uploaded by this user
+            user_filesize = UploadedData.objects.filter(user=self.request.user).aggregate(s=Sum('size'))['s']
+            if user_filesize is None:
+                user_filesize = 0
+            if user_filesize + upload_size > USER_UPLOAD_QUOTA:
+                # remove temp directory used for processing upload if quota exceeded
+                shutil.rmtree(outputdir)
+                self.add_error('file','User Quota Exceeded. Quota: %s Used: %s Adding: %s'%(
+                    sizeof_fmt(USER_UPLOAD_QUOTA), 
+                    sizeof_fmt(user_filesize), 
+                    sizeof_fmt(upload_size)
+                ))
         return cleaned_data

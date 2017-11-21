@@ -73,8 +73,13 @@ class FileAddView(ImportHelper, FormView, JSONResponseMixin):
     template_name = 'osgeo_importer/new.html'
     json = False
 
+    def get_form_kwargs(self):
+        kw = super(FileAddView, self).get_form_kwargs()
+        kw['request'] = self.request
+        return kw
+
     def form_valid(self, form):
-        upload = self.upload(form.cleaned_data['file'], self.request.user)
+        upload = self.upload(form.cleaned_data['file'], self.request.user, form.cleaned_data['upload_size'])
         files = [f for f in form.cleaned_data['file']]
         self.configure_upload(upload, files)
 
