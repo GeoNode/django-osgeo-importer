@@ -144,7 +144,8 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         if 'permissions' in layer_config:
             new_layer.set_permissions(layer_config['permissions'])
         else:
-            new_layer.set_default_permissions()
+            if settings.DEFAULT_ANONYMOUS_VIEW_PERMISSION:
+                new_layer.set_default_permissions()
 
         results = {
             'stats': {

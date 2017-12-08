@@ -35,9 +35,8 @@ class UploadFileForm(forms.Form):
         for f in files:
             errors = valid_file(f)
             if errors != []:
-                self.add_error('file', ', '.join(errors))
+                logger.warning(', '.join(errors))
                 continue
-
             if is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipname in zip.namelist():
@@ -73,15 +72,28 @@ class UploadFileForm(forms.Form):
 
         # After moving files in place make sure they can be opened by inspector
         inspected_files = []
+        file_names = [os.path.basename(f.name) for f in cleaned_files]
+
         for cleaned_file in cleaned_files:
             cleaned_file_path = os.path.join(outputdir, cleaned_file.name)
-            if not validate_inspector_can_read(cleaned_file_path):
-                self.add_error(
-                    'file',
-                    'Inspector could not read file {} or file is empty'.format(cleaned_file_path)
-                )
+            if validate_inspector_can_read(cleaned_file_path):
+                add_file = True
+                name, ext = os.path.splitext(os.path.basename(cleaned_file.name))
+
+                if ext == '.xml':
+                    if '{}.shp'.format(name) in file_names:
+                        add_file = False
+                    elif '.shp' in name and name in file_names:
+                        add_file = False
+
+                if add_file:
+                    inspected_files.append(cleaned_file)
+                else:
+                    logger.warning('Inspector could not read file {} or file is empty'.format(cleaned_file_path))
+                    continue
+            else:
+                logger.warning('Inspector could not read file {} or file is empty'.format(cleaned_file_path))
                 continue
-            inspected_files.append(cleaned_file)
 
         cleaned_data['file'] = inspected_files
         return cleaned_data
