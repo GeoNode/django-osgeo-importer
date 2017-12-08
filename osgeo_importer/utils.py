@@ -329,7 +329,7 @@ class ImportHelper(object):
         with self.Inspector(path) as opened_file:
             return opened_file.file_type()
 
-    def upload(self, data, owner):
+    def upload(self, data, owner, upload_size=0):
         """Use cleaned form data to populate an unsaved upload record.
 
         Once, each upload was just one file, so all we had to do was attach its
@@ -341,9 +341,13 @@ class ImportHelper(object):
         option.
         """
         from osgeo_importer.models import UploadedData
+        from django.db.models import Sum
 
         # Do not save here, we want to leave control of that to the caller.
         upload = UploadedData.objects.create(user=owner)
+
+        upload.size = upload_size
+
         # Get a list of paths for files in this upload.
         paths = [item.name for item in data]
         # If there are multiple paths, see if we can boil them down to a
@@ -540,9 +544,6 @@ class ImportHelper(object):
 
                     upload.uploadlayer_set.add(upload_layer)
 
-        upload.size = sum(
-            upfile.file.size for upfile in upfiles
-        )
         upload.complete = True
         upload.state = 'UPLOADED'
         upload.save()
