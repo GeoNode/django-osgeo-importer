@@ -142,12 +142,6 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             upload_layer.save()
 
         if 'permissions' in layer_config:
-            if not settings.DEFAULT_ANONYMOUS_VIEW_PERMISSION:
-                if 'AnonymousUser' in layer_config['permissions']['users'].keys():
-                    del layer_config['permissions']['users']['AnonymousUser']
-                    if not layer_config['permissions']['users']:
-                        layer_config['permissions'] = {}
-
             new_layer.set_permissions(layer_config['permissions'])
         else:
             if settings.DEFAULT_ANONYMOUS_VIEW_PERMISSION:
