@@ -88,6 +88,7 @@ class UploadFileForm(forms.Form):
             if validate_inspector_can_read(cleaned_file_path):
                 add_file = True
                 name, ext = os.path.splitext(os.path.basename(cleaned_file.name))
+                upload_size += os.path.getsize(cleaned_file_path)
 
                 if ext == '.xml':
                     if '{}.shp'.format(name) in file_names:
@@ -103,9 +104,6 @@ class UploadFileForm(forms.Form):
             else:
                 logger.warning('Inspector could not read file {} or file is empty'.format(cleaned_file_path))
                 continue
-
-            upload_size += os.path.getsize(cleaned_file_path)
-            inspected_files.append(cleaned_file)
 
         cleaned_data['file'] = inspected_files
         # Get total file size
