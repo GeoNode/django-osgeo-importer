@@ -3,6 +3,9 @@
 
 {% block extra_script %}
 <script>
+    $(document).ready(function() {
+       $('#choose-file').prop('disabled', false);
+    });
 
    function chooseFile() {
       $("#id_file").click();
@@ -32,7 +35,7 @@
             {{form}}
         </div>
         <div class="row">
-            <button type="button" class="btn-info col-md-4 btn" onclick="chooseFile();">choose file(s)</button>
+            <button type="button" id="choose-file" class="btn-info col-md-4 btn" onclick="chooseFile();" disabled="disabled">choose file(s)</button>
         </div>
         <div class="row">
             <div class="errorlist">
