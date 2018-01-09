@@ -209,7 +209,7 @@ class GDALInspector(InspectorMixin):
                     field_desc = {}
                     field = layer_definition.GetFieldDefn(i)
                     field_desc['name'] = field.GetName()
-                    field_desc['type'] = field.GetFieldTypeName(i)
+                    field_desc['type'] = field.GetFieldTypeName(field.type)
                     layer_description['fields'].append(field_desc)
 
             description.append(layer_description)
