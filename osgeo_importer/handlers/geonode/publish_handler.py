@@ -103,6 +103,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             'store': store_name,
             'storeType': store_type,
             'typename': typename,
+            'alternate': typename,
             'title': layer_title,
             "abstract": layer_abstract,
             'owner': owner,
