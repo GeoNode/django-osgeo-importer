@@ -46,10 +46,21 @@ class UploadFileForm(forms.Form):
                 self.add_error('file', ', '.join(errors))
                 continue
 
+            # find files in the .zip that we know how to process (VALID_EXTENSIONS)
             if is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipname in zip.namelist():
-                        _, zipext = zipname.split(os.extsep, 1)
+                        _,zipext = os.path.splitext(zipname)
+                        # doesn't have an extension
+                        if not zipext:
+                            continue
+                        # OS X - ignore hidden files (i.e. .DS_Store and __MACOSX/.*)
+                        _,fname = os.path.split(zipname)
+                        if fname.startswith("."):
+                            continue
+                        # handle .shp.xml metadata files
+                        if fname.lower().endswith(".shp.xml"):
+                            zipext = ".shp.xml"
                         zipext = zipext.lstrip('.').lower()
                         if zipext in VALID_EXTENSIONS:
                             process_files.append(zipname)
