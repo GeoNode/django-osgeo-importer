@@ -220,7 +220,15 @@ class OGRImport(Import):
         OGRMultiPolygon.
         """
         driver = source.GetDriver().ShortName.lower()
-        formats_to_inspect = ['esri shapefile', 'kml', 'libkml']
+        formats_to_inspect = [
+            'esri shapefile',
+            'kml',
+            'libkml',
+            'geojson',
+            'esrijson',
+            'topojson'
+        ]
+
         layer_geom_type = layer.GetGeomType()
 
         if driver in formats_to_inspect:
