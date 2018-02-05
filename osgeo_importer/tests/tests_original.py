@@ -1252,6 +1252,20 @@ class UploaderTests(ImportHelper, TestCase):
         except Exception as ex:
             self.fail(ex)
 
+    def test_complex_zip(self):
+        """ Test a complex zip file.
+               a) the data is in a directory inside the shapefile
+               b) there are MACOSX hidden files in it
+               c) there is a .shp.xml metadata file
+        """
+        filename = 'states.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
+
     def test_istanbul(self):
         """Tests shapefile with multipart polygons and non-WGS84 SR.
         """
