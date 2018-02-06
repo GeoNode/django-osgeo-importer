@@ -445,46 +445,90 @@ class OGRImport(Import):
                 if wkb_field is not 0:
                     layer.SetIgnoredFields(['wkb_geometry'])
 
-                for feature in layer:
-                    if feature and feature.geometry():
+                try:
+                    for feature in layer:
+                        if feature and feature.geometry():
 
-                        if not layer.GetFIDColumn():
-                            feature.SetFID(-1)
+                            if not layer.GetFIDColumn():
+                                feature.SetFID(-1)
 
-                        if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
-                                target_layer.GetGeomType() in range(4, 7):
+                            if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
+                                    target_layer.GetGeomType() in range(4, 7):
 
-                            if target_layer.GetGeomType() == 5:
-                                conversion_function = ogr.ForceToMultiLineString
-                            elif target_layer.GetGeomType() == 4:
-                                conversion_function = ogr.ForceToMultiPoint
-                            else:
-                                conversion_function = ogr.ForceToMultiPolygon
+                                if target_layer.GetGeomType() == 5:
+                                    conversion_function = ogr.ForceToMultiLineString
+                                elif target_layer.GetGeomType() == 4:
+                                    conversion_function = ogr.ForceToMultiPoint
+                                else:
+                                    conversion_function = ogr.ForceToMultiPolygon
 
-                            geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
-                            feature.SetGeometry(conversion_function(geom))
+                                geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
+                                feature.SetGeometry(conversion_function(geom))
 
-                        if source_fid is not None:
-                            feature.SetFID(feature.GetField(source_fid))
+                            if source_fid is not None:
+                                feature.SetFID(feature.GetField(source_fid))
 
-                        try:
-                            target_layer.CreateFeature(feature)
-
-                        except:
-                            for field in range(0, feature.GetFieldCount()):
-                                if feature.GetFieldType(field) == ogr.OFTString:
-                                    try:
-                                        feature.GetField(field).decode('utf8')
-                                    except UnicodeDecodeError:
-                                        feature.SetField(field, decode(feature.GetField(field)))
-                                    except AttributeError:
-                                        continue
                             try:
                                 target_layer.CreateFeature(feature)
-                            except err as e:
-                                logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
-                                raise e
-                layer.ResetReading()
+
+                            except:
+                                for field in range(0, feature.GetFieldCount()):
+                                    if feature.GetFieldType(field) == ogr.OFTString:
+                                        try:
+                                            feature.GetField(field).decode('utf8')
+                                        except UnicodeDecodeError:
+                                            feature.SetField(field, decode(feature.GetField(field)))
+                                        except AttributeError:
+                                            continue
+                                try:
+                                    target_layer.CreateFeature(feature)
+                                except err as e:
+                                    logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
+                                    raise e
+                    layer.ResetReading()
+                except:
+                    os.environ['PG_USE_COPY'] = 'false'
+                    logger.debug('layer would not import using copy, trying with inserts')
+                    for feature in layer:
+                        if feature and feature.geometry():
+
+                            if not layer.GetFIDColumn():
+                                feature.SetFID(-1)
+
+                            if feature.geometry().GetGeometryType() != target_layer.GetGeomType() and \
+                                    target_layer.GetGeomType() in range(4, 7):
+
+                                if target_layer.GetGeomType() == 5:
+                                    conversion_function = ogr.ForceToMultiLineString
+                                elif target_layer.GetGeomType() == 4:
+                                    conversion_function = ogr.ForceToMultiPoint
+                                else:
+                                    conversion_function = ogr.ForceToMultiPolygon
+
+                                geom = ogr.CreateGeometryFromWkb(feature.geometry().ExportToWkb())
+                                feature.SetGeometry(conversion_function(geom))
+
+                            if source_fid is not None:
+                                feature.SetFID(feature.GetField(source_fid))
+
+                            try:
+                                target_layer.CreateFeature(feature)
+
+                            except:
+                                for field in range(0, feature.GetFieldCount()):
+                                    if feature.GetFieldType(field) == ogr.OFTString:
+                                        try:
+                                            feature.GetField(field).decode('utf8')
+                                        except UnicodeDecodeError:
+                                            feature.SetField(field, decode(feature.GetField(field)))
+                                        except AttributeError:
+                                            continue
+                                try:
+                                    target_layer.CreateFeature(feature)
+                                except err as e:
+                                    logger.error('Create feature failed: {0}'.format(gdal.GetLastErrorMsg()))
+                                    raise e
+                    layer.ResetReading()
                 self.completed_layers.append([target_layer.GetName(), layer_options])
             else:
                 msg = 'Unexpected layer type: "{}"'.format(layer_options['layer_type'])
