@@ -31,7 +31,6 @@ try:
 except ImportError:
     from django.utils.module_loading import import_by_path as import_string
 
-
 ogr.UseExceptions()
 gdal.UseExceptions()
 
@@ -86,8 +85,7 @@ def timeparse(timestr):
         try:
             logger.debug('trying %s as direct parse', timestr)
             dt = parse(timestr, default=DEFAULT)
-            t = numpy.datetime64(dt.isoformat()).astype(
-                'datetime64[ms]').astype('int64')
+            t = numpy.datetime64(dt.isoformat()).astype('datetime64[ms]').astype('int64')
             return t, str(numpy.datetime64(t, 'ms'))
         except:
             pass
@@ -186,7 +184,6 @@ class FileTypeNotAllowed(Exception):
 
 
 class UploadError(Exception):
-
     pass
 
 
@@ -222,7 +219,6 @@ def load_handler(path, *args, **kwargs):
 
 
 def get_kwarg(index, kwargs, default=None):
-
     if index in kwargs:
         return kwargs[index]
     else:
@@ -255,8 +251,7 @@ def raster_import(infile, outfile, *args, **kwargs):
     if os.path.exists(outfile):
         raise FileExists
 
-    options = get_kwarg('options', kwargs, [
-                        'TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=4'])
+    options = get_kwarg('options', kwargs, ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=4'])
     gdal.SetCacheMax = 524288000
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)
@@ -285,12 +280,9 @@ def raster_import(infile, outfile, *args, **kwargs):
     indata = None
 
     if build_overviews:
-        overviews_levels = get_kwarg(
-            'overviews_levels', kwargs, [2, 4, 8, 16, 32])
-        overviews_resampling = get_kwarg(
-            'overviews_resampling', kwargs, 'AVERAGE')
-        overviews_options = get_kwarg('overviews_options', kwargs, [
-                                      'COMPRESS_OVERVIEW=LZW'])
+        overviews_levels = get_kwarg('overviews_levels', kwargs, [2, 4, 8, 16, 32])
+        overviews_resampling = get_kwarg('overviews_resampling', kwargs, 'AVERAGE')
+        overviews_options = get_kwarg('overviews_options', kwargs, ['COMPRESS_OVERVIEW=LZW'])
 
         for opt in overviews_options:
             key, value = opt.split('=')
@@ -350,7 +342,6 @@ class ImportHelper(object):
 
     def upload(self, data, owner, upload_size=0):
         """Use cleaned form data to populate an unsaved upload record.
-
         Once, each upload was just one file, so all we had to do was attach its
         name and type to the upload, where we could display it. Since multifile
         and geopackage supported were added, the required behavior depends on
@@ -375,18 +366,26 @@ class ImportHelper(object):
             # Group paths by common pre-extension prefixes
             groups = collections.defaultdict(list)
             for path in paths:
-                group_name = os.path.splitext(path)[0]
+                if 'gdb/' in path:
+                    group_name = os.path.dirname(path)
+                else:
+                    group_name = os.path.splitext(path)[0]
                 groups[group_name].append(path)
             # Check each group for "leaders" - a special filename like "a.shp"
             # which can be understood to represent other files in the group.
             # Map from each group name to a list of leaders in that group.
-            leader_exts = ["shp"]
+            leader_exts = ["shp", '{}{}'.format(os.path.extsep, "gdb")]
             group_leaders = {}
             for group_name, group in groups.items():
                 leaders = [
                     path for path in group
                     if any(path.endswith(ext) for ext in leader_exts)
                 ]
+                gdb_leaders = [
+                    os.path.dirname(path) for path in group
+                    if any(os.path.dirname(path).endswith(ext) for ext in leader_exts)
+                ]
+                leaders.extend(set(gdb_leaders))
                 if leaders:
                     group_leaders[group_name] = leaders
             # Rebuild paths: leaders + paths without leaders to represent them
@@ -423,13 +422,14 @@ class ImportHelper(object):
             if len(name) > max_length:
                 logger.warning(
                     "rejecting upload name for length: {0!r} {1} > {2}"
-                    .format(name, len(name), max_length)
+                        .format(name, len(name), max_length)
                 )
                 name = None
             file_type = None
 
         upload.name = name
         upload.file_type = file_type
+
         return upload
 
     @staticmethod
@@ -499,42 +499,60 @@ class ImportHelper(object):
         # Must be done for all files before saving upfile for validation
         finalfiles = []
         for each in files:
-            tofile = os.path.join(outdir, os.path.basename(each.name))
+            # If we're dealing with FGDB get the name of the .gdb parent folder to ensure the directory is created
+            if '{}{}'.format(os.extsep, 'gdb/') in each.name:
+                todir = os.path.join(outdir, os.path.basename(os.path.dirname(each.name)))
+                mkdir_p(todir)
+                tofile = os.path.join(todir, os.path.basename(each.name))
+            else:
+                tofile = os.path.join(outdir, os.path.basename(each.name))
+
             shutil.move(each.name, tofile)
             finalfiles.append(tofile)
 
         # Loop through and create uploadfiles and uploadlayers
         upfiles = []
-        styles = [os.path.basename(x)
-                  for x in finalfiles if '.sld' in x.lower()]
+
+        styles = [os.path.basename(x) for x in finalfiles if '.sld' in x.lower()]
         for each in finalfiles:
+            # If we've already processed one part of an FGDB then we shouldn't add another entry for it
+            if '{}{}'.format(os.extsep, 'gdb/') in each:
+                if upfiles and (os.path.dirname(each) in x.file.name for x in upfiles):
+                    continue
             upfile = UploadFile.objects.create(upload=upload)
             upfiles.append(upfile)
-            upfile.file.name = each
+            if '{}{}'.format(os.extsep, 'gdb/') in each:
+                upfile.file.name = os.path.dirname(each)
+            else:
+                upfile.file.name = each
             # Detect and store file type for later reporting, since it is no
             # longer true that every upload has only one file type.
             try:
-                upfile.file_type = self.get_file_type(each)
+                if '{}{}'.format(os.extsep, 'gdb/') in each:
+                    upfile.file_type = self.get_file_type(os.path.dirname(each))
+                else:
+                    upfile.file_type = self.get_file_type(each)
             except NoDataSourceFound:
                 upfile.file_type = None
             upfile.save()
             upfile_basename = os.path.basename(each)
             _, upfile_ext = os.path.splitext(upfile_basename)
 
-            # If this file isn't part of a shapefile
-            if upfile_ext.lower() not in ['.prj', '.dbf', '.shx']:
+            # If this file isn't part of a shapefile or a subfile for FGDB
+            if upfile_ext.lower() not in ['.prj', '.dbf', '.shx',
+                                          '.cpg', '.sld']:
+                if '{}{}'.format(os.extsep, 'gdb/') in each:
+                    each = os.path.dirname(each)
                 description = self.get_fields(each)
                 for layer_desc in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
-                    configuration_options.update(
-                        {'index': layer_desc.get('index')})
+                    configuration_options.update({'index': layer_desc.get('index')})
                     if styles:
                         configuration_options.update({'styles': styles})
                     # layer_basename is the string to start the layer name with
                     # The inspector will use a full path to the file for .tif layer names.
                     # We'll use just the basename of the path (no modification if it's not a path).
-                    layer_basename = os.path.basename(
-                        layer_desc.get('layer_name') or '')
+                    layer_basename = os.path.basename(layer_desc.get('layer_name') or '')
                     if not layer_basename:
                         msg = ('No layer name provided by inspector, using'
                                ' name of file containing layer as layer_basename')
@@ -548,8 +566,7 @@ class ImportHelper(object):
                     layer_name = self.uniquish_layer_name(layer_basename)
                     with db.transaction.atomic():
                         while UploadLayer.objects.filter(name=layer_name).exists():
-                            layer_name = self.uniquish_layer_name(
-                                layer_basename)
+                            layer_name = self.uniquish_layer_name(layer_basename)
 
                         fields = layer_desc.get('fields', {})
                         upload_layer = UploadLayer(
@@ -560,8 +577,7 @@ class ImportHelper(object):
                             layer_type=layer_desc['layer_type'],
                             fields=ignore_invalid_chars(fields),
                             index=layer_desc.get('index'),
-                            feature_count=layer_desc.get(
-                                'feature_count', None),
+                            feature_count=layer_desc.get('feature_count', None),
                             configuration_options=configuration_options
                         )
                         # If we wait for upload.save(), we may introduce layer_name collisions.
@@ -581,8 +597,7 @@ def import_all_layers(uploaded_data, owner=None):
     """
     from osgeo_importer.tasks import import_object
     from osgeo_importer.inspectors import GDALInspector
-    logger.info(
-        'Importing all layers for UploadedData({})'.format(uploaded_data.id))
+    logger.info('Importing all layers for UploadedData({})'.format(uploaded_data.id))
 
     if owner is None:
         User = get_user_model()
@@ -590,8 +605,7 @@ def import_all_layers(uploaded_data, owner=None):
 
     import_results = []
     for uploaded_file in uploaded_data.uploadfile_set.all():
-        msg = 'Importing file "{}" from UploadedData({})'.format(
-            uploaded_file.name, uploaded_data.id)
+        msg = 'Importing file "{}" from UploadedData({})'.format(uploaded_file.name, uploaded_data.id)
         logger.info(msg)
         gi = GDALInspector(uploaded_file.file.path)
         all_layer_details = gi.describe_fields()
@@ -602,8 +616,7 @@ def import_all_layers(uploaded_data, owner=None):
                 'layer_owner': owner.username, 'layer_type': upload_layer.layer_type,
                 'upload_layer_id': upload_layer.id, 'layer_name': upload_layer.layer_name
             })
-            msg = 'Kicking off a celery task to import layer: {}'.format(
-                upload_layer.layer_name)
+            msg = 'Kicking off a celery task to import layer: {}'.format(upload_layer.layer_name)
             logger.info(msg)
             import_result = import_object.delay(
                 upload_layer.upload_file.id, configuration_options=configuration_options
@@ -672,7 +685,6 @@ def convert_wkt_to_epsg(wkt, epsg_directory=settings.PROJECTION_DIRECTORY, force
 
 
 def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, layer_path):
-
     def get_geometry_type(geometry_name):
         switcher = {
             "POINT": ogr.wkbPoint,
@@ -710,8 +722,7 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     feature = in_shp_layer.GetNextFeature()
     geometry = feature.GetGeometryRef()
     geometry_type = get_geometry_type(geometry.GetGeometryName())
-    output_shp_layer = output_shp_dataset.CreateLayer(
-        '{}_4326'.format(layer_name), output_srs, geometry_type)
+    output_shp_layer = output_shp_dataset.CreateLayer('{}_4326'.format(layer_name), output_srs, geometry_type)
     in_shp_layer.ResetReading()
 
     # add fields to the new output Shapefile
@@ -737,8 +748,7 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
         # set the geometry and attribute
         output_feature.SetGeometry(geom)
         for i in range(0, output_layer_def.GetFieldCount()):
-            output_feature.SetField(output_layer_def.GetFieldDefn(
-                i).GetNameRef(), in_feature.GetField(i))
+            output_feature.SetField(output_layer_def.GetFieldDefn(i).GetNameRef(), in_feature.GetField(i))
         # add the feature to the shapefile
         output_shp_layer.CreateFeature(output_feature)
         # destroy the features and get the next input feature
@@ -764,8 +774,8 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     for file_name in os.listdir(layer_path):
         if os.path.splitext(file_name)[0] == '{}_reproj'.format(layer_name):
             extension = os.path.splitext(file_name)[1][1:].strip().lower()
-            os.rename(os.path.join(layer_path, file_name), os.path.join(
-                layer_path, '{}.{}'.format(original_layer_name, extension)))
+            os.rename(os.path.join(layer_path, file_name),
+                      os.path.join(layer_path, '{}.{}'.format(original_layer_name, extension)))
 
     return '{0}:{1}'.format(output_srs.GetAuthorityName(None), output_srs.GetAuthorityCode(None))
 
