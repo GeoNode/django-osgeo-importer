@@ -12,7 +12,7 @@ OSGEO_IMPORTER = getattr(settings, 'OSGEO_IMPORTER', 'osgeo_importer.importers.O
 
 logger = logging.getLogger(__name__)
 
-NONDATA_EXTENSIONS = ['shx', 'prj', 'dbf', 'xml', 'sld']
+NONDATA_EXTENSIONS = ['shx', 'prj', 'dbf', 'xml', 'sld', 'cpg']
 
 ALL_OK_EXTENSIONS = set(VALID_EXTENSIONS) | set(NONDATA_EXTENSIONS)
 

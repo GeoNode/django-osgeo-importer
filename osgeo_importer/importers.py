@@ -1,3 +1,4 @@
+import codecs
 import logging
 import os
 
@@ -30,7 +31,7 @@ ogr.UseExceptions()
 gdal.UseExceptions()
 
 MEDIA_ROOT = getattr(settings, 'MEDIA_ROOT', FileSystemStorage().location)
-DEFAULT_SUPPORTED_EXTENSIONS = ['shp', 'shx', 'prj', 'dbf', 'kml', 'geojson', 'json',
+DEFAULT_SUPPORTED_EXTENSIONS = ['shp', 'shx', 'prj', 'dbf', 'cpg', 'kml', 'geojson', 'json',
                                 'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml',
                                 'sld', 'ntf', 'nitf']
 VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS', DEFAULT_SUPPORTED_EXTENSIONS)
@@ -381,12 +382,33 @@ class OGRImport(Import):
                 if target_file.GetDriver().GetName() == 'PostgreSQL':
                     target_create_options.append('PRECISION=NO')
                     os.environ["PGCLIENTENCODING"] = "UTF8"
-                    os.environ['SHAPE_ENCODING'] = "utf-8"
                     # Hack for CSV ingest into postgres. When using COPY, OGR prepends a bad newline to each feature
                     if data.GetDriver().ShortName.lower() == 'csv':
                         os.environ["PG_USE_COPY"] = "false"
                     else:
                         os.environ["PG_USE_COPY"] = "true"
+
+                layer_options['encoding'] = 'utf-8'
+                # Read encoding from cpg file if exist
+                cpg_file = "{}.cpg".format(os.path.splitext(filename)[0])
+
+                if os.path.isfile(cpg_file):
+                    _encoding = open(cpg_file).read()
+                    _parts = _encoding.split()
+                    if len(_parts) > 1:
+                        # attempt to cover a case where encoding
+                        # is similar to ANSI 1252 (cp1252)
+                        _encoding = "cp{}".format(_parts[-1])
+
+                    try:
+                        codecs.lookup(_encoding)
+                        layer_options['encoding'] = _encoding
+                    except LookupError:
+                        pass
+
+                logger.debug('attribute encoding: {}'.format(layer_options['encoding']))
+                if data.GetDriver().ShortName.lower() == 'esri shapefile':
+                    os.environ['SHAPE_ENCODING'] = layer_options['encoding']
 
                 layer_options['modified_fields'] = {}
                 layer = data.GetLayer(layer_options.get('index'))
@@ -477,7 +499,7 @@ class OGRImport(Import):
                                 fieldstr = feature.GetField(field)
                                 # First try to decode as latin1 (default encoding for shapefiles)
                                 try:
-                                    decodedfield = fieldstr.decode('utf8', errors='strict')
+                                    decodedfield = fieldstr.decode(layer_options['encoding'], errors='strict')
                                 except UnicodeDecodeError:
                                     decodedfield = fieldstr.decode(errors='ignore')
                                 except AttributeError:
