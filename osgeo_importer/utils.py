@@ -16,9 +16,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import FileSystemStorage
 from django.utils.text import Truncator
-import gdal
-import ogr
-import osr
+try:
+    import gdal
+    import ogr
+    import osr
+except:
+    from osgeo import gdal, ogr, osr
 
 
 logger = logging.getLogger(__name__)
@@ -33,24 +36,24 @@ ogr.UseExceptions()
 gdal.UseExceptions()
 
 GDAL_GEOMETRY_TYPES = {
-   0: 'Unknown',
-   1: 'Point',
-   2: 'LineString',
-   3: 'Polygon',
-   4: 'MultiPoint',
-   5: 'MultiLineString',
-   6: 'MultiPolygon',
-   7: 'GeometryCollection',
-   100: 'None',
-   101: 'LinearRing',
-   1 + -2147483648: 'Point',
-   2 + -2147483648: 'LineString',
-   3 + -2147483648: 'Polygon',
-   4 + -2147483648: 'MultiPoint',
-   5 + -2147483648: 'MultiLineString',
-   6 + -2147483648: 'MultiPolygon',
-   7 + -2147483648: 'GeometryCollection',
-   }
+    0: 'Unknown',
+    1: 'Point',
+    2: 'LineString',
+    3: 'Polygon',
+    4: 'MultiPoint',
+    5: 'MultiLineString',
+    6: 'MultiPolygon',
+    7: 'GeometryCollection',
+    100: 'None',
+    101: 'LinearRing',
+    1 + -2147483648: 'Point',
+    2 + -2147483648: 'LineString',
+    3 + -2147483648: 'Polygon',
+    4 + -2147483648: 'MultiPoint',
+    5 + -2147483648: 'MultiLineString',
+    6 + -2147483648: 'MultiPolygon',
+    7 + -2147483648: 'GeometryCollection',
+}
 
 
 def timeparse(timestr):
@@ -83,7 +86,8 @@ def timeparse(timestr):
         try:
             logger.debug('trying %s as direct parse', timestr)
             dt = parse(timestr, default=DEFAULT)
-            t = numpy.datetime64(dt.isoformat()).astype('datetime64[ms]').astype('int64')
+            t = numpy.datetime64(dt.isoformat()).astype(
+                'datetime64[ms]').astype('int64')
             return t, str(numpy.datetime64(t, 'ms'))
         except:
             pass
@@ -242,7 +246,8 @@ def raster_import(infile, outfile, *args, **kwargs):
     if os.path.exists(outfile):
         raise FileExists
 
-    options = get_kwarg('options', kwargs, ['TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=4'])
+    options = get_kwarg('options', kwargs, [
+                        'TILED=YES', 'COMPRESS=LZW', 'NUM_THREADS=4'])
     gdal.SetCacheMax = 524288000
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(3857)
@@ -271,9 +276,12 @@ def raster_import(infile, outfile, *args, **kwargs):
     indata = None
 
     if build_overviews:
-        overviews_levels = get_kwarg('overviews_levels', kwargs, [2, 4, 8, 16, 32])
-        overviews_resampling = get_kwarg('overviews_resampling', kwargs, 'AVERAGE')
-        overviews_options = get_kwarg('overviews_options', kwargs, ['COMPRESS_OVERVIEW=LZW'])
+        overviews_levels = get_kwarg(
+            'overviews_levels', kwargs, [2, 4, 8, 16, 32])
+        overviews_resampling = get_kwarg(
+            'overviews_resampling', kwargs, 'AVERAGE')
+        overviews_options = get_kwarg('overviews_options', kwargs, [
+                                      'COMPRESS_OVERVIEW=LZW'])
 
         for opt in overviews_options:
             key, value = opt.split('=')
@@ -284,6 +292,7 @@ def raster_import(infile, outfile, *args, **kwargs):
         ds = None
 
     return outfile
+
 
 def quote_ident(str):
     conn = db.connections[settings.OSGEO_DATASTORE]
@@ -312,6 +321,7 @@ class ImportHelper(object):
         because these imports require django settings & models to be fully set up and other
         functions in this file are used before that is the case.
     """
+
     def __init__(self, *args, **kwargs):
         super(ImportHelper, self).__init__(*args, **kwargs)
         from osgeo_importer.inspectors import OSGEO_INSPECTOR
@@ -486,7 +496,8 @@ class ImportHelper(object):
 
         # Loop through and create uploadfiles and uploadlayers
         upfiles = []
-        styles = [os.path.basename(x) for x in finalfiles if '.sld' in x.lower()]
+        styles = [os.path.basename(x)
+                  for x in finalfiles if '.sld' in x.lower()]
         for each in finalfiles:
             upfile = UploadFile.objects.create(upload=upload)
             upfiles.append(upfile)
@@ -506,13 +517,15 @@ class ImportHelper(object):
                 description = self.get_fields(each)
                 for layer_desc in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
-                    configuration_options.update({'index': layer_desc.get('index')})
+                    configuration_options.update(
+                        {'index': layer_desc.get('index')})
                     if styles:
                         configuration_options.update({'styles': styles})
                     # layer_basename is the string to start the layer name with
                     # The inspector will use a full path to the file for .tif layer names.
                     # We'll use just the basename of the path (no modification if it's not a path).
-                    layer_basename = os.path.basename(layer_desc.get('layer_name') or '')
+                    layer_basename = os.path.basename(
+                        layer_desc.get('layer_name') or '')
                     if not layer_basename:
                         msg = ('No layer name provided by inspector, using'
                                ' name of file containing layer as layer_basename')
@@ -526,18 +539,20 @@ class ImportHelper(object):
                     layer_name = self.uniquish_layer_name(layer_basename)
                     with db.transaction.atomic():
                         while UploadLayer.objects.filter(name=layer_name).exists():
-                            layer_name = self.uniquish_layer_name(layer_basename)
+                            layer_name = self.uniquish_layer_name(
+                                layer_basename)
 
                         upload_layer = UploadLayer(
-                                upload_file=upfile,
-                                name=layer_name,
-                                internal_layer_name=internal_layer_name,
-                                layer_name=layer_name,
-                                layer_type=layer_desc['layer_type'],
-                                fields=layer_desc.get('fields', {}),
-                                index=layer_desc.get('index'),
-                                feature_count=layer_desc.get('feature_count', None),
-                                configuration_options=configuration_options
+                            upload_file=upfile,
+                            name=layer_name,
+                            internal_layer_name=internal_layer_name,
+                            layer_name=layer_name,
+                            layer_type=layer_desc['layer_type'],
+                            fields=layer_desc.get('fields', {}),
+                            index=layer_desc.get('index'),
+                            feature_count=layer_desc.get(
+                                'feature_count', None),
+                            configuration_options=configuration_options
                         )
                         # If we wait for upload.save(), we may introduce layer_name collisions.
                         upload_layer.save()
@@ -556,7 +571,8 @@ def import_all_layers(uploaded_data, owner=None):
     """
     from osgeo_importer.tasks import import_object
     from osgeo_importer.inspectors import GDALInspector
-    logger.info('Importing all layers for UploadedData({})'.format(uploaded_data.id))
+    logger.info(
+        'Importing all layers for UploadedData({})'.format(uploaded_data.id))
 
     if owner is None:
         User = get_user_model()
@@ -564,7 +580,8 @@ def import_all_layers(uploaded_data, owner=None):
 
     import_results = []
     for uploaded_file in uploaded_data.uploadfile_set.all():
-        msg = 'Importing file "{}" from UploadedData({})'.format(uploaded_file.name, uploaded_data.id)
+        msg = 'Importing file "{}" from UploadedData({})'.format(
+            uploaded_file.name, uploaded_data.id)
         logger.info(msg)
         gi = GDALInspector(uploaded_file.file.path)
         all_layer_details = gi.describe_fields()
@@ -575,7 +592,8 @@ def import_all_layers(uploaded_data, owner=None):
                 'layer_owner': owner.username, 'layer_type': upload_layer.layer_type,
                 'upload_layer_id': upload_layer.id, 'layer_name': upload_layer.layer_name
             })
-            msg = 'Kicking off a celery task to import layer: {}'.format(upload_layer.layer_name)
+            msg = 'Kicking off a celery task to import layer: {}'.format(
+                upload_layer.layer_name)
             logger.info(msg)
             import_result = import_object.delay(
                 upload_layer.upload_file.id, configuration_options=configuration_options
@@ -682,7 +700,8 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     feature = in_shp_layer.GetNextFeature()
     geometry = feature.GetGeometryRef()
     geometry_type = get_geometry_type(geometry.GetGeometryName())
-    output_shp_layer = output_shp_dataset.CreateLayer('{}_4326'.format(layer_name), output_srs, geometry_type)
+    output_shp_layer = output_shp_dataset.CreateLayer(
+        '{}_4326'.format(layer_name), output_srs, geometry_type)
     in_shp_layer.ResetReading()
 
     # add fields to the new output Shapefile
@@ -708,7 +727,8 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
         # set the geometry and attribute
         output_feature.SetGeometry(geom)
         for i in range(0, output_layer_def.GetFieldCount()):
-            output_feature.SetField(output_layer_def.GetFieldDefn(i).GetNameRef(), in_feature.GetField(i))
+            output_feature.SetField(output_layer_def.GetFieldDefn(
+                i).GetNameRef(), in_feature.GetField(i))
         # add the feature to the shapefile
         output_shp_layer.CreateFeature(output_feature)
         # destroy the features and get the next input feature
@@ -734,7 +754,8 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     for file_name in os.listdir(layer_path):
         if os.path.splitext(file_name)[0] == '{}_reproj'.format(layer_name):
             extension = os.path.splitext(file_name)[1][1:].strip().lower()
-            os.rename(os.path.join(layer_path, file_name), os.path.join(layer_path, '{}.{}'.format(original_layer_name, extension)))
+            os.rename(os.path.join(layer_path, file_name), os.path.join(
+                layer_path, '{}.{}'.format(original_layer_name, extension)))
 
     return '{0}:{1}'.format(output_srs.GetAuthorityName(None), output_srs.GetAuthorityCode(None))
 
