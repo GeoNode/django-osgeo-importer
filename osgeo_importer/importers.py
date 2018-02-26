@@ -389,6 +389,7 @@ class OGRImport(Import):
                 # Prevent numeric field overflow for shapefiles https://trac.osgeo.org/gdal/ticket/5241
                 if target_file.GetDriver().GetName() == 'PostgreSQL':
                     target_create_options.append('PRECISION=NO')
+                    target_create_options.append('OVERWRITE=YES')
                     # Hack for CSV ingest into postgres. When using COPY, OGR prepends a bad newline to each feature
                     if data.GetDriver().ShortName.lower() == 'csv':
                         os.environ["PG_USE_COPY"] = "false"
