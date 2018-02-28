@@ -12,7 +12,7 @@ sphinx-autobuild==0.6.0
 
 Django==1.8.15
 
-GeoNode==2.6.3
+Geonode==2.8rc11
 
 django-tastypie>=0.12.2,<0.14
 
