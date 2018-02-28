@@ -4,8 +4,11 @@ import sqlite3
 
 from django import db
 from django.conf import settings
-import gdal
-import ogr
+try:
+    import gdal
+    import ogr
+except:
+    from osgeo import gdal, ogr
 from osgeo_importer.utils import NoDataSourceFound, GDAL_GEOMETRY_TYPES, increment, timeparse, quote_ident, parse
 
 
