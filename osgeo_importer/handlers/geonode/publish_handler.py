@@ -62,7 +62,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             logger.warn('User "{}" not found using AnonymousUser.'.format(layer_config['layer_owner']))
             owner = User.objects.get(username='AnonymousUser')
 
-        layer_abstract = 'No abstract provided'    
+        layer_abstract = ''    
             
         # Populate arguments to create a new Layer
         if 'layer_abstract' in layer_config:
