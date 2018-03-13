@@ -21,6 +21,7 @@
 import os
 import tempfile
 import logging
+import re
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -264,6 +265,33 @@ class UploadLayer(models.Model):
         s = 'UNKNOWN' if self.import_status is None else self.import_status
 
         return s
+
+    @property
+    def import_full_error(self):
+        """
+        Returns the last error created for an import task
+        """
+        try:
+            ue = UploadException.objects.get(task_id=self.task_id)
+        except:
+            ue = None
+        return ue
+    
+    @property
+    def import_error(self):
+        if self.import_full_error is None:
+            return None
+        e = str(self.import_full_error)
+        if re.search('Runtime Error: ', e):
+            e = e.split('Runtime Error: ')[1]
+        if re.search('layer creation option', e):
+            return 'Layer with this name already imported.'
+        if re.search('duplicate key', e):
+            m = re.search('Key \(([^)]+)\)', e)
+            if m:
+                col = m.group(1)
+                return 'Duplicate key found in column %s' % (col)
+        return e
 
     class Meta:
         ordering = ('index',)
