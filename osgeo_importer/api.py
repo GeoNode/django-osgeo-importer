@@ -41,6 +41,8 @@ class UploadedLayerResource(ModelResource):
     file_type = CharField(attribute='file_type', readonly=True)
     file_name = CharField(attribute='file_name', readonly=True)
     layer_name = CharField(attribute='layer_name', readonly=True)
+    error_message = CharField(attribute='import_error', null=True, readonly=True)
+    traceback_message = CharField(attribute='import_full_error', null=True, readonly=True)
 
     class Meta:
         queryset = UploadLayer.objects.all()
