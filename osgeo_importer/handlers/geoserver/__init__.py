@@ -9,7 +9,7 @@ from osgeo_importer.importers import UPLOAD_DIR
 from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
 from geonode.upload.utils import make_geogig_rest_payload, init_geogig_repo
-from geonode.geoserver.helpers import get_sld_for, _style_contexts, _style_templates
+from geonode.geoserver.helpers import get_sld_for, _style_contexts, _style_templates, save_style
 from geoserver.catalog import ConflictingDataError
 from geoserver.support import DimensionInfo
 from osgeo_importer.utils import increment_filename, database_schema_name
@@ -510,6 +510,7 @@ class GenericSLDHandler(GeoserverHandlerMixin):
             if style:
                 self.layer.default_style = style
                 self.catalog.save(self.layer)
+                save_style(style)
 
 
 
