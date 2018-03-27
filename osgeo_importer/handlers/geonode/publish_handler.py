@@ -113,7 +113,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         if len(styles) > 0:
             new_layer_kwargs.update({
                 'default_style': styles[0]
-                }
+                })
         
         if 'category' in layer_config:
             try:
