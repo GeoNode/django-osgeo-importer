@@ -7,7 +7,7 @@ from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from osgeo_importer.models import UploadLayer
-from geonode.layers.models import Layer
+from geonode.layers.models import Layer, Style
 from backward_compatibility import set_attributes
 from django.contrib.auth import get_user_model
 from geonode.base.models import TopicCategory
@@ -108,6 +108,12 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             'owner': owner,
             'uuid': layer_uuid,
         }
+        
+        styles = Style.objects.filter(name=layer_name)
+        if len(styles) > 0:
+            new_layer_kwargs.update({
+                'default_style': styles[0]
+                })
         
         if 'category' in layer_config:
             try:
