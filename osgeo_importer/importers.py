@@ -189,11 +189,25 @@ class OGRImport(Import):
 
         return self.open_datastore(connection_string, self.target_inspectors, *args, **kwargs)
 
-    def create_target_dataset(self, target_datastore, layer_name, *args, **kwargs):
+    def get_or_create_target_dataset(self, target_datastore, layer_name, *args, **kwargs):
         """
-        Creates the data source in the target data store.
+        Gets or Creates the data source in the target data store.
         """
-        return target_datastore.CreateLayer(layer_name, *args, **kwargs)
+        created = True
+        datastore = None
+        try:
+            datastore = target_datastore.CreateLayer(layer_name,
+                                                     *args, **kwargs)
+        except Exception as e:
+            created = False
+            error_msg = str(e)
+            if 'already exists' in error_msg:
+                logger.info('Layer <{}> already exists so lets get it instead.'.format(layer_name))
+                datastore = target_datastore.GetLayer(layer_name)
+            else:
+                raise e
+
+        return datastore, created
 
     def get_features_geometry_types(self, layer, type='id'):
         """
@@ -439,8 +453,15 @@ class OGRImport(Import):
                     srs = layer.GetSpatialRef()
 
                 logger.info('Creating dataset "{}" from file "{}"'.format(layer_name, target_file))
-                target_layer = self.create_target_dataset(target_file, str(layer_name), srs, layer_geom_type,
+                target_layer, created = self.get_or_create_target_dataset(target_file, str(layer_name), srs, layer_geom_type,
                                                           options=target_create_options)
+
+                if not created:
+                    # if the layer wasn't created, threre's no need for
+                    # further processing lets just return it. This could happen
+                    # if the user is retrying a previously failed import
+                    self.completed_layers.append([target_layer.GetName(), layer_options])
+                    return self.completed_layers
 
                 # adding fields to new layer
                 layer_definition = ogr.Feature(layer.GetLayerDefn())
