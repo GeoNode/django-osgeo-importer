@@ -267,7 +267,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         if store_type.lower() == 'geogig':
             self.geogig_handler(store, layer, layer_config, request_user)
 
-        return self.catalog.publish_featuretype(layer, self.get_or_create_datastore(layer_config, request_user),
+        return self.catalog.publish_featuretype(layer, store,
                                                 layer_config.get('srs', self.srs))
 
     def geogig_version(self):
