@@ -33,7 +33,7 @@ gdal.UseExceptions()
 MEDIA_ROOT = getattr(settings, 'MEDIA_ROOT', FileSystemStorage().location)
 DEFAULT_SUPPORTED_EXTENSIONS = ['shp', 'shx', 'prj', 'dbf', 'cpg', 'kml', 'geojson', 'json',
                                 'tif', 'tiff', 'gpkg', 'csv', 'zip', 'xml',
-                                'sld', 'ntf', 'nitf']
+                                'sld', 'ntf', 'nitf', 'j2k', 'jp2']
 VALID_EXTENSIONS = getattr(settings, 'OSGEO_IMPORTER_VALID_EXTENSIONS', DEFAULT_SUPPORTED_EXTENSIONS)
 
 RASTER_FILES = getattr(settings, 'OSGEO_IMPORTER_RASTER_FILES', os.path.join(MEDIA_ROOT, 'osgeo_importer_raster'))
