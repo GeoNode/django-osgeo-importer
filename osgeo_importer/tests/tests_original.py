@@ -15,11 +15,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.gis.gdal import DataSource
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.test.utils import setup_test_environment
 import gdal
 from geoserver.catalog import Catalog, FailedRequestError
 import osgeo
+from django.db.models import Sum
 
 from osgeo_importer.handlers.geoserver import GeoWebCacheHandler
 from osgeo_importer.handlers.geoserver import configure_time
@@ -227,6 +228,9 @@ class UploaderTests(ImportHelper, TestCase):
         """
         client = AdminClient()
         client.login_as_non_admin()
+
+        if configs is None:
+            configs = [{'index': 0}]
 
         # Don't accidentally iterate over given 'foo' as ['f', 'o', 'o'].
         self.assertNotIsInstance(filenames, str)
@@ -1248,6 +1252,20 @@ class UploaderTests(ImportHelper, TestCase):
         except Exception as ex:
             self.fail(ex)
 
+    def test_complex_zip(self):
+        """ Test a complex zip file.
+               a) the data is in a directory inside the shapefile
+               b) there are MACOSX hidden files in it
+               c) there is a .shp.xml metadata file
+        """
+        filename = 'states.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+
+        try:
+            self.generic_import(filename, configs=configs)
+        except Exception as ex:
+            self.fail(ex)
+
     def test_istanbul(self):
         """Tests shapefile with multipart polygons and non-WGS84 SR.
         """
@@ -1382,6 +1400,44 @@ class UploaderTests(ImportHelper, TestCase):
 
             self.generic_import(filename, configs=configs)
 
+    def test_quota(self):
+        """ Exercise using the user lifetime maximum quota setting 
+        by uploading two files where the first should work, 
+        the second should error
+        """
+        client = AdminClient()
+        client.login_as_non_admin()
+        filename = 'plate_id_pangaea.zip'
+        configs = [{'index': 0}]
+
+        path = get_testfile_path(filename)
+        with open(path) as stream:
+            data = stream.read()
+        upload = SimpleUploadedFile(filename, data)
+        outfiles=[upload]
+        
+        response = client.post(
+            reverse('uploads-new-json'),
+            {'file': outfiles,
+             'json': json.dumps(configs)},
+            follow=True)
+        content = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content['state'],'UPLOADED')
+
+        # Running second time should trigger exceeded quota
+        path = get_testfile_path(filename)
+        with open(path) as stream:
+            data = stream.read()
+        upload = SimpleUploadedFile(filename, data)
+        outfiles=[upload]
+        response = client.post(
+            reverse('uploads-new-json'),
+            {'file': outfiles,
+             'json': json.dumps(configs)},
+            follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Quota Exceeded', response.content)
 
 if __name__ == '__main__':
     unittest.main()

@@ -21,3 +21,5 @@ flake8==3.3.0
 coverage==4.3.4
 
 six==1.10.0
+
+git+git://github.com/dimka665/awesome-slugify@a6563949965bcddd976b7b3fb0babf76e3b490f7#egg=awesome-slugify
