@@ -271,7 +271,6 @@ class GDALInspector(InspectorMixin):
 class OGRTruncatedConverter(OGRInspector):
     def convert_truncated(self, source_layer_name, dest_layer_name):
         converted_mapping = {}
-        dest_layer_name = dest_layer_name.split(':')[1]
         dest_layer = self.data.GetLayerByName(dest_layer_name)
         source_layer = self.data.GetLayerByName(source_layer_name)
         dest_schema = dest_layer.GetLayerDefn()
