@@ -23,14 +23,12 @@ try:
 except:
     from osgeo import gdal, ogr, osr
 
-
 logger = logging.getLogger(__name__)
 
 try:
     from django.utils.module_loading import import_string
 except ImportError:
     from django.utils.module_loading import import_by_path as import_string
-
 
 ogr.UseExceptions()
 gdal.UseExceptions()
@@ -177,7 +175,6 @@ class FileTypeNotAllowed(Exception):
 
 
 class UploadError(Exception):
-
     pass
 
 
@@ -213,7 +210,6 @@ def load_handler(path, *args, **kwargs):
 
 
 def get_kwarg(index, kwargs, default=None):
-
     if index in kwargs:
         return kwargs[index]
     else:
@@ -414,7 +410,7 @@ class ImportHelper(object):
             if len(name) > max_length:
                 logger.warning(
                     "rejecting upload name for length: {0!r} {1} > {2}"
-                    .format(name, len(name), max_length)
+                        .format(name, len(name), max_length)
                 )
                 name = None
             file_type = None
@@ -490,7 +486,13 @@ class ImportHelper(object):
         # Must be done for all files before saving upfile for validation
         finalfiles = []
         for each in files:
-            tofile = os.path.join(outdir, os.path.basename(each.name))
+            if '{}{}'.format(os.extsep, 'gdb/') in each.name:
+                todir = os.path.join(outdir, os.path.dirname(each.name))
+                mkdir_p(todir)
+                tofile = os.path.join(todir, os.path.basename(each.name))
+            else:
+                tofile = os.path.join(outdir, os.path.basename(each.name))
+
             shutil.move(each.name, tofile)
             finalfiles.append(tofile)
 
@@ -499,9 +501,16 @@ class ImportHelper(object):
         styles = [os.path.basename(x)
                   for x in finalfiles if '.sld' in x.lower()]
         for each in finalfiles:
+            # If we've already processed one part of an FGDB then we shouldn't add another entry for it
+            if '{}{}'.format(os.extsep, 'gdb/') in each:
+                if (os.path.dirname(each) in x.file.name for x in upfiles):
+                    continue
             upfile = UploadFile.objects.create(upload=upload)
             upfiles.append(upfile)
-            upfile.file.name = each
+            if '{}{}'.format(os.extsep, 'gdb/') in each:
+                upfile.file.name = os.path.dirname(each)
+            else:
+                upfile.file.name = each
             # Detect and store file type for later reporting, since it is no
             # longer true that every upload has only one file type.
             try:
@@ -551,8 +560,7 @@ class ImportHelper(object):
                             layer_type=layer_desc['layer_type'],
                             fields=layer_desc.get('fields', {}),
                             index=layer_desc.get('index'),
-                            feature_count=layer_desc.get(
-                                'feature_count', None),
+                            feature_count=layer_desc.get('feature_count', None),
                             configuration_options=configuration_options
                         )
                         # If we wait for upload.save(), we may introduce layer_name collisions.
@@ -663,7 +671,6 @@ def convert_wkt_to_epsg(wkt, epsg_directory=settings.PROJECTION_DIRECTORY, force
 
 
 def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, layer_path):
-
     def get_geometry_type(geometry_name):
         switcher = {
             "POINT": ogr.wkbPoint,
@@ -755,8 +762,13 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     for file_name in os.listdir(layer_path):
         if os.path.splitext(file_name)[0] == '{}_reproj'.format(layer_name):
             extension = os.path.splitext(file_name)[1][1:].strip().lower()
+<<<<<<< HEAD
             os.rename(os.path.join(layer_path, file_name), os.path.join(
                 layer_path, '{}.{}'.format(original_layer_name, extension)))
+=======
+            os.rename(os.path.join(layer_path, file_name),
+                      os.path.join(layer_path, '{}.{}'.format(original_layer_name, extension)))
+>>>>>>> Insure we maintain folder structure for FGDB on move
 
     return '{0}:{1}'.format(output_srs.GetAuthorityName(None), output_srs.GetAuthorityCode(None))
 
