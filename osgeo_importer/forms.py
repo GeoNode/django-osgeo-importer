@@ -83,7 +83,6 @@ class UploadFileForm(forms.Form):
             elif is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipfile in zip.namelist():
-
                         if ((zipfile in process_files or ('gdb/' in VALID_EXTENSIONS and
                                                           '{}{}'.format(os.extsep, 'gdb/') in zipfile)) and
                                 not zipfile.endswith('/')):
