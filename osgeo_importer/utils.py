@@ -515,8 +515,9 @@ class ImportHelper(object):
             _, upfile_ext = os.path.splitext(upfile_basename)
 
             # If this file isn't part of a shapefile or a subfile for FGDB
-            if upfile_ext.lower() not in ['.prj', '.dbf', '.shx', '.cpg'] and \
-                    '{}{}'.format(os.extsep, 'gdb/') not in each:
+            if upfile_ext.lower() not in ['.prj', '.dbf', '.shx', '.cpg']:
+                if '{}{}'.format(os.extsep, 'gdb/') in each:
+                    each = os.path.dirname(each)
                 description = self.get_fields(each)
                 for layer_desc in description:
                     configuration_options = DEFAULT_LAYER_CONFIGURATION.copy()
