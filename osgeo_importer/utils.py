@@ -478,8 +478,9 @@ class ImportHelper(object):
         # Must be done for all files before saving upfile for validation
         finalfiles = []
         for each in files:
+            # If we're dealing with FGDB get the name of the .gdb parent folder to ensure the directory is created
             if '{}{}'.format(os.extsep, 'gdb/') in each.name:
-                todir = os.path.join(outdir, os.path.dirname(each.name))
+                todir = os.path.join(outdir, os.path.basename(os.path.dirname(each.name)))
                 mkdir_p(todir)
                 tofile = os.path.join(todir, os.path.basename(each.name))
             else:
@@ -490,11 +491,12 @@ class ImportHelper(object):
 
         # Loop through and create uploadfiles and uploadlayers
         upfiles = []
+
         styles = [os.path.basename(x) for x in finalfiles if '.sld' in x.lower()]
         for each in finalfiles:
             # If we've already processed one part of an FGDB then we shouldn't add another entry for it
             if '{}{}'.format(os.extsep, 'gdb/') in each:
-                if (os.path.dirname(each) in x.file.name for x in upfiles):
+                if upfiles and (os.path.dirname(each) in x.file.name for x in upfiles):
                     continue
             upfile = UploadFile.objects.create(upload=upload)
             upfiles.append(upfile)
