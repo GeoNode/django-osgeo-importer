@@ -539,6 +539,24 @@ class UploaderTests(ImportHelper, TestCase):
         )
         self.generic_time_check(layer, attribute=date_attr.attribute)
 
+    def test_boxes_with_date_gdb(self):
+        """Tests the import of test_boxes_with_date.gdb.
+        """
+        filename = 'boxes_with_date.zip'
+        configs = self.prepare_file_for_import(get_testfile_path(filename))
+        configs[0].update({'convert_to_date': ['date'], 'start_date': 'date', 'configureTime': True})
+
+        layer = self.generic_import(filename, configs=configs)
+
+        date_attr = get_layer_attr(layer, 'date_as_date')
+        self.assertEqual(date_attr.attribute_type, 'xsd:dateTime')
+
+        configure_time(
+            self.catalog.get_layer(layer.name).resource,
+            attribute=date_attr.attribute,
+        )
+        self.generic_time_check(layer, attribute=date_attr.attribute)
+
     def test_duplicate_imports(self):
         """Import the same layer twice to ensure names don't collide.
         """
