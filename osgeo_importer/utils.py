@@ -354,18 +354,26 @@ class ImportHelper(object):
             # Group paths by common pre-extension prefixes
             groups = collections.defaultdict(list)
             for path in paths:
-                group_name = os.path.splitext(path)[0]
+                if 'gdb/' in path:
+                    group_name = os.path.dirname(path)
+                else:
+                    group_name = os.path.splitext(path)[0]
                 groups[group_name].append(path)
             # Check each group for "leaders" - a special filename like "a.shp"
             # which can be understood to represent other files in the group.
             # Map from each group name to a list of leaders in that group.
-            leader_exts = ["shp"]
+            leader_exts = ["shp", '{}{}'.format(os.path.extsep, "gdb")]
             group_leaders = {}
             for group_name, group in groups.items():
                 leaders = [
                     path for path in group
                     if any(path.endswith(ext) for ext in leader_exts)
                 ]
+                gdb_leaders = [
+                    os.path.dirname(path) for path in group
+                    if any(os.path.dirname(path).endswith(ext) for ext in leader_exts)
+                ]
+                leaders.extend(set(gdb_leaders))
                 if leaders:
                     group_leaders[group_name] = leaders
             # Rebuild paths: leaders + paths without leaders to represent them
@@ -409,6 +417,7 @@ class ImportHelper(object):
 
         upload.name = name
         upload.file_type = file_type
+
         return upload
 
     @staticmethod
@@ -507,7 +516,10 @@ class ImportHelper(object):
             # Detect and store file type for later reporting, since it is no
             # longer true that every upload has only one file type.
             try:
-                upfile.file_type = self.get_file_type(each)
+                if '{}{}'.format(os.extsep, 'gdb/') in each:
+                    upfile.file_type = self.get_file_type(os.path.dirname(each))
+                else:
+                    upfile.file_type = self.get_file_type(each)
             except NoDataSourceFound:
                 upfile.file_type = None
             upfile.save()
