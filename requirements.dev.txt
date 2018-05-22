@@ -12,13 +12,14 @@ sphinx-autobuild==0.6.0
 
 Django==1.8.15
 
-GeoNode==2.6.3
+Geonode==2.8rc11
 
 django-tastypie>=0.12.2,<0.14
 
 awscli==1.11.63
 flake8==3.3.0
 coverage==4.3.4
+
 # newer version of django-polymorphic, no more support for  django 1.8
 django-polymorphic==1.3
 # please take a look here https://github.com/GeoNode/geonode/issues/3561
