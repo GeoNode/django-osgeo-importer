@@ -136,11 +136,6 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             if a.attribute in keep_attributes and a.attribute not in layer_config['fields']:
                 layer_config['fields'].append({'name': a.attribute, 'type': a.attribute_type})
 
-        # Add fields to new_layer.attribute_set
-        if fields:
-            attribute_map = [[f['name'], f['type']] for f in fields]
-            set_attributes(new_layer, attribute_map)
-
         if self.importer.upload_file and created:
             upload_layer = UploadLayer.objects.get(upload_file=self.importer.upload_file.pk,
                                                    index=layer_config.get('index'))
