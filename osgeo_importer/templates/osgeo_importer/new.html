@@ -15,13 +15,27 @@
 </script>
 
 {{ block.super }}
+<script type="text/javascript">
+$(document).ready(function () {
+    // disable service registration button if user is not a content manager
+    if ('{{ user.content_creator }}' != 'True') {
+        $('#choose_files_button').prop('disabled', true);
+        $('#add_data_button').attr('disabled', true);
+    }
+})
+</script>
 {% endblock %}
 
 {% block body_outer %}
 
 <div class="page-header">
-  <a href="{% url 'uploads-list' %}"><div class="pull-right" style="margin-top: 25px; font-size: 14px">Manage Your Data</div></a>
+  {% if user.content_creator == True %}
+    <a href="{% url 'uploads-list' %}" id="add_data_button"><div class="pull-right" style="margin-top: 25px; font-size: 14px">Manage Your Data</div></a>
+  {% endif %}
   <h2 class="page-title">{% trans "Add Data" %}</h2>
+  {% if user.content_creator == False %}
+    <p>You are not a Content Creator, so you may not upload a layer. Please contact an Administator if you believe you should be a Content Creator.</p>
+  {% endif %}
 </div>
 
 <div>
@@ -32,7 +46,7 @@
             {{form}}
         </div>
         <div class="row">
-            <button type="button" class="btn-info col-md-4 btn" onclick="chooseFile();">choose file(s)</button>
+            <button type="button" class="btn-info col-md-4 btn" onclick="chooseFile();" id="choose_files_button">choose file(s)</button>
         </div>
         <div class="row">
             <div class="errorlist">
