@@ -557,13 +557,13 @@ class GeoServerStyleHandler(GeoserverHandlerMixin):
                 while True:
                     n += 1
                     try:
-                        self.catalog.create_style(sldname, s.read(), overwrite=False, workspace=self.workspace)
+                        self.catalog.create_style(sldname, s.read(), overwrite=False)
                     except ConflictingDataError:
                         sldname = increment_filename(sldname)
                     if n >= 100:
                         break
 
-                style = self.catalog.get_style(sldname, workspace=self.workspace)
+                style = self.catalog.get_style(sldname)
                 if sld == default_sld:
                     default_style = style
                 styles.append(style)
