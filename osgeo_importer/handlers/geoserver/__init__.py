@@ -10,6 +10,7 @@ from geoserver.catalog import FailedRequestError, ConflictingDataError
 from geonode.geoserver.helpers import gs_catalog
 from geonode.upload.utils import make_geogig_rest_payload, init_geogig_repo
 from geonode.geoserver.helpers import get_sld_for, _style_contexts, _style_templates
+from geonode.people.models import Profile
 from geoserver.catalog import ConflictingDataError
 from geoserver.support import DimensionInfo
 from osgeo_importer.utils import increment_filename, database_schema_name
@@ -260,7 +261,7 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         if layer_config['layer_type'] == 'tile' and layer_config.get('driver', '').lower() == 'gpkg':
             return
 
-        request_user = kwargs.get('request_user', None)
+        request_user = Profile.objects.get(username=kwargs.get('request_user', None))
         store = self.get_or_create_datastore(layer_config, request_user)
 
         store_type = getattr(store, 'type', None) or ''
