@@ -96,7 +96,7 @@ class UploadedLayerResource(ModelResource):
             uploaded_file.id,
             configuration_options=configuration_options,
             request_cookies=request.COOKIES,
-            request_user=request.user
+            request_user=request.user.username
         )
 
         task_id = getattr(import_result, 'id', None)
