@@ -151,6 +151,3 @@ texinfo_documents = [
      author, 'django-osgeo-importer', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-

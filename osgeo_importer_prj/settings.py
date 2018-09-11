@@ -38,7 +38,7 @@ IMPORT_HANDLERS = [
     'osgeo_importer.handlers.geoserver.GeoServerBoundsHandler',
     'osgeo_importer.handlers.geoserver.GenericSLDHandler',
     'osgeo_importer.handlers.geonode.GeoNodePublishHandler',
-#     'osgeo_importer.handlers.mapproxy.publish_handler.MapProxyGPKGTilePublishHandler',
+    #     'osgeo_importer.handlers.mapproxy.publish_handler.MapProxyGPKGTilePublishHandler',
     'osgeo_importer.handlers.geoserver.GeoServerStyleHandler',
     'osgeo_importer.handlers.geonode.GeoNodeMetadataHandler'
 ]
@@ -76,10 +76,10 @@ ROOT_URLCONF = 'osgeo_importer_prj.urls'
 # Location of locale files
 LOCALE_PATHS = (
     os.path.join(LOCAL_ROOT, 'locale'),
-    ) + LOCALE_PATHS
+) + LOCALE_PATHS
 
 
-INSTALLED_APPS = INSTALLED_APPS + ("osgeo_importer","osgeo_importer_client",)
+INSTALLED_APPS = INSTALLED_APPS + ("osgeo_importer", "osgeo_importer_client",)
 # # Remove 'geonode.geoserver', useful for experimenting with a geoserver-less configuration.
 # INSTALLED_APPS = [ a for a in INSTALLED_APPS if a != 'geonode.geoserver' ]
 
@@ -89,14 +89,14 @@ DATABASES = {
         'NAME': os.path.join(PROJECT_ROOT, 'development.db'),
     },
     # vector datastore for uploads
-     'datastore' : {
+    'datastore': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'osgeo_importer_test',
-        'USER' : 'osgeo',
-        'PASSWORD' : 'osgeo',
-        'HOST' : 'postgres',
-        'PORT' : '5432',
-     }
+        'USER': 'osgeo',
+        'PASSWORD': 'osgeo',
+        'HOST': 'postgres',
+        'PORT': '5432',
+    }
 }
 
 GEOSERVER_LOCATION = os.getenv(
@@ -168,4 +168,3 @@ PROJECTION_DIRECTORY = os.path.join(os.path.dirname(pyproj.__file__), 'data/')
 
 # Lifetime Quota for User Uploads in Bytes, defaults to 140M (big enough it won't trip other tests) for tests
 USER_UPLOAD_QUOTA = 140000000
-

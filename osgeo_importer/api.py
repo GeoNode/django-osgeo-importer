@@ -105,7 +105,7 @@ class UploadedLayerResource(ModelResource):
 
     def prepend_urls(self):
         return [url(r"^(?P<resource_name>{0})/(?P<pk>\d+)/configure{1}$".format(self._meta.resource_name,
-                    trailing_slash()), self.wrap_view('import_layer'), name="importer_configure"),
+                                                                                trailing_slash()), self.wrap_view('import_layer'), name="importer_configure"),
                 ]
 
 

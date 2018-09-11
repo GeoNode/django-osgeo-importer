@@ -50,12 +50,12 @@ class UploadFileForm(forms.Form):
             if is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipname in zip.namelist():
-                        _,zipext = os.path.splitext(zipname)
+                        _, zipext = os.path.splitext(zipname)
                         # doesn't have an extension
                         if not zipext:
                             continue
                         # OS X - ignore hidden files (i.e. .DS_Store and __MACOSX/.*)
-                        _,fname = os.path.split(zipname)
+                        _, fname = os.path.split(zipname)
                         if fname.startswith("."):
                             continue
                         # handle .shp.xml metadata files
@@ -115,9 +115,9 @@ class UploadFileForm(forms.Form):
             if user_filesize + upload_size > USER_UPLOAD_QUOTA:
                 # remove temp directory used for processing upload if quota exceeded
                 shutil.rmtree(outputdir)
-                self.add_error('file','User Quota Exceeded. Quota: %s Used: %s Adding: %s'%(
-                    sizeof_fmt(USER_UPLOAD_QUOTA), 
-                    sizeof_fmt(user_filesize), 
+                self.add_error('file', 'User Quota Exceeded. Quota: %s Used: %s Adding: %s' % (
+                    sizeof_fmt(USER_UPLOAD_QUOTA),
+                    sizeof_fmt(user_filesize),
                     sizeof_fmt(upload_size)
                 ))
         return cleaned_data

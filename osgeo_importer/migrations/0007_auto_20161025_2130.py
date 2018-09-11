@@ -15,6 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='uploadfile',
             name='file',
-            field=models.FileField(max_length=1000, upload_to=b'uploads', validators=[osgeo_importer.models.validate_file_extension, osgeo_importer.models.validate_inspector_can_read]),
+            field=models.FileField(max_length=1000, upload_to=b'uploads', validators=[
+                                   osgeo_importer.models.validate_file_extension, osgeo_importer.models.validate_inspector_can_read]),
         ),
     ]

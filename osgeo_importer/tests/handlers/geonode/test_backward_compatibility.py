@@ -13,6 +13,7 @@ class TestSetAttributes(TestCase):
     """ This is copied & modified from geonode.tests.utils.
         @see backward_compatibility for details.
     """
+
     def setUp(self):
         # Load users to log in as
         # call_command('loaddata', 'people_data', verbosity=0)

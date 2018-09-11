@@ -45,6 +45,7 @@ class MapProxyGPKGTilePublishHandler(ImportHandlerMixin):
                 layer_name = layer_config['layer_name']
                 # Use the layer name for the name of the cache and grid, this ensures they're also
                 #  unique and it's easy for someone checking the config to see how they link together.
+
                 default_cache_name = config_dict['caches'].keys()[0]
                 config_dict['caches'] = {layer_name: config_dict['caches'][default_cache_name]}
                 config_dict['caches'][layer_name]['grids'] = [layer_name]

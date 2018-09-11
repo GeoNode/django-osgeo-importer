@@ -33,8 +33,8 @@ class RecordImportStateTask(ExceptionLoggingTask):
         try:
             ul = UploadLayer.objects.get(id=ulid)
             UploadException.objects.create(error=exc,
-                                   verbose_traceback=einfo,
-                                   task_id=task_id, upload_layer=ul)
+                                           verbose_traceback=einfo,
+                                           task_id=task_id, upload_layer=ul)
         except UploadLayer.DoesNotExist:
             msg = 'Got invalid UploadLayer id: {}'.format(ulid)
             logger.error(msg)

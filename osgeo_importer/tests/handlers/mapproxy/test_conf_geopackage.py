@@ -70,9 +70,9 @@ class TestMapProxyConfCmd(SimpleTestCase):
     def test_test_cap_output_no_base(self):
         with capture(bytes=True) as (stdout, stderr):
             assert config_command(
-                       ['mapproxy-conf',
-                        '--capabilities', filename('util-conf-wms-111-cap.xml'),
-                        '--output', self.tmp_filename('mapproxy.yaml'), ]) == 0
+                ['mapproxy-conf',
+                 '--capabilities', filename('util-conf-wms-111-cap.xml'),
+                 '--output', self.tmp_filename('mapproxy.yaml'), ]) == 0
 
         with open(self.tmp_filename('mapproxy.yaml'), 'rb') as f:
             conf = yaml.load(f)
@@ -113,7 +113,7 @@ class TestMapProxyConfCmd(SimpleTestCase):
                         'name': 'osm_roads',
                         'title': 'OpenStreetMap (streets only)',
                         'sources': ['osm_roads_wms'],
-                     },
+                    },
                 ]
             }])
             eq_(len(conf['layers'][0]['layers']), 2)
@@ -121,11 +121,11 @@ class TestMapProxyConfCmd(SimpleTestCase):
     def test_test_cap_output(self):
         with capture(bytes=True) as (stdout, stderr):
             assert config_command([
-                       'mapproxy-conf',
-                       '--capabilities', filename('util-conf-wms-111-cap.xml'),
-                       '--output', self.tmp_filename('mapproxy.yaml'),
-                       '--base', filename('util-conf-base-grids.yaml'),
-                   ]) == 0
+                'mapproxy-conf',
+                '--capabilities', filename('util-conf-wms-111-cap.xml'),
+                '--output', self.tmp_filename('mapproxy.yaml'),
+                '--base', filename('util-conf-base-grids.yaml'),
+            ]) == 0
 
         with open(self.tmp_filename('mapproxy.yaml'), 'rb') as f:
             conf = yaml.load(f)
@@ -196,12 +196,12 @@ class TestMapProxyConfCmd(SimpleTestCase):
     def test_overwrites(self):
         with capture(bytes=True) as (stdout, stderr):
             assert config_command([
-                           'mapproxy-conf',
-                           '--capabilities', filename('util-conf-wms-111-cap.xml'),
-                           '--output', self.tmp_filename('mapproxy.yaml'),
-                           '--overwrite', filename('util-conf-overwrite.yaml'),
-                           '--base', filename('util-conf-base-grids.yaml'),
-                       ]) == 0
+                'mapproxy-conf',
+                '--capabilities', filename('util-conf-wms-111-cap.xml'),
+                '--output', self.tmp_filename('mapproxy.yaml'),
+                '--overwrite', filename('util-conf-overwrite.yaml'),
+                '--base', filename('util-conf-base-grids.yaml'),
+            ]) == 0
 
         with open(self.tmp_filename('mapproxy.yaml'), 'rb') as f:
             conf = yaml.load(f)
@@ -262,7 +262,7 @@ class TestMapProxyConfCmd(SimpleTestCase):
                         'name': 'osm_roads',
                         'title': 'OpenStreetMap (streets only)',
                         'sources': ['osm_roads_cache'],
-                     },
+                    },
                 ]
             }])
             eq_(len(conf['layers'][0]['layers']), 2)
@@ -335,17 +335,17 @@ class TestMapProxyConfCmd(SimpleTestCase):
         expected_results = {'layers': [{'sources': ['cache_cache'], 'name': 'cache', 'title': 'cache'}],
                             'services': {'wms': None, 'demo': None, 'tms': {'origin': 'nw', 'use_grid_names': True},
                                          'kml': {'use_grid_names': True}, 'wmts': None}, 'grids': {
-                'cache_900913': {'origin': 'nw', 'srs': 'EPSG:900913',
-                                 'res': [156543.03392804097, 78271.51696402048, 39135.75848201024, 19567.87924100512,
-                                         9783.93962050256, 4891.96981025128, 2445.98490512564, 1222.99245256282,
-                                         611.49622628141, 305.748113140705, 152.8740565703525, 76.43702828517625,
-                                         38.21851414258813, 19.109257071294063, 9.554628535647032, 4.777314267823516,
-                                         2.388657133911758, 1.194328566955879, 0.5971642834779395],
-                                 'bbox': [-20037508.342789244, -20037508.342789244, 20037508.342789244,
-                                          20037508.342789244], 'tile_size': [256, 256]}}, 'caches': {
-                'cache_cache': {'sources': [], 'cache': {'table_name': 'cache', 'type': 'geopackage',
-                                                         'filename': None},
-                                'grids': ['cache_900913']}}}
+            'cache_900913': {'origin': 'nw', 'srs': 'EPSG:900913',
+                             'res': [156543.03392804097, 78271.51696402048, 39135.75848201024, 19567.87924100512,
+                                     9783.93962050256, 4891.96981025128, 2445.98490512564, 1222.99245256282,
+                                     611.49622628141, 305.748113140705, 152.8740565703525, 76.43702828517625,
+                                     38.21851414258813, 19.109257071294063, 9.554628535647032, 4.777314267823516,
+                                     2.388657133911758, 1.194328566955879, 0.5971642834779395],
+                             'bbox': [-20037508.342789244, -20037508.342789244, 20037508.342789244,
+                                      20037508.342789244], 'tile_size': [256, 256]}}, 'caches': {
+            'cache_cache': {'sources': [], 'cache': {'table_name': 'cache', 'type': 'geopackage',
+                                                     'filename': None},
+                            'grids': ['cache_900913']}}}
         eq_(expected_results, returned_contents)
 
 
