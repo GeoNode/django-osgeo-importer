@@ -260,8 +260,10 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         # GeoServer doesn't handle tiles from gpkg files correctly, don't attempt
         if layer_config['layer_type'] == 'tile' and layer_config.get('driver', '').lower() == 'gpkg':
             return
-
-        request_user = Profile.objects.get(username=kwargs.get('request_user', None))
+        if kwargs.get('request_user', None):
+            request_user = Profile.objects.get(username=kwargs.get('request_user', None))
+        else:
+            request_user= None
         store = self.get_or_create_datastore(layer_config, request_user)
 
         store_type = getattr(store, 'type', None) or ''
