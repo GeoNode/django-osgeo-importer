@@ -27,6 +27,7 @@ class ImportHandlerMixin(object):
     """
     A mixin providing the basic layout for handlers.
     """
+
     def __init__(self, importer, *args, **kwargs):
         self.importer = importer
 
@@ -75,10 +76,10 @@ class FieldConverterHandler(GetModifiedFieldsMixin, ImportHandlerMixin):
     def convert_field_to_time(self, layer, field):
         d = db.connections[settings.OSGEO_DATASTORE].settings_dict
         connection_string = "PG:dbname='%s' user='%s' password='%s' host='%s' port='%s' schemas=%s" % (
-                                                                                            d['NAME'], d['USER'],
-                                                                                            d['PASSWORD'], d['HOST'],
-                                                                                            d['PORT'],
-                                                                                            database_schema_name())
+            d['NAME'], d['USER'],
+            d['PASSWORD'], d['HOST'],
+            d['PORT'],
+            database_schema_name())
 
         with self.field_converter(connection_string) as datasource:
             return datasource.convert_field(layer, field)

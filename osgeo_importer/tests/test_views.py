@@ -11,12 +11,14 @@ class TestFileAddView_upload(TestCase):
     class FakeRequest(object):
         """Fake the kind of request object used by FileAddView.upload.
         """
+
         def __init__(self, user):
             self.user = user
 
     class FakeFile(object):
         """Fake the kind of file object used by FileAddView.upload.
         """
+
         def __init__(self, name):
             self.name = name
 

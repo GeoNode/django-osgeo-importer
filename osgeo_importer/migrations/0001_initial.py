@@ -51,7 +51,8 @@ class Migration(migrations.Migration):
             name='UploadFile',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('file', models.FileField(upload_to=b'uploads', validators=[osgeo_importer.models.validate_file_extension, osgeo_importer.models.validate_inspector_can_read])),
+                ('file', models.FileField(upload_to=b'uploads', validators=[
+                 osgeo_importer.models.validate_file_extension, osgeo_importer.models.validate_inspector_can_read])),
                 ('slug', models.SlugField(max_length=250, blank=True)),
                 ('upload', models.ForeignKey(blank=True, to='osgeo_importer.UploadedData', null=True)),
             ],

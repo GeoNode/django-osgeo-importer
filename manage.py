@@ -9,4 +9,3 @@ if __name__ == "__main__":
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "osgeo_importer_prj.settings")
     execute_from_command_line(sys.argv)
-

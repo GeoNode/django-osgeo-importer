@@ -93,6 +93,7 @@ class OGRImportTests(ImportHelper, TestCase,):
 
         # --- Check that PostGIS has a table matching the name of the layer set during configure_upload()
         expected_tablename = custom_layername
+
         default_tablename = upload_layer.layer_name
         with connections['datastore'].cursor() as cursor:
             sql = """

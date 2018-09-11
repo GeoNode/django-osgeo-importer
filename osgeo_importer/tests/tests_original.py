@@ -350,6 +350,7 @@ class UploaderTests(ImportHelper, TestCase):
         # Warning: this assumes that Layer pks equal UploadLayer pks
         layer = Layer.objects.get(pk=layer_id)
         gslayer = self.catalog.get_layer(layer.name)
+
         default_style = gslayer.default_style
         # TODO: can we use public API or omit this?
         self.catalog._cache.clear()
@@ -387,7 +388,7 @@ class UploaderTests(ImportHelper, TestCase):
         self.assertEqual(layer.language, 'eng')
         self.assertEqual(layer.title, 'Old_Americas_LSIB_Polygons_Detailed_2013Mar')
 
-    #def test_geotiff_raster(self):
+    # def test_geotiff_raster(self):
     #    """Exercise GeoTIFF raster import, ensuring import doesn't cause any exceptions.
     #    """
     #    filename = 'test_grid.tif'
@@ -398,7 +399,7 @@ class UploaderTests(ImportHelper, TestCase):
     #    except Exception as ex:
     #        self.fail(ex)
 
-    #def test_nitf_raster(self):
+    # def test_nitf_raster(self):
     #    """Tests NITF raster import
     #    """
     #    filename = 'test_nitf.nitf'
@@ -766,7 +767,7 @@ class UploaderTests(ImportHelper, TestCase):
 #             self.assertEqual(layer.store, self.datastore.name)
 #             self.assertEqual(layer.storeType, 'dataStore')
 
-# skipping this test as urls are not enabled in the ui and this breaks with no 
+# skipping this test as urls are not enabled in the ui and this breaks with no
 # upload folder to use
 #    def test_arcgisjson(self):
 #        """Tests the import from a WFS Endpoint
@@ -1383,19 +1384,19 @@ class UploaderTests(ImportHelper, TestCase):
         for filename in filenames:
             configs = self.prepare_file_for_import(get_testfile_path(filename))
             configs[0].update({
-                    'configureTime': True,
-                    'convert_to_date': ['date_time'],
-                    'editable': True,
-                    'permissions': {
-                        'users': {
-                            'AnonymousUser': [
-                                'change_layer_data',
-                                'download_resourcebase',
-                                'view_resourcebase'
-                            ]
-                        }
-                    },
-                    'start_date': 'date_time',
+                'configureTime': True,
+                'convert_to_date': ['date_time'],
+                'editable': True,
+                'permissions': {
+                    'users': {
+                        'AnonymousUser': [
+                            'change_layer_data',
+                            'download_resourcebase',
+                            'view_resourcebase'
+                        ]
+                    }
+                },
+                'start_date': 'date_time',
             })
 
             self.generic_import(filename, configs=configs)
@@ -1414,8 +1415,8 @@ class UploaderTests(ImportHelper, TestCase):
         with open(path) as stream:
             data = stream.read()
         upload = SimpleUploadedFile(filename, data)
-        outfiles=[upload]
-        
+        outfiles = [upload]
+
         response = client.post(
             reverse('uploads-new-json'),
             {'file': outfiles,
@@ -1423,14 +1424,14 @@ class UploaderTests(ImportHelper, TestCase):
             follow=True)
         content = json.loads(response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(content['state'],'UPLOADED')
+        self.assertEqual(content['state'], 'UPLOADED')
 
         # Running second time should trigger exceeded quota
         path = get_testfile_path(filename)
         with open(path) as stream:
             data = stream.read()
         upload = SimpleUploadedFile(filename, data)
-        outfiles=[upload]
+        outfiles = [upload]
         response = client.post(
             reverse('uploads-new-json'),
             {'file': outfiles,
@@ -1438,6 +1439,7 @@ class UploaderTests(ImportHelper, TestCase):
             follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('Quota Exceeded', response.content)
+
 
 if __name__ == '__main__':
     unittest.main()

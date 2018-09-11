@@ -62,12 +62,12 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             logger.warn('User "{}" not found using AnonymousUser.'.format(layer_config['layer_owner']))
             owner = User.objects.get(username='AnonymousUser')
 
-        layer_abstract = 'No abstract provided'    
-            
+        layer_abstract = 'No abstract provided'
+
         # Populate arguments to create a new Layer
         if 'layer_abstract' in layer_config:
             layer_abstract = layer_config.get('layer_abstract')
-        
+
         layer_type = layer_config.get('layer_type')
         layer_uuid = str(uuid.uuid4())
         if layer_type == 'raster':
@@ -108,7 +108,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             'owner': owner,
             'uuid': layer_uuid,
         }
-        
+
         if 'category' in layer_config:
             try:
                 category = TopicCategory.objects.get(id=layer_config.get('category'))
