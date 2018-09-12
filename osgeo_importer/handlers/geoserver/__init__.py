@@ -295,11 +295,9 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         if layer_config['layer_type'] == 'tile' and layer_config.get(
                 'driver', '').lower() == 'gpkg':
             return
-        if kwargs.get('request_user', None):
-            request_user = Profile.objects.get(
-                username=kwargs.get('request_user', None))
-        else:
-            request_user = None
+        request_user = kwargs.get('request_user', None)
+        if request_user:
+            request_user = Profile.objects.get(username=request_user)
         store = self.get_or_create_datastore(layer_config, request_user)
 
         store_type = getattr(store, 'type', None) or ''
