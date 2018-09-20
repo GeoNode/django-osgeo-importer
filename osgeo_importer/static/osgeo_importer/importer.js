@@ -343,7 +343,7 @@
                                                 ) {
       $scope.uploader = new FileUploader({'url': '/uploads/new/json',
           autoUpload: true,
-          headers:{'X-CSRFToken': $cookies.get('csrftoken')}
+          headers:{'X-CSRFToken': $cookies['csrftoken']}
       });
 
       $scope.reset = function() {
