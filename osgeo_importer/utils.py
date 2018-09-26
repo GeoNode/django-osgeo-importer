@@ -776,13 +776,8 @@ def reproject_coordinate_system(original_layer_name, layer_name, in_shp_layer, l
     for file_name in os.listdir(layer_path):
         if os.path.splitext(file_name)[0] == '{}_reproj'.format(layer_name):
             extension = os.path.splitext(file_name)[1][1:].strip().lower()
-<<<<<<< HEAD
-            os.rename(os.path.join(layer_path, file_name), os.path.join(
-                layer_path, '{}.{}'.format(original_layer_name, extension)))
-=======
             os.rename(os.path.join(layer_path, file_name),
                       os.path.join(layer_path, '{}.{}'.format(original_layer_name, extension)))
->>>>>>> Insure we maintain folder structure for FGDB on move
 
     return '{0}:{1}'.format(output_srs.GetAuthorityName(None), output_srs.GetAuthorityCode(None))
 
