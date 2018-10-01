@@ -48,7 +48,7 @@ class UploadFileForm(forms.Form):
             if is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipname in zip.namelist():
-                        _, zipext = zipname.split(os.extsep, 1)
+                        zipext = zipname.split(os.extsep, 1)[-1]
                         zipext = zipext.lstrip('.').lower()
                         if zipext in VALID_EXTENSIONS:
                             process_files.append(zipname)
