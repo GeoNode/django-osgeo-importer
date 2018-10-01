@@ -14,8 +14,8 @@ from osgeo_importer.validators import valid_file
 
 from .models import UploadFile, UploadedData
 from .validators import validate_inspector_can_read, validate_shapefiles_have_all_parts
-USER_UPLOAD_QUOTA = getattr(settings, 'USER_UPLOAD_QUOTA', None)
 
+USER_UPLOAD_QUOTA = getattr(settings, 'USER_UPLOAD_QUOTA', None)
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,9 @@ class UploadFileForm(forms.Form):
             elif is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipfile in zip.namelist():
-                        if zipfile in process_files:
+                        if ((zipfile in process_files or ('gdb/' in VALID_EXTENSIONS and
+                                                          '{}{}'.format(os.extsep, 'gdb/') in zipfile)) and
+                                not zipfile.endswith('/')):
                             with zip.open(zipfile) as zf:
                                 mkdir_p(os.path.join(outputdir, os.path.dirname(zipfile)))
                                 with open(os.path.join(outputdir, zipfile), 'w') as outfile:
@@ -84,7 +86,10 @@ class UploadFileForm(forms.Form):
         upload_size = 0
 
         for cleaned_file in cleaned_files:
-            cleaned_file_path = os.path.join(outputdir, cleaned_file.name)
+            if '{}{}'.format(os.extsep, 'gdb/') in cleaned_file.name:
+                cleaned_file_path = os.path.join(outputdir, os.path.dirname(cleaned_file.name))
+            else:
+                cleaned_file_path = os.path.join(outputdir, cleaned_file.name)
             if validate_inspector_can_read(cleaned_file_path):
                 add_file = True
                 name, ext = os.path.splitext(os.path.basename(cleaned_file.name))
@@ -97,7 +102,8 @@ class UploadFileForm(forms.Form):
                         add_file = False
 
                 if add_file:
-                    inspected_files.append(cleaned_file)
+                    if cleaned_file not in inspected_files:
+                        inspected_files.append(cleaned_file)
                 else:
                     logger.warning('Inspector could not read file {} or file is empty'.format(cleaned_file_path))
                     continue
@@ -116,9 +122,9 @@ class UploadFileForm(forms.Form):
             if user_filesize + upload_size > USER_UPLOAD_QUOTA:
                 # remove temp directory used for processing upload if quota exceeded
                 shutil.rmtree(outputdir)
-                self.add_error('file','User Quota Exceeded. Quota: %s Used: %s Adding: %s'%(
-                    sizeof_fmt(USER_UPLOAD_QUOTA), 
-                    sizeof_fmt(user_filesize), 
+                self.add_error('file', 'User Quota Exceeded. Quota: %s Used: %s Adding: %s' % (
+                    sizeof_fmt(USER_UPLOAD_QUOTA),
+                    sizeof_fmt(user_filesize),
                     sizeof_fmt(upload_size)
                 ))
         return cleaned_data
