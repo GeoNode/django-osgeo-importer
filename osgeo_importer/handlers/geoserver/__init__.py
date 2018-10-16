@@ -6,11 +6,10 @@ from django import db
 from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin, GetModifiedFieldsMixin, ensure_can_run
 from osgeo_importer.importers import UPLOAD_DIR
-from geoserver.catalog import FailedRequestError, ConflictingDataError
+from geoserver.catalog import FailedRequestError, ConflictingDataError, UploadError
 from geonode.geoserver.helpers import gs_catalog
 from geonode.upload.utils import make_geogig_rest_payload, init_geogig_repo
 from geonode.geoserver.helpers import get_sld_for, _style_contexts, _style_templates, save_style
-from geoserver.catalog import ConflictingDataError
 from geoserver.support import DimensionInfo
 from osgeo_importer.utils import increment_filename, database_schema_name
 import re
@@ -541,6 +540,7 @@ class GeoServerStyleHandler(GeoserverHandlerMixin):
         path = os.path.join(UPLOAD_DIR, str(self.importer.upload_file.upload.id))
         default_sld = layer_config.get('default_style', None)
         slds = layer_config.get('styles', None)
+        response = {}
         all_slds = []
         if default_sld is not None:
             slds.append(default_sld)
@@ -554,22 +554,30 @@ class GeoServerStyleHandler(GeoserverHandlerMixin):
             with open(os.path.join(path, sld)) as s:
                 n = 0
                 sldname = os.path.splitext(sld)[0]
+                upload_failed = False
                 while True:
                     n += 1
                     try:
                         self.catalog.create_style(sldname, s.read(), overwrite=False)
                     except ConflictingDataError:
                         sldname = increment_filename(sldname)
+                    except UploadError:
+                        upload_failed = True
+                        break
                     if n >= 100:
                         break
 
                 style = self.catalog.get_style(sldname)
-                if sld == default_sld:
-                    default_style = style
-                styles.append(style)
+                if not upload_failed:
+                    if sld == default_sld:
+                        default_style = style
+                    styles.append(style)
+                else:
+                    self.catalog.delete(style)
 
         lyr.styles = list(set(lyr.styles + styles))
         if default_style is not None:
             lyr.default_style = default_style
+            response = {'default_style': default_style.filename}
         self.catalog.save(lyr)
-        return {'default_style': default_style.filename}
+        return response
