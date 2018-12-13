@@ -100,6 +100,15 @@ def ensure_defaults(layer):
         layer.resource.catalog.save(fs)
 
 
+def ignore_invalid_chars(fields):
+    cleaned = fields
+    if isinstance(fields, list):
+        for i, field in enumerate(fields):
+            for key, value in field.iteritems():
+                cleaned[i][key] = value.decode('utf_8', 'ignore')
+    return cleaned
+
+
 class StdOutCapture(list):
 
     def __enter__(self):
@@ -555,21 +564,22 @@ class ImportHelper(object):
                     with db.transaction.atomic():
                         while UploadLayer.objects.filter(name=layer_name).exists():
                             layer_name = self.uniquish_layer_name(layer_basename)
-
+                        
+                        fields = layer_desc.get('fields', {})
                         upload_layer = UploadLayer(
                             upload_file=upfile,
                             name=layer_name,
                             internal_layer_name=internal_layer_name,
                             layer_name=layer_name,
                             layer_type=layer_desc['layer_type'],
-                            fields=layer_desc.get('fields', {}),
+                            fields=ignore_invalid_chars(fields),
                             index=layer_desc.get('index'),
                             feature_count=layer_desc.get('feature_count', None),
                             configuration_options=configuration_options
                         )
                         # If we wait for upload.save(), we may introduce layer_name collisions.
                         upload_layer.save()
-
+                       
                     upload.uploadlayer_set.add(upload_layer)
 
         upload.complete = True
