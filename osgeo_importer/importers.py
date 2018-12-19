@@ -472,6 +472,13 @@ class OGRImport(Import):
                 for i in range(layer_definition.GetFieldCount()):
 
                     field_def = layer_definition.GetFieldDefnRef(i)
+                    field_name = field_def.GetName()
+                    try:
+                        field_name = field_name.decode('utf-8')
+                    except UnicodeDecodeError as e:
+                        logger.error('Error Decoding {} - {}'.format(field_name,
+                                                                     str(e)))
+                        field_def.SetName(str(field_name.decode('utf-8', 'ignore')))
 
                     if field_def.GetName() == target_layer.GetFIDColumn() and field_def.GetType() != 0:
                         field_def.SetType(0)
