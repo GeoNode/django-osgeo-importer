@@ -152,7 +152,7 @@ class GDALInspector(InspectorMixin):
 
         try:
             # "1" argument makes the data writeable
-            self.data = gdal.OpenEx(filename, open_options=open_options)
+            self.data = gdal.OpenEx(filename, 1, open_options=open_options)
         except:
             msg = 'gdal.OpenEx({}, {}) failed.'.format(filename, open_options)
             logger.debug(msg)
