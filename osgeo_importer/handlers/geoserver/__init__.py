@@ -154,8 +154,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
             if connection_string is not None:
                 if connection_string['type'] == 'geogig':
                     if request_user is not None:
-                        username = request_user.username
-                        useremail = request_user.email
+                        username = request_user.get('username', None)
+                        useremail = request_user.get('email', None)
                         payload = make_geogig_rest_payload(username, useremail)
                     else:
                         payload = make_geogig_rest_payload()
@@ -203,8 +203,8 @@ class GeoserverPublishHandler(GeoserverHandlerMixin):
         transaction = requests.get(transaction_url, **request_params)
 
         if request_user is not None:
-            author_name = request_user.username
-            author_email = request_user.email
+            author_name = request_user.get('username', None)
+            author_email = request_user.get('email', None)
         else:
             author_name = None
             author_email = None
