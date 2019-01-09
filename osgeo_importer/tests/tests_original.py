@@ -169,7 +169,7 @@ class UploaderTests(ImportHelper, TestCase):
 
         # upload & configure_upload expect closed file objects
         #    This is heritage from originally being closely tied to a view passing request.Files
-        of = open(tmppath, 'r+b')
+        of = open(tmppath, 'rb')
         of.close()
         files = [of]
         uploaded_data = self.upload(files, self.admin_user)
@@ -1042,7 +1042,7 @@ class UploaderTests(ImportHelper, TestCase):
         non_admin = User.objects.get(username=self.non_admin_user.username)
 
         path = get_testfile_path('US_Shootings.csv')
-        with open(path, 'r+b') as stream:
+        with open(path, 'rb') as stream:
             uploaded_file = SimpleUploadedFile('test_data', stream.read())
             admin_upload = UploadedData.objects.create(state='Admin test', user=admin)
             admin_upload.uploadfile_set.add(UploadFile.objects.create(file=uploaded_file))
