@@ -91,12 +91,12 @@ class UploadedLayerResource(ModelResource):
             raise ImmediateHttpResponse(response=http.HttpBadRequest('Configuration options missing.'))
 
         uploaded_file = obj.upload_file
-
+        user = { 'username': request.user.username, 'email': request.user.email }
         import_result = import_object.delay(
             uploaded_file.id,
             configuration_options=configuration_options,
             request_cookies=request.COOKIES,
-            request_user=request.user.username
+            request_user=user
         )
 
         task_id = getattr(import_result, 'id', None)
