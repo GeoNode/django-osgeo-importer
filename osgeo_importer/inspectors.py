@@ -17,6 +17,8 @@ ogr.UseExceptions()
 logger = getLogger(__name__)
 
 OSGEO_INSPECTOR = getattr(settings, 'OSGEO_INSPECTOR', 'osgeo_importer.inspectors.GDALInspector')
+# Default "1" argument makes the data writeable
+GDAL_ACCESS_MODE = getattr(settings, 'GDAL_ACCESS_MODE', 1)
 
 
 class InspectorMixin(object):
@@ -151,8 +153,7 @@ class GDALInspector(InspectorMixin):
         open_options = kwargs.get('open_options', [])
 
         try:
-            # "1" argument makes the data writeable
-            self.data = gdal.OpenEx(filename, 1, open_options=open_options)
+            self.data = gdal.OpenEx(filename, GDAL_ACCESS_MODE, open_options=open_options)
         except:
             msg = 'gdal.OpenEx({}, {}) failed.'.format(filename, open_options)
             logger.debug(msg)
