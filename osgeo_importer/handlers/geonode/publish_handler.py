@@ -7,7 +7,7 @@ from django.conf import settings
 from osgeo_importer.handlers import ImportHandlerMixin
 from osgeo_importer.handlers import ensure_can_run
 from osgeo_importer.models import UploadLayer
-from geonode.layers.models import Layer
+from geonode.layers.models import Layer, Style
 from backward_compatibility import set_attributes
 from django.contrib.auth import get_user_model
 from geonode.base.models import TopicCategory
@@ -62,7 +62,7 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             logger.warn('User "{}" not found using AnonymousUser.'.format(layer_config['layer_owner']))
             owner = User.objects.get(username='AnonymousUser')
 
-        layer_abstract = 'No abstract provided'
+        layer_abstract = ''
 
         # Populate arguments to create a new Layer
         if 'layer_abstract' in layer_config:
@@ -109,6 +109,12 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             'uuid': layer_uuid,
         }
 
+        styles = Style.objects.filter(name=layer_name)
+        if len(styles) > 0:
+            new_layer_kwargs.update({
+                'default_style': styles[0]
+                })
+
         if 'category' in layer_config:
             try:
                 category = TopicCategory.objects.get(id=layer_config.get('category'))
@@ -130,11 +136,6 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             if a.attribute in keep_attributes and a.attribute not in layer_config['fields']:
                 layer_config['fields'].append({'name': a.attribute, 'type': a.attribute_type})
 
-        # Add fields to new_layer.attribute_set
-        if fields:
-            attribute_map = [[f['name'], f['type']] for f in fields]
-            set_attributes(new_layer, attribute_map)
-
         if self.importer.upload_file and created:
             upload_layer = UploadLayer.objects.get(upload_file=self.importer.upload_file.pk,
                                                    index=layer_config.get('index'))
@@ -144,7 +145,8 @@ class GeoNodePublishHandler(ImportHandlerMixin):
         if 'permissions' in layer_config:
             new_layer.set_permissions(layer_config['permissions'])
         else:
-            new_layer.set_default_permissions()
+            if settings.DEFAULT_ANONYMOUS_VIEW_PERMISSION:
+                new_layer.set_default_permissions()
 
         results = {
             'stats': {
