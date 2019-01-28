@@ -14,8 +14,8 @@ from osgeo_importer.validators import valid_file
 
 from .models import UploadFile, UploadedData
 from .validators import validate_inspector_can_read, validate_shapefiles_have_all_parts
-USER_UPLOAD_QUOTA = getattr(settings, 'USER_UPLOAD_QUOTA', None)
 
+USER_UPLOAD_QUOTA = getattr(settings, 'USER_UPLOAD_QUOTA', None)
 
 logger = logging.getLogger(__name__)
 
@@ -43,24 +43,12 @@ class UploadFileForm(forms.Form):
         for f in files:
             errors = valid_file(f)
             if errors != []:
-                self.add_error('file', ', '.join(errors))
+                logger.warning(', '.join(errors))
                 continue
-
-            # find files in the .zip that we know how to process (VALID_EXTENSIONS)
             if is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipname in zip.namelist():
-                        _, zipext = os.path.splitext(zipname)
-                        # doesn't have an extension
-                        if not zipext:
-                            continue
-                        # OS X - ignore hidden files (i.e. .DS_Store and __MACOSX/.*)
-                        _, fname = os.path.split(zipname)
-                        if fname.startswith("."):
-                            continue
-                        # handle .shp.xml metadata files
-                        if fname.lower().endswith(".shp.xml"):
-                            zipext = ".shp.xml"
+                        zipext = zipname.split(os.extsep, 1)[-1]
                         zipext = zipext.lstrip('.').lower()
                         if zipext in VALID_EXTENSIONS:
                             process_files.append(zipname)
@@ -83,7 +71,9 @@ class UploadFileForm(forms.Form):
             elif is_zipfile(f):
                 with ZipFile(f) as zip:
                     for zipfile in zip.namelist():
-                        if zipfile in process_files:
+                        if ((zipfile in process_files or ('gdb/' in VALID_EXTENSIONS and
+                                                          '{}{}'.format(os.extsep, 'gdb/') in zipfile)) and
+                                not zipfile.endswith('/')):
                             with zip.open(zipfile) as zf:
                                 mkdir_p(os.path.join(outputdir, os.path.dirname(zipfile)))
                                 with open(os.path.join(outputdir, zipfile), 'w') as outfile:
@@ -92,17 +82,34 @@ class UploadFileForm(forms.Form):
 
         # After moving files in place make sure they can be opened by inspector
         inspected_files = []
+        file_names = [os.path.basename(f.name) for f in cleaned_files]
         upload_size = 0
+
         for cleaned_file in cleaned_files:
-            cleaned_file_path = os.path.join(outputdir, cleaned_file.name)
-            if not validate_inspector_can_read(cleaned_file_path):
-                self.add_error(
-                    'file',
-                    'Inspector could not read file {} or file is empty'.format(cleaned_file_path)
-                )
+            if '{}{}'.format(os.extsep, 'gdb/') in cleaned_file.name:
+                cleaned_file_path = os.path.join(outputdir, os.path.dirname(cleaned_file.name))
+            else:
+                cleaned_file_path = os.path.join(outputdir, cleaned_file.name)
+            if validate_inspector_can_read(cleaned_file_path):
+                add_file = True
+                name, ext = os.path.splitext(os.path.basename(cleaned_file.name))
+                upload_size += os.path.getsize(cleaned_file_path)
+
+                if ext == '.xml':
+                    if '{}.shp'.format(name) in file_names:
+                        add_file = False
+                    elif '.shp' in name and name in file_names:
+                        add_file = False
+
+                if add_file:
+                    if cleaned_file not in inspected_files:
+                        inspected_files.append(cleaned_file)
+                else:
+                    logger.warning('Inspector could not read file {} or file is empty'.format(cleaned_file_path))
+                    continue
+            else:
+                logger.warning('Inspector could not read file {} or file is empty'.format(cleaned_file_path))
                 continue
-            upload_size += os.path.getsize(cleaned_file_path)
-            inspected_files.append(cleaned_file)
 
         cleaned_data['file'] = inspected_files
         # Get total file size
