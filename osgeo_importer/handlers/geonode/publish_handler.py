@@ -108,13 +108,11 @@ class GeoNodePublishHandler(ImportHandlerMixin):
             'owner': owner,
             'uuid': layer_uuid,
         }
-
         styles = Style.objects.filter(name=layer_name)
         if len(styles) > 0:
             new_layer_kwargs.update({
                 'default_style': styles[0]
                 })
-
         if 'category' in layer_config:
             try:
                 category = TopicCategory.objects.get(id=layer_config.get('category'))

@@ -23,7 +23,6 @@ try:
 except:
     from osgeo import gdal, ogr, osr
 
-
 logger = logging.getLogger(__name__)
 
 try:
@@ -567,7 +566,6 @@ class ImportHelper(object):
                     with db.transaction.atomic():
                         while UploadLayer.objects.filter(name=layer_name).exists():
                             layer_name = self.uniquish_layer_name(layer_basename)
-
                         fields = layer_desc.get('fields', {})
                         upload_layer = UploadLayer(
                             upload_file=upfile,
@@ -582,7 +580,7 @@ class ImportHelper(object):
                         )
                         # If we wait for upload.save(), we may introduce layer_name collisions.
                         upload_layer.save()
-
+                       
                     upload.uploadlayer_set.add(upload_layer)
 
         upload.complete = True

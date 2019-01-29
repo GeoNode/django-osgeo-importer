@@ -18,7 +18,6 @@ class UploadedDataAdmin(admin.ModelAdmin):
 class UploadExceptionAdmin(admin.ModelAdmin):
     model = UploadException
 
-
 admin.site.register(UploadException, UploadExceptionAdmin)
 admin.site.register(UploadLayer, UploadedLayerAdmin)
 admin.site.register(UploadedData, UploadedDataAdmin)
