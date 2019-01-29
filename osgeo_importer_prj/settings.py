@@ -168,5 +168,6 @@ PROJECTION_DIRECTORY = os.path.join(os.path.dirname(pyproj.__file__), 'data/')
 
 # Lifetime Quota for User Uploads in Bytes, defaults to 140M (big enough it won't trip other tests) for tests
 USER_UPLOAD_QUOTA = 140000000
- # 0 is read-only
+
+# 0 is read-only
 GDAL_ACCESS_MODE = 0
