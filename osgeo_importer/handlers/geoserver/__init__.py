@@ -317,9 +317,20 @@ class GeoserverPublishCoverageHandler(GeoserverHandlerMixin):
         """
         UPLOAD_RASTER = getattr(settings, 'OSGEO_IMPORTER_UPLOAD_RASTER_TO_GEOSERVER', True)
         if UPLOAD_RASTER:
-            return self.catalog._create_coveragestore(name, layer, workspace, False, False)
+            layer_path = layer
+            external = not UPLOAD_RASTER
         else:
-            return self.catalog._create_coveragestore(name, "file:{}".format(layer), workspace, False, True)
+            layer_path = "file:{}".format(layer)
+            external = UPLOAD_RASTER
+
+        resp = None
+        try:
+            resp = self.catalog._create_coveragestore(name, layer_path, workspace, False, external)
+        except AttributeError:
+            resp = self.catalog.create_coveragestore(name, path=layer_path, workspace=workspace,
+                                                     layer_name=name, upload_data=UPLOAD_RASTER)
+
+        return resp
 
 
 class GeoWebCacheHandler(GeoserverHandlerMixin):
@@ -407,9 +418,21 @@ class GeoWebCacheHandler(GeoserverHandlerMixin):
                   <regex>.*</regex>
                 </regexParameterFilter>
                 """
+        resp = None
+        try:
+            resp = self.catalog.http.request(
+                self.gwc_url(self.layer),
+                method="POST",
+                body=self.config(regex_parameter_filter=regex_filter, name=self.layer.name)
+            )
+        except AttributeError:
+            resp = self.catalog.http_request(
+                self.gwc_url(self.layer),
+                method="POST",
+                data=self.config(regex_parameter_filter=regex_filter, name=self.layer.name)
+            )
 
-        return self.catalog.http.request(self.gwc_url(self.layer), method="POST",
-                                         body=self.config(regex_parameter_filter=regex_filter, name=self.layer.name))
+        return resp
 
 
 class GeoServerBoundsHandler(GeoserverHandlerMixin):
@@ -464,7 +487,6 @@ class GenericSLDHandler(GeoserverHandlerMixin):
 
         return False
 
-
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
         """
@@ -507,7 +529,6 @@ class GenericSLDHandler(GeoserverHandlerMixin):
                 self.layer.default_style = style
                 self.catalog.save(self.layer)
                 save_style(style)
-
 
 
 class GeoServerStyleHandler(GeoserverHandlerMixin):
