@@ -27,6 +27,7 @@ transifex-client==0.12.5
 six==1.10.0
 # Newer versions have import errors
 django-autocomplete-light==2.3.3
+django-cors-headers==2.4.1
 
 # Newer versions cause errors.
 pycsw==2.0.3
