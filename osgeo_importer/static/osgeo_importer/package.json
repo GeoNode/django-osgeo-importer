@@ -5,7 +5,7 @@
   "main": "importer.js",
   "dependencies": {
     "underscore": "1.8.3",
-    "angular": "1.3.0",
+    "angular": "1.8.0",
     "angular-resource": "1.3.0",
     "angular-ui-bootstrap": "0.14.2",
     "angular-file-upload": "2.2.0",
