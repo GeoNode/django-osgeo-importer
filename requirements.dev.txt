@@ -1,7 +1,7 @@
 # gdal/ogr python bindings
 python-dateutil==1.5
 psycopg2==2.7.1
-numpy==1.8.2
+numpy==1.21.0
 
 # Needed for testing.
 mock==2.0.0
