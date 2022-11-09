@@ -10,7 +10,7 @@ mock==2.0.0
 sphinx==1.5.3
 sphinx-autobuild==0.6.0
 
-Django==1.8.15
+Django==2.2.28
 
 Geonode==2.8rc11
 
